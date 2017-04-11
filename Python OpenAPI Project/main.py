@@ -6,7 +6,7 @@ from general import *
 
 
 PROJECT_NAME = 'creativeworks'
-HOMEPAGE = 'https://www.nytimes.com/'
+HOMEPAGE = 'http://www.bbc.com/news'# 'https://www.nytimes.com/'
 
 # If you have your own web site, use get_domain_name(HOMEPAGE)
 
