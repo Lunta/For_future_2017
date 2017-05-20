@@ -19,7 +19,13 @@ request.get_method = lambda: 'GET'
 response_body = urllib.request.urlopen(request).read().decode('utf-8')
 print (response_body)
 
-#import cairosvg
+
+from svglib.svglib import svg2rlg
+from reportlab.graphics import renderPM
+
+drawing = svg2rlg('Administrative_divisions_map_of_South_Korea.svg')
+
+renderPM.drawToFile(drawing, "file.png")
 #import rsvg
 #cairosvg.surface.PNGSurface=
 #img = cairo.ImageSurface(cairo.FORMAT_ARGB32, 640,480)
