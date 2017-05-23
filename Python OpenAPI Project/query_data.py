@@ -19,6 +19,9 @@ request.get_method = lambda: 'GET'
 response_body = urllib.request.urlopen(request).read().decode('utf-8')
 print (response_body)
 
+from xml.dom.minidom import *
+doc = parseString(response_body)
+print(doc.createElement('numOfRows'))
 
 from svglib.svglib import svg2rlg
 from reportlab.graphics import renderPM
