@@ -17,11 +17,63 @@ str = 'http://openapi.airkorea.or.kr/openapi/services/rest/ArpltnInforInqireSvc/
 request = urllib.request.Request(str)
 request.get_method = lambda: 'GET'
 response_body = urllib.request.urlopen(request).read().decode('utf-8')
-print (response_body)
 
+print (response_body)
+tags = [
+'dataTime',
+'so2Value',
+'so2Grade',
+'coValue',
+'coGrade',
+'o3Value',
+'o3Grade',
+'no2Value',
+'no2Grade',
+'pm10Value',
+'pm10Grade',
+'pm25Value',
+'pm25Grade'
+       ]
 from xml.dom.minidom import *
-doc = parseString(response_body)
-print(doc.createElement('numOfRows'))
+from xml.dom.minidom import parse, parseString
+
+AtmosphereInfo = parseString(response_body)
+response = AtmosphereInfo.childNodes[0].childNodes
+body = response[3]
+print(body)
+item_list = body.childNodes[1].childNodes
+print(item_list.length)
+for item in item_list:
+    if item.nodeName == "item":
+        subitems = item.childNodes  # book에 들어 있는 노드들을 가져옴
+        for atom in subitems:
+            if atom.nodeName in tags:
+                print(atom.nodeName + ': ' + atom.firstChild.nodeValue)  # 책 목록을 출력
+
+location_list = AtmosphereInfo.childNodes
+
+
+#def launcherFunction(menu):
+#    if menu == 'l':
+#        BooksDoc = LoadXMLFromFile()
+#    elif menu == 'b':
+#        PrintBookList(["title", ])
+#
+#
+#def PrintBookList(tags):
+#    global BooksDoc
+#    if not checkDocument():  # DOM이 None인지 검사
+#        return None
+#
+#    booklist = BooksDoc.childNodes
+#    book = booklist[0].childNodes
+#    for item in book:
+#        if item.nodeName == "book":  # 엘리먼트를 중 book인 것을 추출
+#            subitems = item.childNodes  # book에 들어 있는 노드들을 가져옴
+#            for atom in subitems:
+#                if atom.nodeName in tags:
+#                    print(＂title =＂, atom.firstChild.nodeValue)  # 책 목록을 출력
+#
 
 from svglib.svglib import svg2rlg
 from reportlab.graphics import renderPM
@@ -29,15 +81,3 @@ from reportlab.graphics import renderPM
 drawing = svg2rlg('Administrative_divisions_map_of_South_Korea.svg')
 
 renderPM.drawToFile(drawing, "file.png")
-#import rsvg
-#cairosvg.surface.PNGSurface=
-#img = cairo.ImageSurface(cairo.FORMAT_ARGB32, 640,480)
-#ctx = cairo.Context(img)
-#
-### handle = rsvg.Handle(<svg filename>)
-## or, for in memory SVG data:
-#handle= rsvg.Handle(None, 'Administrative_divisions_map_of_South_Korea.svg')
-#
-#handle.render_cairo(ctx)
-#
-#img.write_to_png("svg.png")
