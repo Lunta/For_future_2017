@@ -2,7 +2,7 @@ import urllib.parse
 import urllib.request
 
 str = 'http://openapi.airkorea.or.kr/openapi/services/rest/ArpltnInforInqireSvc/getMsrstnAcctoRltmMesureDnsty?' \
-      'stationName='+urllib.parse.quote('정왕동')+'&' \
+      'stationName='+urllib.parse.quote('부평구')+'&' \
       'dataTerm=month&' \
       'pageNo=1&' \
       'numOfRows=24&' \
@@ -19,21 +19,8 @@ request.get_method = lambda: 'GET'
 response_body = urllib.request.urlopen(request).read().decode('utf-8')
 
 print (response_body)
-tags = [
-'dataTime',
-'so2Value',
-'so2Grade',
-'coValue',
-'coGrade',
-'o3Value',
-'o3Grade',
-'no2Value',
-'no2Grade',
-'pm10Value',
-'pm10Grade',
-'pm25Value',
-'pm25Grade'
-       ]
+tags = ['dataTime', 'so2Value', 'so2Grade', 'coValue', 'coGrade', 'o3Value', 'o3Grade', 'no2Value', 'no2Grade',
+        'pm10Value', 'pm10Grade', 'pm25Value', 'pm25Grade']
 from xml.dom.minidom import *
 from xml.dom.minidom import parse, parseString
 
@@ -43,14 +30,40 @@ body = response[3]
 print(body)
 item_list = body.childNodes[1].childNodes
 print(item_list.length)
+dic = {}
+day_info = []
 for item in item_list:
     if item.nodeName == "item":
-        subitems = item.childNodes  # book에 들어 있는 노드들을 가져옴
+        subitems = item.childNodes
         for atom in subitems:
             if atom.nodeName in tags:
-                print(atom.nodeName + ': ' + atom.firstChild.nodeValue)  # 책 목록을 출력
+                if atom.firstChild is None:
+                    dic[atom.nodeName] = 'None'
+                else:
+                    dic[atom.nodeName] = atom.firstChild.nodeValue
+        print(dic)
 
 location_list = AtmosphereInfo.childNodes
+
+
+map_file = open('Administrative_divisions_map_of_South_Korea.svg', 'r', encoding='utf-8')
+map_file_str = map_file.read()
+
+MapInfo = parseString(map_file_str)
+area_list = MapInfo.childNodes[2].childNodes
+print(area_list.length)
+
+for area in area_list:
+    if area.nodeName == 'g' or area.nodeName == 'path':
+        print(area.attributes._attrs['id']._value)
+        subitems = area.childNodes
+        for atom in subitems:
+            if atom.attributes is not None:
+                print(atom.attributes._attrs['id']._value + ' ' + atom.attributes._attrs['fill']._value + ' ' + atom.attributes._attrs['stroke']._value)
+            #print(atom.nodeName)
+            if atom.nodeName in tags:
+                #print(atom.nodeName + ': ' + atom.firstChild.nodeValue)
+                pass
 
 
 #def launcherFunction(menu):
