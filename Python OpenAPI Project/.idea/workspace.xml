@@ -2,10 +2,12 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="01584fd9-c762-4ad1-a17c-add32ed813f4" name="Default" comment="">
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/file.png" afterPath="$PROJECT_DIR$/file.png" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/air_info.py" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/info_map.py" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/search_location.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/Administrative_divisions_map_of_South_Korea.svg" afterPath="$PROJECT_DIR$/Administrative_divisions_map_of_South_Korea.svg" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/query_data.py" afterPath="$PROJECT_DIR$/query_data.py" />
+      <change type="MOVED" beforePath="$PROJECT_DIR$/query_data.py" afterPath="$PROJECT_DIR$/main.py" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -20,14 +22,46 @@
   <component name="ExecutionTargetManager" SELECTED_TARGET="default_target" />
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file leaf-file-name="query_data.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/query_data.py">
+      <file leaf-file-name="main.py" pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/main.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="475">
-              <caret line="61" column="116" lean-forward="false" selection-start-line="61" selection-start-column="116" selection-end-line="61" selection-end-column="116" />
+            <state relative-caret-position="266">
+              <caret line="14" column="0" lean-forward="true" selection-start-line="14" selection-start-column="0" selection-end-line="14" selection-end-column="0" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="info_map.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/info_map.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="152">
+              <caret line="8" column="26" lean-forward="true" selection-start-line="8" selection-start-column="26" selection-end-line="8" selection-end-column="26" />
+              <folding>
+                <element signature="e#0#29#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="search_location.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/search_location.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="361">
+              <caret line="19" column="49" lean-forward="true" selection-start-line="19" selection-start-column="14" selection-end-line="19" selection-end-column="49" />
               <folding>
                 <element signature="e#0#19#0" expanded="true" />
               </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="air_info.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/air_info.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="171">
+              <caret line="9" column="35" lean-forward="false" selection-start-line="9" selection-start-column="35" selection-end-line="9" selection-end-column="35" />
+              <folding />
             </state>
           </provider>
         </entry>
@@ -39,27 +73,12 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="Administrative_divisions_map_of_South_Korea.svg" pinned="false" current-in-tab="true">
+      <file leaf-file-name="Administrative_divisions_map_of_South_Korea.svg" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/Administrative_divisions_map_of_South_Korea.svg">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="1154">
-              <caret line="1010" column="12" lean-forward="false" selection-start-line="1010" selection-start-column="12" selection-end-line="1010" selection-end-column="12" />
-              <folding>
-                <element signature="n#g#2;n#svg#0;n#!!top" expanded="false" />
-                <element signature="n#g#3;n#svg#0;n#!!top" expanded="false" />
-                <element signature="n#g#4;n#svg#0;n#!!top" expanded="false" />
-                <element signature="n#g#5;n#svg#0;n#!!top" expanded="false" />
-                <element signature="n#g#6;n#svg#0;n#!!top" expanded="false" />
-                <element signature="n#g#7;n#svg#0;n#!!top" expanded="false" />
-                <element signature="n#g#8;n#svg#0;n#!!top" expanded="false" />
-                <element signature="n#g#9;n#svg#0;n#!!top" expanded="false" />
-                <element signature="n#g#10;n#svg#0;n#!!top" expanded="false" />
-                <element signature="n#g#11;n#svg#0;n#!!top" expanded="false" />
-                <element signature="n#g#12;n#svg#0;n#!!top" expanded="false" />
-                <element signature="n#g#13;n#svg#0;n#!!top" expanded="false" />
-                <element signature="n#g#14;n#svg#0;n#!!top" expanded="false" />
-                <element signature="n#g#15;n#svg#0;n#!!top" expanded="false" />
-              </folding>
+            <state relative-caret-position="810">
+              <caret line="365" column="141" lean-forward="true" selection-start-line="365" selection-start-column="141" selection-end-line="365" selection-end-column="141" />
+              <folding />
             </state>
           </provider>
         </entry>
@@ -78,6 +97,8 @@
       <find>_output</find>
       <find>open</find>
       <find>encode</find>
+      <find>location_list</find>
+      <find>MapInfo</find>
     </findStrings>
   </component>
   <component name="Git.Settings">
@@ -98,22 +119,27 @@
         <option value="$PROJECT_DIR$/word_analysis.py" />
         <option value="$PROJECT_DIR$/spider.py" />
         <option value="$PROJECT_DIR$/VocabularyDict.py" />
-        <option value="$PROJECT_DIR$/main.py" />
         <option value="$PROJECT_DIR$/install_pip.py" />
         <option value="$PROJECT_DIR$/request_openapi.py" />
         <option value="$USER_HOME$/AppData/Local/Programs/Python/Python36/Lib/http/client.py" />
         <option value="$USER_HOME$/AppData/Local/Programs/Python/Python36/Lib/urllib/request.py" />
         <option value="$PROJECT_DIR$/Administrative_divisions_map_of_South_Korea.svg" />
         <option value="$PROJECT_DIR$/query_data.py" />
+        <option value="$PROJECT_DIR$/info_map.py" />
+        <option value="$PROJECT_DIR$/air_info.py" />
+        <option value="$PROJECT_DIR$/search_location.py" />
+        <option value="$PROJECT_DIR$/main.py" />
       </list>
     </option>
   </component>
   <component name="ProjectFrameBounds">
-    <option name="x" value="-12" />
+    <option name="x" value="-11" />
     <option name="width" value="1870" />
     <option name="height" value="1092" />
   </component>
-  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true">
+    <ConfirmationsSetting value="2" id="Add" />
+  </component>
   <component name="ProjectView">
     <navigator currentView="ProjectPane" proportions="" version="1">
       <flattenPackages />
@@ -129,7 +155,6 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
-      <pane id="Scratches" />
       <pane id="ProjectPane">
         <subPane>
           <PATH>
@@ -144,6 +169,7 @@
           </PATH>
         </subPane>
       </pane>
+      <pane id="Scratches" />
       <pane id="Scope" />
     </panes>
   </component>
@@ -163,7 +189,7 @@
       </list>
     </option>
   </component>
-  <component name="RunManager" selected="Python.query_data">
+  <component name="RunManager" selected="Python.main">
     <configuration default="false" name="query_data" type="PythonConfigurationType" factoryName="Python" temporary="true">
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -176,7 +202,25 @@
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <module name="Python OpenAPI Project" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/query_data.py" />
+      <option name="SCRIPT_NAME" value="D:\MySource\For_future_2017\Python OpenAPI Project\main.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <method />
+    </configuration>
+    <configuration default="false" name="main" type="PythonConfigurationType" factoryName="Python" temporary="true">
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <module name="Python OpenAPI Project" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/main.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -278,12 +322,14 @@
       <option name="_new_targetType" value="&quot;PATH&quot;" />
       <method />
     </configuration>
-    <list size="1">
+    <list size="2">
       <item index="0" class="java.lang.String" itemvalue="Python.query_data" />
+      <item index="1" class="java.lang.String" itemvalue="Python.main" />
     </list>
     <recent_temporary>
-      <list size="1">
-        <item index="0" class="java.lang.String" itemvalue="Python.query_data" />
+      <list size="2">
+        <item index="0" class="java.lang.String" itemvalue="Python.main" />
+        <item index="1" class="java.lang.String" itemvalue="Python.query_data" />
       </list>
     </recent_temporary>
     <configuration default="true" type="tests" factoryName="Attests">
@@ -320,13 +366,13 @@
     <servers />
   </component>
   <component name="ToolWindowManager">
-    <frame x="-12" y="0" width="1870" height="1092" extended-state="0" />
+    <frame x="-11" y="0" width="1870" height="1092" extended-state="0" />
     <editor active="true" />
     <layout>
       <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.19848976" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.3299389" sideWeight="0.50408995" order="7" side_tool="true" content_ui="tabs" />
-      <window_info id="Run" active="true" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.32721713" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
+      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.32721713" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32994923" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Python Console" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.328934" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
@@ -358,14 +404,11 @@
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
-      <option name="time" value="4" />
+      <option name="time" value="8" />
     </breakpoint-manager>
     <watches-manager />
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/domain.py" />
-    <entry file="file://$PROJECT_DIR$/main.py" />
-    <entry file="file://$PROJECT_DIR$/general.py" />
     <entry file="file://$PROJECT_DIR$/ddd.py" />
     <entry file="file://$USER_HOME$/AppData/Local/Programs/Python/Python36/Lib/site-packages/bs4/__init__.py">
       <provider selected="true" editor-type-id="text-editor">
@@ -507,7 +550,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="338">
           <caret line="1577" column="0" lean-forward="false" selection-start-line="1577" selection-start-column="0" selection-end-line="1577" selection-end-column="0" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -515,7 +557,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="323">
           <caret line="17" column="0" lean-forward="false" selection-start-line="17" selection-start-column="0" selection-end-line="17" selection-end-column="0" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -527,11 +568,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/file.png">
-      <provider selected="true" editor-type-id="images">
-        <state />
-      </provider>
-    </entry>
     <entry file="file://$USER_HOME$/AppData/Local/Programs/Python/Python36/Lib/xml/dom/expatbuilder.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="179">
@@ -540,36 +576,52 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/query_data.py">
+    <entry file="file://$PROJECT_DIR$/file.png">
+      <provider selected="true" editor-type-id="images">
+        <state />
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Administrative_divisions_map_of_South_Korea.svg">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="475">
-          <caret line="61" column="116" lean-forward="false" selection-start-line="61" selection-start-column="116" selection-end-line="61" selection-end-column="116" />
+        <state relative-caret-position="810">
+          <caret line="365" column="141" lean-forward="true" selection-start-line="365" selection-start-column="141" selection-end-line="365" selection-end-column="141" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/air_info.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="171">
+          <caret line="9" column="35" lean-forward="false" selection-start-line="9" selection-start-column="35" selection-end-line="9" selection-end-column="35" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/info_map.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="152">
+          <caret line="8" column="26" lean-forward="true" selection-start-line="8" selection-start-column="26" selection-end-line="8" selection-end-column="26" />
+          <folding>
+            <element signature="e#0#29#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/search_location.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="361">
+          <caret line="19" column="49" lean-forward="true" selection-start-line="19" selection-start-column="14" selection-end-line="19" selection-end-column="49" />
           <folding>
             <element signature="e#0#19#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/Administrative_divisions_map_of_South_Korea.svg">
+    <entry file="file://$PROJECT_DIR$/main.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1154">
-          <caret line="1010" column="12" lean-forward="false" selection-start-line="1010" selection-start-column="12" selection-end-line="1010" selection-end-column="12" />
-          <folding>
-            <element signature="n#g#2;n#svg#0;n#!!top" expanded="false" />
-            <element signature="n#g#3;n#svg#0;n#!!top" expanded="false" />
-            <element signature="n#g#4;n#svg#0;n#!!top" expanded="false" />
-            <element signature="n#g#5;n#svg#0;n#!!top" expanded="false" />
-            <element signature="n#g#6;n#svg#0;n#!!top" expanded="false" />
-            <element signature="n#g#7;n#svg#0;n#!!top" expanded="false" />
-            <element signature="n#g#8;n#svg#0;n#!!top" expanded="false" />
-            <element signature="n#g#9;n#svg#0;n#!!top" expanded="false" />
-            <element signature="n#g#10;n#svg#0;n#!!top" expanded="false" />
-            <element signature="n#g#11;n#svg#0;n#!!top" expanded="false" />
-            <element signature="n#g#12;n#svg#0;n#!!top" expanded="false" />
-            <element signature="n#g#13;n#svg#0;n#!!top" expanded="false" />
-            <element signature="n#g#14;n#svg#0;n#!!top" expanded="false" />
-            <element signature="n#g#15;n#svg#0;n#!!top" expanded="false" />
-          </folding>
+        <state relative-caret-position="266">
+          <caret line="14" column="0" lean-forward="true" selection-start-line="14" selection-start-column="0" selection-end-line="14" selection-end-column="0" />
+          <folding />
         </state>
       </provider>
     </entry>
