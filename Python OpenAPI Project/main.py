@@ -1,4 +1,5 @@
 from search_location import *
+from info_map import *
 
 
 
@@ -25,5 +26,5 @@ def main():
         elif select is 'q':
             run = False
 
-main()
-
+#main()
+InfoMap()

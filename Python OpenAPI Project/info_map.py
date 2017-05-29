@@ -5,6 +5,12 @@ from reportlab.graphics import renderPM
 
 class InfoMap:
     map_info = None
+    location_list = []
+
+    def __init__(self):
+        self.LoadMapFile()
+        print(self.location_list)
+        print(len(self.location_list))
 
     def LoadMapFile(self):
         map_file = open('Administrative_divisions_map_of_South_Korea.svg', 'r', encoding='utf-8')
@@ -18,6 +24,7 @@ class InfoMap:
         for area in area_list:
             if area.nodeName == 'g' or area.nodeName == 'path':
                 print(area.attributes._attrs['id']._value)
+                self.location_list.append(area.attributes._attrs['id']._value)
                 if area.attributes._attrs['id']._value in '세종특별자치시':
                     print(area.attributes._attrs['fill']._value + ' ' + area.attributes._attrs['stroke']._value)
                     area.attributes._attrs['fill']._value = '#000000'
@@ -26,9 +33,11 @@ class InfoMap:
                     if atom.attributes is not None:
                         try:
                             print(atom.attributes._attrs['id']._value + ' ' + atom.attributes._attrs['fill']._value + ' ' + atom.attributes._attrs['stroke']._value)
+                            self.location_list.append(atom.attributes._attrs['id']._value)
                         except:
                             try:
                                 print(atom.attributes._attrs['id']._value)
+                                self.location_list.append(atom.attributes._attrs['id']._value)
                             except:
                                 print(atom.attributes._attrs['fill']._value + ' ' + atom.attributes._attrs['stroke']._value)
 

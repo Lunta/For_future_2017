@@ -24,7 +24,7 @@ def SearchLocation():
     request.get_method = lambda: 'GET'
     response_body = urllib.request.urlopen(request).read().decode('utf-8')
 
-    #print (response_body)
+    print (response_body)
     tags = ['dataTime', 'so2Value', 'so2Grade', 'coValue', 'coGrade', 'o3Value', 'o3Grade', 'no2Value', 'no2Grade',
             'pm10Value', 'pm10Grade', 'pm25Value', 'pm25Grade']
 
