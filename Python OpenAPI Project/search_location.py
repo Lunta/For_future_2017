@@ -47,6 +47,6 @@ def SearchLocation():
                         dic[atom.nodeName] = 'None'
                     else:
                         dic[atom.nodeName] = atom.firstChild.nodeValue
-            day_info.append(dic)
+            day_info.append(dict(dic))
 
     return AirInfo(location_str, day_info)

@@ -2,9 +2,11 @@ from xml.dom.minidom import *
 from xml.dom.minidom import parse, parseString
 from svglib.svglib import svg2rlg
 from reportlab.graphics import renderPM
+from tkinter import *
 
 class InfoMap:
     map_info = None
+    map_png = None
     location_list = []
 
     def __init__(self):
@@ -46,6 +48,9 @@ class InfoMap:
                                 for part in subatoms:
                                     if part.attributes is not None:
                                         print(part.attributes._attrs['fill']._value + ' ' + part.attributes._attrs['stroke']._value)
+
+    def LoadImage(self):
+        self.map_png = PhotoImage(file="file.png")
 
     def SaveMapFile(self):
         map_file = open('Administrative_divisions_map_of_South_Korea.svg', 'w', encoding='utf-8')

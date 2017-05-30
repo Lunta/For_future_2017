@@ -10,6 +10,7 @@ class AirInfo:
         if len(self.air_info) is 0:
             return None
         print(self.id_location)
-        print(self.air_info[0])
+        for info in self.air_info:
+            print(info)
         return self.air_info[0]
 
