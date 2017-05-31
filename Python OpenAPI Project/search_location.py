@@ -6,14 +6,13 @@ from air_info import  *
 
 def SearchLocation():
     location_str = input('검색 지역을 입력하세요: ')
-
-    str = 'http://openapi.airkorea.or.kr/openapi/services/rest/ArpltnInforInqireSvc/getMsrstnAcctoRltmMesureDnsty?' \
-          'stationName='+urllib.parse.quote(location_str)+'&' \
-          'dataTerm=month&' \
-          'pageNo=1&' \
-          'numOfRows=24&' \
+    str = 'http://openapi.airkorea.or.kr/openapi/services/rest/ArpltnInforInqireSvc/' \
+          'getCtprvnRltmMesureDnsty?' \
+          'sidoName='+ urllib.parse.quote(location_str)+'&' \
+          'pageNo=1&numOfRows=24&' \
           'ServiceKey=LkXZ0KCCJ4B52toUWxsA5xcobsnrNLOB55MHxbJbVBj1WUZ6P2BkN1Qka%2BytNClkxQbFC3mvvhxkI163p%2BTHjg%3D%3D&' \
           'ver=1.3'
+
     # 등급	    좋음	보통	나쁨	매우나쁨
     # Grade 값	1	    2	    3	    4
     # 항목	    SO2	    CO	        O3	    NO2	         PM10	PM2.5
