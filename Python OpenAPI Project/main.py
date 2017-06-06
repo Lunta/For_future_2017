@@ -89,7 +89,6 @@ def query_sido_data():
     body = response[3]
     item_list = body.childNodes[1].childNodes
     print(len(item_list))
-    print(len(item_list))
 
     dic = {}
     day_info = []
