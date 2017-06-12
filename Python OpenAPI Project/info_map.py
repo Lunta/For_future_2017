@@ -26,17 +26,23 @@ class InfoMap:
         self.map_info = parseString(map_file_str)
         area_list = self.map_info.childNodes[2].childNodes
         print(area_list.length)
-
+        sido_list = []
         for area in area_list:
             if area.nodeName == 'g' or area.nodeName == 'path':
+                sido_dict = dict()
+                id = area.attributes._attrs['id']._value
                 print(area.attributes._attrs['id']._value)
                 self.location_list.append(area.attributes._attrs['id']._value)
-                if area.attributes._attrs['id']._value in '세종특별자치시':
+                if id in '세종':
+                    sido_dict[id] = area.attributes
                     print(area.attributes._attrs['fill']._value + ' ' + area.attributes._attrs['stroke']._value)
                     area.attributes._attrs['fill']._value = '#000000'
                 subitems = area.childNodes
                 for atom in subitems:
                     if atom.attributes is not None:
+                        sido_dict[id] = atom.attributes
+                        sido_list.append(dict(sido_dict))
+                        print(sido_dict)
                         try:
                             print(atom.attributes._attrs['id']._value + ' ' + atom.attributes._attrs['fill']._value + ' ' + atom.attributes._attrs['stroke']._value)
                             self.location_list.append(atom.attributes._attrs['id']._value)
@@ -52,6 +58,7 @@ class InfoMap:
                                 for part in subatoms:
                                     if part.attributes is not None:
                                         print(part.attributes._attrs['fill']._value + ' ' + part.attributes._attrs['stroke']._value)
+        print(sido_list)
 
     def LoadImage(self):
         self.map_png = PhotoImage(file="file.png")
