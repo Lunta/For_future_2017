@@ -9,13 +9,16 @@ import urllib.request
 class InfoMap:
     map_info = None
     map_png = None
-    location_list = []
-    sido_dict = dict()
+    map_dict = dict()
+    sidoInfo_dict = dict()
+    averageInfo_dict = dict()
+    SIDO_LIST = ['서울', '인천', '경기', '강원', '충북', '대전', '충남', '제주', '경북', '대구', '울산', '경남', '부산',
+                 '전북', '광주', '전남', '세종']
+    INFO_TAGS = ['stationName', 'dataTime', 'so2Value', 'coValue', 'o3Value', 'no2Value', 'pm10Value', 'pm10Value24',
+                 'pm25Value', 'pm25Value24', 'so2Grade', 'coGrade', 'o3Grade', 'no2Grade', 'pm10Grade', 'pm25Grade']
 
     def __init__(self):
         self.LoadMapFile()
-        print(self.location_list)
-        print(len(self.location_list))
         self.query_sido_data()
 
     def LoadMapFile(self):
@@ -26,39 +29,19 @@ class InfoMap:
         self.map_info = parseString(map_file_str)
         area_list = self.map_info.childNodes[2].childNodes
         print(area_list.length)
-        sido_list = []
+        self.map_dict = dict()
         for area in area_list:
             if area.nodeName == 'g' or area.nodeName == 'path':
-                sido_dict = dict()
+
                 id = area.attributes._attrs['id']._value
-                print(area.attributes._attrs['id']._value)
-                self.location_list.append(area.attributes._attrs['id']._value)
-                if id in '세종':
-                    sido_dict[id] = area.attributes
-                    print(area.attributes._attrs['fill']._value + ' ' + area.attributes._attrs['stroke']._value)
-                    area.attributes._attrs['fill']._value = '#000000'
+                self.map_dict[id] = []
+                if id in '세종 ':
+                    self.map_dict[id].append(area.attributes._attrs['fill'])
                 subitems = area.childNodes
                 for atom in subitems:
                     if atom.attributes is not None:
-                        sido_dict[id] = atom.attributes
-                        sido_list.append(dict(sido_dict))
-                        print(sido_dict)
-                        try:
-                            print(atom.attributes._attrs['id']._value + ' ' + atom.attributes._attrs['fill']._value + ' ' + atom.attributes._attrs['stroke']._value)
-                            self.location_list.append(atom.attributes._attrs['id']._value)
-                        except:
-                            try:
-                                print(atom.attributes._attrs['id']._value)
-                                self.location_list.append(atom.attributes._attrs['id']._value)
-                            except:
-                                print(atom.attributes._attrs['fill']._value + ' ' + atom.attributes._attrs['stroke']._value)
+                        self.map_dict[id].append(atom.attributes._attrs['fill'])
 
-                            if atom.nodeName == 'g' or atom.nodeName == 'path':
-                                subatoms = atom.childNodes
-                                for part in subatoms:
-                                    if part.attributes is not None:
-                                        print(part.attributes._attrs['fill']._value + ' ' + part.attributes._attrs['stroke']._value)
-        print(sido_list)
 
     def LoadImage(self):
         self.map_png = PhotoImage(file="file.png")
@@ -73,12 +56,14 @@ class InfoMap:
         renderPM.drawToFile(drawing, "file.png")
 
     def UpdateMapInfo(self):
-        pass
+        for sido in self.map_dict:
+            for dic in self.map_dict[sido]:
+                dic._value = '#000000'
+
+        self.SaveMapFile()
 
     def query_sido_data(self):
-        sido_list = ['서울', '부산', '대구', '인천', '광주', '대전', '울산', '경기', '강원', '충북', '충남', '전북',
-                     '전남', '경북', '경남', '제주', '세종']
-        for sido in sido_list:
+        for sido in self.SIDO_LIST:
             str = 'http://openapi.airkorea.or.kr/openapi/services/rest/ArpltnInforInqireSvc/' \
                   'getCtprvnRltmMesureDnsty?' \
                   'sidoName=' + urllib.parse.quote(sido) + '&' \
@@ -97,10 +82,6 @@ class InfoMap:
             request.get_method = lambda: 'GET'
             response_body = urllib.request.urlopen(request).read().decode('utf-8')
 
-            tags = ['stationName', 'dataTime', 'so2Value', 'coValue', 'o3Value', 'no2Value', 'pm10Value', 'pm10Value24',
-                    'pm25Value', 'pm25Value24', 'so2Grade', 'coGrade', 'o3Grade', 'no2Grade', 'pm10Grade', 'pm25Grade',
-                    'pm10Grade1H', 'pm25Grade1H']
-
             AtmosphereInfo = parseString(response_body)
             response = AtmosphereInfo.childNodes[0].childNodes
             body = response[3]
@@ -112,16 +93,41 @@ class InfoMap:
                 if item.nodeName == "item":
                     subitems = item.childNodes
                     for atom in subitems:
-                        if atom.nodeName in tags:
+                        if atom.nodeName in self.INFO_TAGS:
                             if atom.firstChild is None:
                                 dic[atom.nodeName] = 'None'
                             else:
                                 dic[atom.nodeName] = atom.firstChild.nodeValue
                     sido_info.append(dict(dic))
 
-            self.sido_dict[sido] = sido_info
-        for d in self.sido_dict:
-            print(d, self.sido_dict[d])
+            self.sidoInfo_dict[sido] = sido_info
+
+        sido_info = dict()
+        for tag in self.INFO_TAGS:
+            sido_info[tag] = 0
+        for sido in self.sidoInfo_dict:
+            num = len(self.sidoInfo_dict[sido])
+            for dic in self.sidoInfo_dict[sido]:
+                for tag in self.INFO_TAGS:
+                    if tag is not 'stationName' and tag is not 'dataTime':
+                        try:
+                            sido_info[tag] += float(dic[tag])
+                        except:
+                            sido_info[tag] += 0
+                sido_info['stationName'] = sido
+                sido_info['dataTime'] = dic['dataTime']
+            self.averageInfo_dict[sido] = sido_info
+
+
+            for tag in self.INFO_TAGS:
+                try:
+                    self.averageInfo_dict[sido][tag] /= num
+                except:
+                    pass
+                if 'Grade' in tag:
+                    self.averageInfo_dict[sido][tag] = int(self.averageInfo_dict[sido][tag] + 0.5)
+            print(self.averageInfo_dict[sido])
+
 
 
 
