@@ -19,7 +19,7 @@ class InfoMap:
 
     def __init__(self):
         self.LoadMapFile()
-        self.query_sido_data()
+        self.UpdateMapInfo('pm10Grade')
 
     def LoadMapFile(self):
         map_file = open('Administrative_divisions_map_of_South_Korea.svg', 'r', encoding='utf-8')
@@ -32,7 +32,6 @@ class InfoMap:
         self.map_dict = dict()
         for area in area_list:
             if area.nodeName == 'g' or area.nodeName == 'path':
-
                 id = area.attributes._attrs['id']._value
                 self.map_dict[id] = []
                 if id in '세종 ':
@@ -55,12 +54,44 @@ class InfoMap:
         drawing = svg2rlg('Administrative_divisions_map_of_South_Korea.svg')
         renderPM.drawToFile(drawing, "file.png")
 
-    def UpdateMapInfo(self):
+    def UpdateMapInfo(self, kind_of_grade):
+        self.query_sido_data()
+        for sido in self.sidoInfo_dict:
+            num = len(self.sidoInfo_dict[sido])
+            self.averageInfo_dict[sido] = dict()
+            for tag in self.INFO_TAGS:
+                self.averageInfo_dict[sido][tag] = 0
+            for dic in self.sidoInfo_dict[sido]:
+                for tag in self.INFO_TAGS:
+                    if tag is not 'stationName' and tag is not 'dataTime':
+                        try:
+                            self.averageInfo_dict[sido][tag] += float(dic[tag])
+                        except:
+                            self.averageInfo_dict[sido][tag] += 0
+                self.averageInfo_dict[sido]['stationName'] = sido
+                self.averageInfo_dict[sido]['dataTime'] = dic['dataTime']
+
+            for tag in self.INFO_TAGS:
+                try:
+                    self.averageInfo_dict[sido][tag] /= num
+                    if 'Grade' in tag:
+                        self.averageInfo_dict[sido][tag] = int(self.averageInfo_dict[sido][tag] + 0.5)
+                except:
+                    pass
+
         for sido in self.map_dict:
             for dic in self.map_dict[sido]:
-                dic._value = '#000000'
-
+                if self.averageInfo_dict[sido][kind_of_grade] is 1:
+                    dic._value = '#00FF00'
+                elif self.averageInfo_dict[sido][kind_of_grade] is 2:
+                    dic._value = '#FFFF00'
+                elif self.averageInfo_dict[sido][kind_of_grade] is 3:
+                    dic._value = '#FF0000'
+                elif self.averageInfo_dict[sido][kind_of_grade] is 4:
+                    dic._value = '#000000'
         self.SaveMapFile()
+        self.MapFileToImage()
+        self.LoadImage()
 
     def query_sido_data(self):
         for sido in self.SIDO_LIST:
@@ -101,32 +132,11 @@ class InfoMap:
                     sido_info.append(dict(dic))
 
             self.sidoInfo_dict[sido] = sido_info
-
-        sido_info = dict()
-        for tag in self.INFO_TAGS:
-            sido_info[tag] = 0
-        for sido in self.sidoInfo_dict:
-            num = len(self.sidoInfo_dict[sido])
-            for dic in self.sidoInfo_dict[sido]:
-                for tag in self.INFO_TAGS:
-                    if tag is not 'stationName' and tag is not 'dataTime':
-                        try:
-                            sido_info[tag] += float(dic[tag])
-                        except:
-                            sido_info[tag] += 0
-                sido_info['stationName'] = sido
-                sido_info['dataTime'] = dic['dataTime']
-            self.averageInfo_dict[sido] = sido_info
+            print(self.sidoInfo_dict)
 
 
-            for tag in self.INFO_TAGS:
-                try:
-                    self.averageInfo_dict[sido][tag] /= num
-                except:
-                    pass
-                if 'Grade' in tag:
-                    self.averageInfo_dict[sido][tag] = int(self.averageInfo_dict[sido][tag] + 0.5)
-            print(self.averageInfo_dict[sido])
+
+
 
 
 

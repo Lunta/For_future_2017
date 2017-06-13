@@ -19,19 +19,13 @@ tab.add(frame_graph, text='Graph')
 tab.add(frame_map, text='Map')
 
 
-l1 = Label(window, text="달러")
-l2 = Label(window, text="원")
-l1.grid(row=0, column=0)
-l2.grid(row=1, column=0)
-e1 = Entry(window, bg='yellow')
-e2 = Entry(window, bg='blue')
-e1.grid(row=0, column=1)
-e2.grid(row=1, column=1)
-b1 = Button(window, text="달러->원")
-b2 = Button(window, text="원->달러")
-b1.grid(row=2, column=0)
-b2.grid(row=2, column=1)
-#window.mainloop()
+SearchLabel = Label(window, text="지역명 입력")
+SearchLabel.place(x=150, y=20)
+SearchEntry = Entry(window, bg='yellow')
+SearchEntry.place(x=220, y=20)
+SearchButton = Button(window, text="검색")
+SearchButton.place(x=365, y=16)
+window.mainloop()
 
 def PrintMenu():
     print('')
@@ -58,5 +52,5 @@ def main():
 
 
 #main()
-InfoMap()
+#InfoMap()
 
