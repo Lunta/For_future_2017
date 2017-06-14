@@ -3,9 +3,10 @@
   <component name="ChangeListManager">
     <list default="true" id="01584fd9-c762-4ad1-a17c-add32ed813f4" name="Default" comment="">
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/file.png" afterPath="$PROJECT_DIR$/file.png" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/Administrative_divisions_map_of_South_Korea.svg" afterPath="$PROJECT_DIR$/Administrative_divisions_map_of_South_Korea.svg" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/info_map.py" afterPath="$PROJECT_DIR$/info_map.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/main.py" afterPath="$PROJECT_DIR$/main.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/search_location.py" afterPath="$PROJECT_DIR$/search_location.py" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -20,11 +21,11 @@
   <component name="ExecutionTargetManager" SELECTED_TARGET="default_target" />
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file leaf-file-name="main.py" pinned="false" current-in-tab="true">
+      <file leaf-file-name="main.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/main.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="380">
-              <caret line="20" column="0" lean-forward="true" selection-start-line="20" selection-start-column="0" selection-end-line="20" selection-end-column="0" />
+            <state relative-caret-position="2112">
+              <caret line="114" column="17" lean-forward="true" selection-start-line="114" selection-start-column="17" selection-end-line="114" selection-end-column="17" />
               <folding>
                 <element signature="e#0#29#0" expanded="true" />
               </folding>
@@ -32,11 +33,21 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="info_map.py" pinned="false" current-in-tab="false">
+      <file leaf-file-name="__init__.py" pinned="false" current-in-tab="false">
+        <entry file="file://$USER_HOME$/AppData/Local/Programs/Python/Python36/Lib/tkinter/__init__.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="210">
+              <caret line="2362" column="0" lean-forward="false" selection-start-line="2362" selection-start-column="0" selection-end-line="2362" selection-end-column="0" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="info_map.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/info_map.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="972">
-              <caret line="121" column="26" lean-forward="true" selection-start-line="121" selection-start-column="26" selection-end-line="121" selection-end-column="26" />
+            <state relative-caret-position="286">
+              <caret line="55" column="0" lean-forward="true" selection-start-line="55" selection-start-column="0" selection-end-line="55" selection-end-column="0" />
               <folding>
                 <element signature="e#0#29#0" expanded="true" />
               </folding>
@@ -47,8 +58,8 @@
       <file leaf-file-name="Administrative_divisions_map_of_South_Korea.svg" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/Administrative_divisions_map_of_South_Korea.svg">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="155">
-              <caret line="347" column="85" lean-forward="true" selection-start-line="347" selection-start-column="85" selection-end-line="347" selection-end-column="85" />
+            <state relative-caret-position="6593">
+              <caret line="347" column="85" lean-forward="false" selection-start-line="347" selection-start-column="85" selection-end-line="347" selection-end-column="85" />
               <folding />
             </state>
           </provider>
@@ -57,8 +68,8 @@
       <file leaf-file-name="search_location.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/search_location.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="95">
-              <caret line="5" column="0" lean-forward="true" selection-start-line="5" selection-start-column="0" selection-end-line="5" selection-end-column="0" />
+            <state relative-caret-position="152">
+              <caret line="20" column="67" lean-forward="true" selection-start-line="16" selection-start-column="4" selection-end-line="20" selection-end-column="67" />
               <folding>
                 <element signature="e#0#19#0" expanded="true" />
               </folding>
@@ -126,10 +137,10 @@
         <option value="$USER_HOME$/AppData/Local/Programs/Python/Python36/Lib/urllib/request.py" />
         <option value="$PROJECT_DIR$/query_data.py" />
         <option value="$PROJECT_DIR$/air_info.py" />
-        <option value="$PROJECT_DIR$/search_location.py" />
         <option value="$PROJECT_DIR$/Administrative_divisions_map_of_South_Korea.svg" />
-        <option value="$PROJECT_DIR$/info_map.py" />
+        <option value="$PROJECT_DIR$/search_location.py" />
         <option value="$PROJECT_DIR$/main.py" />
+        <option value="$PROJECT_DIR$/info_map.py" />
       </list>
     </option>
   </component>
@@ -430,7 +441,6 @@
     <watches-manager />
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/output.txt" />
     <entry file="file://$PROJECT_DIR$/news.txt" />
     <entry file="file://$USER_HOME$/AppData/Local/Programs/Python/Python36/Lib/site-packages/konlpy/tag/_hannanum.py">
       <provider selected="true" editor-type-id="text-editor">
@@ -588,10 +598,24 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/Administrative_divisions_map_of_South_Korea.svg">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="6593">
+          <caret line="347" column="85" lean-forward="false" selection-start-line="347" selection-start-column="85" selection-end-line="347" selection-end-column="85" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/file.png">
+      <provider selected="true" editor-type-id="images">
+        <state />
+      </provider>
+    </entry>
     <entry file="file://$USER_HOME$/AppData/Local/Programs/Python/Python36/Lib/tkinter/__init__.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="361">
-          <caret line="1830" column="4" lean-forward="false" selection-start-line="1830" selection-start-column="4" selection-end-line="1830" selection-end-column="4" />
+        <state relative-caret-position="210">
+          <caret line="2362" column="0" lean-forward="false" selection-start-line="2362" selection-start-column="0" selection-end-line="2362" selection-end-column="0" />
+          <folding />
         </state>
       </provider>
     </entry>
@@ -603,43 +627,35 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/Administrative_divisions_map_of_South_Korea.svg">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="155">
-          <caret line="347" column="85" lean-forward="true" selection-start-line="347" selection-start-column="85" selection-end-line="347" selection-end-column="85" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/info_map.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="972">
-          <caret line="121" column="26" lean-forward="true" selection-start-line="121" selection-start-column="26" selection-end-line="121" selection-end-column="26" />
-          <folding>
-            <element signature="e#0#29#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/search_location.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="95">
-          <caret line="5" column="0" lean-forward="true" selection-start-line="5" selection-start-column="0" selection-end-line="5" selection-end-column="0" />
+        <state relative-caret-position="152">
+          <caret line="20" column="67" lean-forward="true" selection-start-line="16" selection-start-column="4" selection-end-line="20" selection-end-column="67" />
           <folding>
             <element signature="e#0#19#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/file.png">
+    <entry file="file://$PROJECT_DIR$/main.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="2112">
+          <caret line="114" column="17" lean-forward="true" selection-start-line="114" selection-start-column="17" selection-end-line="114" selection-end-column="17" />
+          <folding>
+            <element signature="e#0#29#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/file.gif">
       <provider selected="true" editor-type-id="images">
         <state />
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/main.py">
+    <entry file="file://$PROJECT_DIR$/info_map.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="380">
-          <caret line="20" column="0" lean-forward="true" selection-start-line="20" selection-start-column="0" selection-end-line="20" selection-end-column="0" />
+        <state relative-caret-position="286">
+          <caret line="55" column="0" lean-forward="true" selection-start-line="55" selection-start-column="0" selection-end-line="55" selection-end-column="0" />
           <folding>
             <element signature="e#0#29#0" expanded="true" />
           </folding>

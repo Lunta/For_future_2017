@@ -4,8 +4,7 @@ from xml.dom.minidom import *
 from xml.dom.minidom import parse, parseString
 from air_info import  *
 
-def SearchLocation():
-    location_str = input('검색 지역을 입력하세요: ')
+def SearchLocation(location_str):
 
     str = 'http://openapi.airkorea.or.kr/openapi/services/rest/ArpltnInforInqireSvc/' \
           'getMsrstnAcctoRltmMesureDnsty?' \
@@ -26,8 +25,8 @@ def SearchLocation():
     response_body = urllib.request.urlopen(request).read().decode('utf-8')
 
     print (response_body)
-    tags = ['dataTime', 'so2Value', 'so2Grade', 'coValue', 'coGrade', 'o3Value', 'o3Grade', 'no2Value', 'no2Grade',
-            'pm10Value', 'pm10Grade', 'pm25Value', 'pm25Grade']
+    tags = ['stationName', 'dataTime', 'so2Value', 'coValue', 'o3Value', 'no2Value', 'pm10Value', 'pm10Value24',
+            'pm25Value', 'pm25Value24', 'so2Grade', 'coGrade', 'o3Grade', 'no2Grade', 'pm10Grade', 'pm25Grade']
 
     AtmosphereInfo = parseString(response_body)
     response = AtmosphereInfo.childNodes[0].childNodes
