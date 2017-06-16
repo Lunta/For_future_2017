@@ -11,7 +11,7 @@ def SearchLocation(location_str):
           'stationName='+ urllib.parse.quote(location_str)+'&' \
           'dataTerm=month&' \
           'pageNo=1&' \
-          'numOfRows=10&' \
+          'numOfRows=24&' \
           'ServiceKey=LkXZ0KCCJ4B52toUWxsA5xcobsnrNLOB55MHxbJbVBj1WUZ6P2BkN1Qka%2BytNClkxQbFC3mvvhxkI163p%2BTHjg%3D%3D&' \
           'ver=1.3'
     # 등급	    좋음	보통	나쁨	매우나쁨

@@ -9,56 +9,91 @@ from tkinter import ttk
     # 이름      아황산  일산화탄소  오존    이산화질소   미세    초미세
     # 단위	    ppm	    ppm	        ppm	    ppm	         ㎍/㎥	㎍/㎥
 
-info_map = InfoMap()
+window = Tk()
+window.geometry("600x800+750+200")
+window.title('대기오염정보 조회서비스')
+
+#info_map = InfoMap()
 result_search = None
 grade_dict = dict()
 grade_dict[1] = '좋음'
 grade_dict[2] = '보통'
 grade_dict[3] = '나쁨'
 grade_dict[4] = '매우나쁨'
+grade_kind = dict()
+grade_kind['아황산'] = 'so2Grade'
+grade_kind['일산화탄소'] = 'coGrade'
+grade_kind['오존'] = 'o3Grade'
+grade_kind['이산화질소'] = 'no2Grade'
+grade_kind['미세먼지'] = 'pm10Grade'
+grade_kind['초미세먼지'] = 'pm25Grade'
+graph_title = None
+canvas_height = 300
 
 def Search():
-    global result_search, grade_dict
-
+    global result_search, grade_dict, InfoNameList
     result_search = SearchLocation(SearchEntry.get())
     result_search.lastest_info()
     locationName = Label(frame_search, text=result_search.id_location)
-    locationName.place(x=170, y=10)
+    locationName.place(x=170, y=10+ canvas_height)
     dataTime = Label(frame_search,     text=result_search.air_info[0]['dataTime'])
-    dataTime.place(x=170, y=30)
+    dataTime.place(x=170, y=30+ canvas_height)
     so2Value = Label(frame_search,     text=str(result_search.air_info[0]['so2Value']) + 'ppm')
-    so2Value.place(x=170, y=50)
+    so2Value.place(x=170, y=50+ canvas_height)
     coValue = Label(frame_search,      text=str(result_search.air_info[0]['coValue']) + 'ppm')
-    coValue.place(x=170, y=70)
+    coValue.place(x=170, y=70+ canvas_height)
     o3Value = Label(frame_search,      text=str(result_search.air_info[0]['o3Value']) + 'ppm')
-    o3Value.place(x=170, y=90)
+    o3Value.place(x=170, y=90+ canvas_height)
     no2Value = Label(frame_search,     text=str(result_search.air_info[0]['no2Value']) + 'ppm')
-    no2Value.place(x=170, y=110)
+    no2Value.place(x=170, y=110+ canvas_height)
     pm10Value = Label(frame_search,    text=str(result_search.air_info[0]['pm10Value']) + '㎍/㎥')
-    pm10Value.place(x=170, y=130)
+    pm10Value.place(x=170, y=130+ canvas_height)
     pm10Value24 = Label(frame_search,  text=str(result_search.air_info[0]['pm10Value24']) + '㎍/㎥')
-    pm10Value24.place(x=170, y=150)
+    pm10Value24.place(x=170, y=150+ canvas_height)
     pm25Value = Label(frame_search,    text=str(result_search.air_info[0]['pm25Value']) + '㎍/㎥')
-    pm25Value.place(x=170, y=170)
+    pm25Value.place(x=170, y=170+ canvas_height)
     pm25Value24 = Label(frame_search,  text=str(result_search.air_info[0]['pm25Value24']) + '㎍/㎥')
-    pm25Value24.place(x=170, y=190)
+    pm25Value24.place(x=170, y=190+ canvas_height)
 
     so2Grade = Label(frame_search,  text=grade_dict[int(result_search.air_info[0]['so2Grade'])])
-    so2Grade.place(x=420, y=50)
+    so2Grade.place(x=420, y=50+ canvas_height)
     coGrade = Label(frame_search,   text=grade_dict[int(result_search.air_info[0]['coGrade'])])
-    coGrade.place(x=420, y=70)
+    coGrade.place(x=420, y=70+ canvas_height)
     o3Grade = Label(frame_search,   text=grade_dict[int(result_search.air_info[0]['o3Grade'])])
-    o3Grade.place(x=420, y=90)
+    o3Grade.place(x=420, y=90+ canvas_height)
     no2Grade = Label(frame_search,  text=grade_dict[int(result_search.air_info[0]['no2Grade'])])
-    no2Grade.place(x=420, y=110)
+    no2Grade.place(x=420, y=110+ canvas_height)
     pm10Grade = Label(frame_search, text=grade_dict[int(result_search.air_info[0]['pm10Grade'])])
-    pm10Grade.place(x=420, y=130)
+    pm10Grade.place(x=420, y=130+ canvas_height)
     pm25Grade = Label(frame_search, text=grade_dict[int(result_search.air_info[0]['pm25Grade'])])
-    pm25Grade.place(x=420, y=170)
+    pm25Grade.place(x=420, y=170+ canvas_height)
 
-window = Tk()
-window.geometry("600x800+750+200")
-window.title('대기오염정보 조회서비스')
+    InfoNameList.activate(5)
+
+def UpdateGraph(event):
+    global result_search, InfoNameList, graph_title
+    if result_search is None:
+        return
+    TAG = ['so2Value', 'coValue', 'o3Value', 'no2Value', 'pm10Value', 'pm25Value', 'dataTime']
+    if graph_title is None:
+        graph_title = Label(frame_search, text='일간 ' + result_search.id_location + ' ' + InfoNameList.get(InfoNameList.curselection()[0]) + ' 정보')
+    else:
+        graph_title.configure(text='일간 ' + result_search.id_location + ' ' + InfoNameList.get(InfoNameList.curselection()[0]) + ' 정보')
+    graph_title.pack()
+    graph_title.place(x=160, y=0)
+    idx = 0
+    for info in result_search.air_info:
+        if idx % 3 is 0:
+            a = Label(frame_search, text=info['dataTime'].split(' ')[1])
+            a.pack()
+            a.place(x=425 - (idx * 20), y=canvas_height-30)
+        idx += 1
+
+def UpdateMap(event):
+    global mapLabel, info_map, grade_kind
+    info_map.UpdateMapInfo(mapSortList.get(grade_kind[mapSortList.curselection()]))
+    mapLabel.configure(image=info_map.map_png)
+    mapLabel.image = info_map.map_png
 
 tab = ttk.Notebook()
 tab.pack()
@@ -78,43 +113,71 @@ SearchEntry.place(x=220, y=20)
 SearchButton = Button(window, text="검색", command=Search)
 SearchButton.place(x=365, y=16)
 locationName = Label(frame_search, text='[지역명]                        :  ')
-locationName.place(x=10, y=10)
+locationName.place(x=10, y=10 + canvas_height)
 dataTime = Label(frame_search,     text='[일시]                           :  ')
-dataTime.place(x=10, y=30)
+dataTime.place(x=10, y=30 + canvas_height)
 so2Value = Label(frame_search,     text='[아황산 농도]                 :  ')
-so2Value.place(x=10, y=50)
+so2Value.place(x=10, y=50 + canvas_height)
 coValue = Label(frame_search,      text='[일산화탄소 농도]           :  ')
-coValue.place(x=10, y=70)
+coValue.place(x=10, y=70 + canvas_height)
 o3Value = Label(frame_search,      text='[오존 농도]                    :  ')
-o3Value.place(x=10, y=90)
+o3Value.place(x=10, y=90 + canvas_height)
 no2Value = Label(frame_search,     text='[이산화질소 농도]           :  ')
-no2Value.place(x=10, y=110)
+no2Value.place(x=10, y=110 + canvas_height)
 pm10Value = Label(frame_search,    text='[미세먼지 농도]              :  ')
-pm10Value.place(x=10, y=130)
+pm10Value.place(x=10, y=130 + canvas_height)
 pm10Value24 = Label(frame_search,  text='[미세먼지 일 평균 농도]   :  ')
-pm10Value24.place(x=10, y=150)
+pm10Value24.place(x=10, y=150 + canvas_height)
 pm25Value = Label(frame_search,    text='[초미세먼지 농도]           :  ')
-pm25Value.place(x=10, y=170)
+pm25Value.place(x=10, y=170 + canvas_height)
 pm25Value24 = Label(frame_search,  text='[초미세먼지 일 평균 농도]:  ')
-pm25Value24.place(x=10, y=190)
+pm25Value24.place(x=10, y=190 + canvas_height)
 so2Grade = Label(frame_search,  text='[아황산 지수]      :  ')
-so2Grade.place(x=300, y=50)
+so2Grade.place(x=300, y=50 + canvas_height)
 coGrade = Label(frame_search,   text='[일산화탄소 지수]:  ')
-coGrade.place(x=300, y=70)
+coGrade.place(x=300, y=70 + canvas_height)
 o3Grade = Label(frame_search,   text='[오존 지수]         :  ')
-o3Grade.place(x=300, y=90)
+o3Grade.place(x=300, y=90 + canvas_height)
 no2Grade = Label(frame_search,  text='[이산화질소 지수]:  ')
-no2Grade.place(x=300, y=110)
+no2Grade.place(x=300, y=110 + canvas_height)
 pm10Grade = Label(frame_search, text='[미세먼지 지수]   :  ')
-pm10Grade.place(x=300, y=130)
+pm10Grade.place(x=300, y=130 + canvas_height)
 pm25Grade = Label(frame_search, text='[초미세먼지 지수]:  ')
-pm25Grade.place(x=300, y=170)
+pm25Grade.place(x=300, y=170 + canvas_height)
 
-mapLabel = Label(frame_map, image=info_map.map_png)
-mapLabel.pack()
+GraphCanvas = Canvas(frame_search, bg="white", height=canvas_height - 30, width=550)
+GraphCanvas.place(x=000, y=300)
+GraphCanvas.pack()
+
+coord = 10, 50, 240, 210
+#arc = GraphCanvas.create_arc(coord, start=0, extent=150, fill="red")
+
+
+#mapLabel = Label(frame_map, image=info_map.map_png)
+#mapLabel.pack()
+mapSortList = Listbox(frame_map, width=10, height=6)
+mapSortList.insert(1, '아황산')
+mapSortList.insert(2, '일산화탄소')
+mapSortList.insert(3, '오존')
+mapSortList.insert(4, '이산화질소')
+mapSortList.insert(5, '미세먼지')
+mapSortList.insert(6, '초미세먼지')
+mapSortList.activate(5)
+mapSortList.bind('<<ListboxSelect>>', UpdateMap)
+mapSortList.pack()
+mapSortList.place(x=0, y=0)
+
+InfoNameList = Listbox(frame_search, width=10, height=6)
+InfoNameList.insert(1, '아황산')
+InfoNameList.insert(2, '일산화탄소')
+InfoNameList.insert(3, '오존')
+InfoNameList.insert(4, '이산화질소')
+InfoNameList.insert(5, '미세먼지')
+InfoNameList.insert(6, '초미세먼지')
+InfoNameList.bind('<<ListboxSelect>>', UpdateGraph)
+InfoNameList.pack()
+InfoNameList.place(x=482, y=0) #canvas_height-100
+
 window.mainloop()
-
-
-#main()
 
 

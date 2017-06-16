@@ -18,6 +18,7 @@ class InfoMap:
                  'pm25Value', 'pm25Value24', 'so2Grade', 'coGrade', 'o3Grade', 'no2Grade', 'pm10Grade', 'pm25Grade']
 
     def __init__(self):
+        self.query_sido_data()
         self.LoadMapFile()
         self.UpdateMapInfo('pm10Grade')
 
@@ -28,7 +29,6 @@ class InfoMap:
 
         self.map_info = parseString(map_file_str)
         area_list = self.map_info.childNodes[2].childNodes
-        print(area_list.length)
         self.map_dict = dict()
         for area in area_list:
             if area.nodeName == 'g' or area.nodeName == 'path':
@@ -43,6 +43,8 @@ class InfoMap:
 
 
     def LoadImage(self):
+        if self.map_png is not None:
+            del self.map_png
         self.map_png = PhotoImage(file="file.png")
 
     def SaveMapFile(self):
@@ -55,7 +57,6 @@ class InfoMap:
         renderPM.drawToFile(drawing, "file.png")
 
     def UpdateMapInfo(self, kind_of_grade):
-        self.query_sido_data()
         for sido in self.sidoInfo_dict:
             num = len(self.sidoInfo_dict[sido])
             self.averageInfo_dict[sido] = dict()
@@ -112,7 +113,7 @@ class InfoMap:
             request = urllib.request.Request(str)
             request.get_method = lambda: 'GET'
             response_body = urllib.request.urlopen(request).read().decode('utf-8')
-
+            print(response_body)
             AtmosphereInfo = parseString(response_body)
             response = AtmosphereInfo.childNodes[0].childNodes
             body = response[3]
@@ -132,7 +133,6 @@ class InfoMap:
                     sido_info.append(dict(dic))
 
             self.sidoInfo_dict[sido] = sido_info
-            print(self.sidoInfo_dict)
 
 
 
