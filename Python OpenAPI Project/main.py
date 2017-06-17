@@ -28,6 +28,7 @@ grade_kind['이산화질소'] = 'no2Grade'
 grade_kind['미세먼지'] = 'pm10Grade'
 grade_kind['초미세먼지'] = 'pm25Grade'
 graph_title = None
+
 canvas_height = 300
 
 def Search():
@@ -71,9 +72,10 @@ def Search():
     InfoNameList.activate(5)
 
 def UpdateGraph(event):
-    global result_search, InfoNameList, graph_title
+    global result_search, InfoNameList, graph_title, GraphCanvas, graph_bar
     if result_search is None:
         return
+
     TAG = ['so2Value', 'coValue', 'o3Value', 'no2Value', 'pm10Value', 'pm25Value', 'dataTime']
     if graph_title is None:
         graph_title = Label(frame_search, text='일간 ' + result_search.id_location + ' ' + InfoNameList.get(InfoNameList.curselection()[0]) + ' 정보')
@@ -82,11 +84,21 @@ def UpdateGraph(event):
     graph_title.pack()
     graph_title.place(x=160, y=0)
     idx = 0
+    for bar in graph_bar:
+        GraphCanvas.delete(bar)
+    graph_bar.clear()
     for info in result_search.air_info:
         if idx % 3 is 0:
             a = Label(frame_search, text=info['dataTime'].split(' ')[1])
             a.pack()
             a.place(x=425 - (idx * 20), y=canvas_height-30)
+            value = 0
+            try:
+                value = int(float(info[TAG[InfoNameList.curselection()[0]]]))
+            except:
+                value = 0
+            rect = (435 - (idx * 20)), 265 - value, (445 - (idx * 20)), 265
+            graph_bar.append(GraphCanvas.create_rectangle(rect, fill="red"))
         idx += 1
 
 def UpdateMap(event):
@@ -148,6 +160,7 @@ pm25Grade.place(x=300, y=170 + canvas_height)
 GraphCanvas = Canvas(frame_search, bg="white", height=canvas_height - 30, width=550)
 GraphCanvas.place(x=000, y=300)
 GraphCanvas.pack()
+graph_bar = []
 
 coord = 10, 50, 240, 210
 #arc = GraphCanvas.create_arc(coord, start=0, extent=150, fill="red")

@@ -2,13 +2,8 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="01584fd9-c762-4ad1-a17c-add32ed813f4" name="Default" comment="">
-      <change type="DELETED" beforePath="$PROJECT_DIR$/file.gif" afterPath="" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/file.png" afterPath="$PROJECT_DIR$/file.png" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/Administrative_divisions_map_of_South_Korea.svg" afterPath="$PROJECT_DIR$/Administrative_divisions_map_of_South_Korea.svg" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/info_map.py" afterPath="$PROJECT_DIR$/info_map.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/main.py" afterPath="$PROJECT_DIR$/main.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/search_location.py" afterPath="$PROJECT_DIR$/search_location.py" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -26,8 +21,8 @@
       <file leaf-file-name="main.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/main.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="22">
-              <caret line="136" column="53" lean-forward="true" selection-start-line="136" selection-start-column="53" selection-end-line="136" selection-end-column="53" />
+            <state relative-caret-position="191">
+              <caret line="87" column="31" lean-forward="true" selection-start-line="87" selection-start-column="31" selection-end-line="87" selection-end-column="31" />
               <folding>
                 <element signature="e#0#29#0" expanded="true" />
               </folding>
@@ -35,10 +30,30 @@
           </provider>
         </entry>
       </file>
+      <file leaf-file-name="builtins.py" pinned="false" current-in-tab="false">
+        <entry file="file://$USER_HOME$/.PyCharmCE2017.1/system/python_stubs/-1953502833/builtins.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="376">
+              <caret line="3593" column="0" lean-forward="true" selection-start-line="3593" selection-start-column="0" selection-end-line="3593" selection-end-column="0" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="__init__.py" pinned="false" current-in-tab="false">
+        <entry file="file://$USER_HOME$/AppData/Local/Programs/Python/Python36/Lib/tkinter/__init__.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="153">
+              <caret line="2492" column="8" lean-forward="false" selection-start-line="2492" selection-start-column="8" selection-end-line="2492" selection-end-column="8" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
       <file leaf-file-name="info_map.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/info_map.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="2091">
+            <state relative-caret-position="592">
               <caret line="115" column="31" lean-forward="false" selection-start-line="115" selection-start-column="31" selection-end-line="115" selection-end-column="31" />
               <folding>
                 <element signature="e#0#29#0" expanded="true" />
@@ -60,7 +75,7 @@
       <file leaf-file-name="search_location.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/search_location.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="193">
+            <state relative-caret-position="171">
               <caret line="13" column="23" lean-forward="false" selection-start-line="13" selection-start-column="23" selection-end-line="13" selection-end-column="23" />
               <folding>
                 <element signature="e#0#19#0" expanded="true" />
@@ -160,6 +175,7 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
+      <pane id="Scratches" />
       <pane id="Scope" />
       <pane id="ProjectPane">
         <subPane>
@@ -175,7 +191,6 @@
           </PATH>
         </subPane>
       </pane>
-      <pane id="Scratches" />
     </panes>
   </component>
   <component name="PropertiesComponent">
@@ -392,12 +407,11 @@
   </component>
   <component name="ToolWindowManager">
     <frame x="-8" y="-8" width="1874" height="1096" extended-state="6" />
-    <editor active="true" />
     <layout>
       <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.31700754" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.3299389" sideWeight="0.50408995" order="7" side_tool="true" content_ui="tabs" />
-      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.30558375" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
+      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.30558375" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32994923" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Python Console" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.328934" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
@@ -434,7 +448,6 @@
     <watches-manager />
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/news.txt" />
     <entry file="file://$USER_HOME$/AppData/Local/Programs/Python/Python36/Lib/site-packages/konlpy/tag/_hannanum.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="247">
@@ -599,19 +612,7 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/file.gif">
-      <provider selected="true" editor-type-id="images">
-        <state />
-      </provider>
-    </entry>
-    <entry file="file://$USER_HOME$/AppData/Local/Programs/Python/Python36/Lib/tkinter/__init__.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="210">
-          <caret line="2279" column="8" lean-forward="false" selection-start-line="2279" selection-start-column="8" selection-end-line="2279" selection-end-column="8" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
+    <entry file="file://$PROJECT_DIR$/file.gif" />
     <entry file="file://$PROJECT_DIR$/file.png">
       <provider selected="true" editor-type-id="images">
         <state />
@@ -625,19 +626,9 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/info_map.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="2091">
-          <caret line="115" column="31" lean-forward="false" selection-start-line="115" selection-start-column="31" selection-end-line="115" selection-end-column="31" />
-          <folding>
-            <element signature="e#0#29#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/search_location.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="193">
+        <state relative-caret-position="171">
           <caret line="13" column="23" lean-forward="false" selection-start-line="13" selection-start-column="23" selection-end-line="13" selection-end-column="23" />
           <folding>
             <element signature="e#0#19#0" expanded="true" />
@@ -645,10 +636,36 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/info_map.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="592">
+          <caret line="115" column="31" lean-forward="false" selection-start-line="115" selection-start-column="31" selection-end-line="115" selection-end-column="31" />
+          <folding>
+            <element signature="e#0#29#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/AppData/Local/Programs/Python/Python36/Lib/tkinter/__init__.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="153">
+          <caret line="2492" column="8" lean-forward="false" selection-start-line="2492" selection-start-column="8" selection-end-line="2492" selection-end-column="8" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/.PyCharmCE2017.1/system/python_stubs/-1953502833/builtins.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="376">
+          <caret line="3593" column="0" lean-forward="true" selection-start-line="3593" selection-start-column="0" selection-end-line="3593" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/main.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="22">
-          <caret line="136" column="53" lean-forward="true" selection-start-line="136" selection-start-column="53" selection-end-line="136" selection-end-column="53" />
+        <state relative-caret-position="191">
+          <caret line="87" column="31" lean-forward="true" selection-start-line="87" selection-start-column="31" selection-end-line="87" selection-end-column="31" />
           <folding>
             <element signature="e#0#29#0" expanded="true" />
           </folding>
