@@ -113,7 +113,7 @@ class InfoMap:
             request = urllib.request.Request(str)
             request.get_method = lambda: 'GET'
             response_body = urllib.request.urlopen(request).read().decode('utf-8')
-            print(response_body)
+            #print(response_body)
             AtmosphereInfo = parseString(response_body)
             response = AtmosphereInfo.childNodes[0].childNodes
             body = response[3]
