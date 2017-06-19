@@ -124,6 +124,9 @@ def UpdateMap(event):
     mapLabel.configure(image=info_map.map_png)
     mapLabel.image = info_map.map_png
 
+def SortMapData():
+    pass
+
 tab = ttk.Notebook()
 tab.pack()
 tab.place(x=25, y=50)
