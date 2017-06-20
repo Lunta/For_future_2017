@@ -5,6 +5,7 @@ from reportlab.graphics import renderPM
 from tkinter import *
 import urllib.parse
 import urllib.request
+import json
 
 class InfoMap:
     map_info = None
@@ -12,18 +13,28 @@ class InfoMap:
     map_dict = dict()
     sidoInfo_dict = dict()
     averageInfo_dict = dict()
+    sortInfo_list = []
+
     SIDO_LIST = ['서울', '인천', '경기', '강원', '충북', '대전', '충남', '제주', '경북', '대구', '울산', '경남', '부산',
                  '전북', '광주', '전남', '세종']
     INFO_TAGS = ['stationName', 'dataTime', 'so2Value', 'coValue', 'o3Value', 'no2Value', 'pm10Value', 'pm10Value24',
                  'pm25Value', 'pm25Value24', 'so2Grade', 'coGrade', 'o3Grade', 'no2Grade', 'pm10Grade', 'pm25Grade']
 
     def __init__(self):
+        #self.LoadInfoDictFromFile()
         self.query_sido_data()
         self.LoadMapFile()
         self.UpdateMapInfo('pm10Grade')
 
+    def LoadInfoDictFromFile(self):
+        self.sidoInfo_dict.clear()
+        fp = open('Atmosphere/sidoinfo.txt', 'r')
+        self.sidoInfo_dict = json.load(fp)
+        fp.close()
+        return self.sidoInfo_dict
+
     def LoadMapFile(self):
-        map_file = open('Administrative_divisions_map_of_South_Korea.svg', 'r', encoding='utf-8')
+        map_file = open('Atmosphere/Administrative_divisions_map_of_South_Korea.svg', 'r', encoding='utf-8')
         map_file_str = map_file.read()
         map_file.close()
 
@@ -45,18 +56,19 @@ class InfoMap:
     def LoadImage(self):
         if self.map_png is not None:
             del self.map_png
-        self.map_png = PhotoImage(file="file.png")
+        self.map_png = PhotoImage(file="Atmosphere/file.png")
 
     def SaveMapFile(self):
-        map_file = open('Administrative_divisions_map_of_South_Korea.svg', 'w', encoding='utf-8')
+        map_file = open('Atmosphere/Administrative_divisions_map_of_South_Korea.svg', 'w', encoding='utf-8')
         self.map_info.writexml(map_file)
         map_file.close()
 
     def MapFileToImage(self):
-        drawing = svg2rlg('Administrative_divisions_map_of_South_Korea.svg')
-        renderPM.drawToFile(drawing, "file.png")
+        drawing = svg2rlg('Atmosphere/Administrative_divisions_map_of_South_Korea.svg')
+        renderPM.drawToFile(drawing, "Atmosphere/file.png")
 
     def UpdateMapInfo(self, kind_of_grade):
+        self.LoadInfoDictFromFile()
         for sido in self.sidoInfo_dict:
             num = len(self.sidoInfo_dict[sido])
             self.averageInfo_dict[sido] = dict()
@@ -133,11 +145,26 @@ class InfoMap:
                     sido_info.append(dict(dic))
 
             self.sidoInfo_dict[sido] = sido_info
+        fp = open('Atmosphere/sidoinfo.txt', 'w')
+        json.dump(self.sidoInfo_dict, fp)
+        fp.close()
 
 
 
 
 
-
+## load from file:
+#with open('/path/to/my_file.json', 'r') as f:
+#    try:
+#        data = json.load(f)
+#    # if the file is empty the ValueError will be thrown
+#    except ValueError:
+#        data = {}
+#
+## save to file:
+#with open('/path/to/my_file.json', 'w') as f:
+#    data['new_key'] = [1, 2, 3]
+#    json.dump(data, f)
+#
 
 

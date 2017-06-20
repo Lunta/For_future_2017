@@ -1,8 +1,9 @@
 import urllib.parse
 import urllib.request
-from xml.dom.minidom import *
-from xml.dom.minidom import parse, parseString
-from air_info import  *
+from xml.dom.minidom import parseString
+
+from Atmosphere.air_info import *
+
 
 def SearchLocation(location_str):
 
@@ -24,7 +25,7 @@ def SearchLocation(location_str):
     request.get_method = lambda: 'GET'
     response_body = urllib.request.urlopen(request).read().decode('utf-8')
 
-    print (response_body)
+    #print (response_body)
     tags = ['stationName', 'dataTime', 'so2Value', 'coValue', 'o3Value', 'no2Value', 'pm10Value', 'pm10Value24',
             'pm25Value', 'pm25Value24', 'so2Grade', 'coGrade', 'o3Grade', 'no2Grade', 'pm10Grade', 'pm25Grade']
 
