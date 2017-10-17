@@ -28,10 +28,10 @@ CPlayer::~CPlayer()
 }
 
 void CPlayer::CreateShaderVariables(
-	ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *pd3dCommandList)
+	CD3DDeviceIndRes *pd3dDeviceIndRes, ID3D12GraphicsCommandList *pd3dCommandList)
 {
-	CGameObject::CreateShaderVariables(pd3dDevice, pd3dCommandList);
-	if (m_pCamera) m_pCamera->CreateShaderVariables(pd3dDevice, pd3dCommandList);
+	CGameObject::CreateShaderVariables(pd3dDeviceIndRes, pd3dCommandList);
+	if (m_pCamera) m_pCamera->CreateShaderVariables(pd3dDeviceIndRes, pd3dCommandList);
 }
 void CPlayer::ReleaseShaderVariables()
 {
@@ -66,7 +66,10 @@ void CPlayer::Render(ID3D12GraphicsCommandList *pd3dCommandList, CCamera *pCamer
 	if (nCameraMode == THIRD_PERSON_CAMERA) CGameObject::Render(pd3dCommandList, pCamera);
 }
 
-CCamera * CPlayer::ChangeCamera(ID3D12Device * pd3dDevice, DWORD nNewCameraMode, float fTimeElapsed)
+CCamera* CPlayer::ChangeCamera(
+	CD3DDeviceIndRes *pd3dDeviceIndRes
+	, DWORD nNewCameraMode
+	, float fTimeElapsed)
 {
 	return nullptr;
 }
@@ -313,22 +316,22 @@ CCamera *CPlayer::OnChangeCamera(DWORD nNewCameraMode, DWORD nCurrentCameraMode)
 }
 
 
-CAirplanePlayer::CAirplanePlayer(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList
+CAirplanePlayer::CAirplanePlayer(CD3DDeviceIndRes *pd3dDeviceIndRes, ID3D12GraphicsCommandList
 	*pd3dCommandList, ID3D12RootSignature *pd3dGraphicsRootSignature, int nMeshes) :
 	CPlayer(nMeshes)
 {
 	//비행기 메쉬를 생성한다.
-	CMesh *pAirplaneMesh = new CAirplaneMeshDiffused(pd3dDevice, pd3dCommandList, 20.0f,
+	CMesh *pAirplaneMesh = new CAirplaneMeshDiffused(pd3dDeviceIndRes, pd3dCommandList, 20.0f,
 		20.0f, 4.0f, XMFLOAT4(0.0f, 0.5f, 0.0f, 0.0f));
 	SetMesh(0, pAirplaneMesh);
 	//플레이어의 카메라를 스페이스-쉽 카메라로 변경(생성)한다.
-	m_pCamera = ChangeCamera(pd3dDevice, SPACESHIP_CAMERA, 0.0f);
+	m_pCamera = ChangeCamera(pd3dDeviceIndRes, SPACESHIP_CAMERA, 0.0f);
 	//플레이어를 위한 셰이더 변수를 생성한다.
-	CreateShaderVariables(pd3dDevice, pd3dCommandList);
+	CreateShaderVariables(pd3dDeviceIndRes, pd3dCommandList);
 	//플레이어의 위치를 설정한다.
 	SetPosition(XMFLOAT3(0.0f, 0.0f, -50.0f));
 	CObjectsShader *pShader = new CObjectsShader();
-	pShader->CreateShader(pd3dDevice, pd3dGraphicsRootSignature);
+	pShader->CreateShader(pd3dDeviceIndRes, pd3dGraphicsRootSignature);
 	SetShader(pShader);
 }
 
@@ -349,7 +352,7 @@ void CAirplanePlayer::OnPrepareRender()
 축 방향으로 향하도록 그릴 것이기 때문이다.*/
 //카메라를 변경할 때 호출되는 함수이다. nNewCameraMode는 새로 설정할 카메라 모드이다.
 CCamera *CAirplanePlayer::ChangeCamera(
-	ID3D12Device *pd3dDevice, DWORD nNewCameraMode, float fTimeElapsed)
+	CD3DDeviceIndRes *pd3dDeviceIndRes, DWORD nNewCameraMode, float fTimeElapsed)
 {
 	DWORD nCurrentCameraMode = (m_pCamera) ? m_pCamera->GetMode() : 0x00;
 	if (nCurrentCameraMode == nNewCameraMode) return(m_pCamera);
@@ -403,11 +406,11 @@ CCamera *CAirplanePlayer::ChangeCamera(
 	return(m_pCamera);
 }
 
-CTerrainPlayer::CTerrainPlayer(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList
+CTerrainPlayer::CTerrainPlayer(CD3DDeviceIndRes *pd3dDeviceIndRes, ID3D12GraphicsCommandList
 	*pd3dCommandList, ID3D12RootSignature *pd3dGraphicsRootSignature, void *pContext, int
 	nMeshes) : CPlayer(nMeshes)
 {
-	m_pCamera = ChangeCamera(pd3dDevice, THIRD_PERSON_CAMERA, 0.0f);
+	m_pCamera = ChangeCamera(pd3dDeviceIndRes, THIRD_PERSON_CAMERA, 0.0f);
 	CHeightMapTerrain *pTerrain = (CHeightMapTerrain *)pContext;
 	/*플레이어의 위치를 지형의 가운데(y-축 좌표는 지형의 높이보다 1500 높게)로 설정한다. 플레이어 위치 벡터의 y-
 	좌표가 지형의 높이보다 크고 중력이 작용하도록 플레이어를 설정하였으므로 플레이어는 점차적으로 하강하게 된다.*/
@@ -419,21 +422,21 @@ CTerrainPlayer::CTerrainPlayer(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandLi
 	SetPlayerUpdatedContext(pTerrain);
 	//카메라의 위치가 변경될 때 지형의 정보에 따라 카메라의 위치를 변경할 수 있도록 설정한다.
 	SetCameraUpdatedContext(pTerrain);
-	CCubeMeshDiffused *pCubeMesh = new CCubeMeshDiffused(pd3dDevice, pd3dCommandList,
+	CCubeMeshDiffused *pCubeMesh = new CCubeMeshDiffused(pd3dDeviceIndRes, pd3dCommandList,
 		4.0f, 12.0f, 4.0f);
 	SetMesh(0, pCubeMesh);
 	//플레이어를 렌더링할 셰이더를 생성한다.
 	CObjectsShader *pShader = new CObjectsShader();
-	pShader->CreateShader(pd3dDevice, pd3dGraphicsRootSignature);
+	pShader->CreateShader(pd3dDeviceIndRes, pd3dGraphicsRootSignature);
 	SetShader(pShader);
-	CreateShaderVariables(pd3dDevice, pd3dCommandList);
+	CreateShaderVariables(pd3dDeviceIndRes, pd3dCommandList);
 }
 CTerrainPlayer::~CTerrainPlayer()
 {
 }
 
 CCamera *CTerrainPlayer::ChangeCamera(
-	ID3D12Device *pd3dDevice, DWORD nNewCameraMode, float fTimeElapsed)
+	CD3DDeviceIndRes *pd3dDeviceIndRes, DWORD nNewCameraMode, float fTimeElapsed)
 {
 	DWORD nCurrentCameraMode = (m_pCamera) ? m_pCamera->GetMode() : 0x00;
 	if (nCurrentCameraMode == nNewCameraMode) return(m_pCamera);

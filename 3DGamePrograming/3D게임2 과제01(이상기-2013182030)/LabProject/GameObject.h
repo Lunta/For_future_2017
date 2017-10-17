@@ -53,7 +53,7 @@ public:
 	virtual void SetShader(CShader *pShader);
 	//상수 버퍼
 	virtual void CreateShaderVariables(
-		ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *pd3dCommandList);
+		CD3DDeviceIndRes *pd3dDeviceIndRes, ID3D12GraphicsCommandList *pd3dCommandList);
 	virtual void ReleaseShaderVariables();
 	virtual void UpdateShaderVariables(ID3D12GraphicsCommandList *pd3dCommandList);
 	virtual void OnPrepareRender();
@@ -136,10 +136,13 @@ public:
 class CHeightMapTerrain : public CGameObject
 {
 public:
-	CHeightMapTerrain(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList
-		*pd3dCommandList, ID3D12RootSignature *pd3dGraphicsRootSignature, LPCTSTR pFileName, int
-		nWidth, int nLength, int nBlockWidth, int nBlockLength, XMFLOAT3 xmf3Scale, XMFLOAT4
-		xmf4Color);
+	CHeightMapTerrain(
+		CD3DDeviceIndRes *pd3dDeviceIndRes
+		, ID3D12GraphicsCommandList *pd3dCommandList
+		, ID3D12RootSignature *pd3dGraphicsRootSignature
+		, LPCTSTR pFileName, int nWidth, int nLength
+		, int nBlockWidth, int nBlockLength
+		, XMFLOAT3 xmf3Scale, XMFLOAT4 xmf4Color);
 	virtual ~CHeightMapTerrain();
 private:
 	//지형의 높이 맵으로 사용할 이미지이다.

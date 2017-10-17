@@ -34,14 +34,17 @@
     <Filter Include="Shader\hlsl">
       <UniqueIdentifier>{3dc49f5d-aec3-4c3c-9ea1-5a29bd7beb6d}</UniqueIdentifier>
     </Filter>
-    <Filter Include="GameObject\Camera">
-      <UniqueIdentifier>{6a11eb4b-4af9-4d02-bb93-ec4b728d4d0d}</UniqueIdentifier>
-    </Filter>
     <Filter Include="GameObject\Player">
       <UniqueIdentifier>{e101eb72-9638-436c-a80c-3abef27dec5b}</UniqueIdentifier>
     </Filter>
     <Filter Include="Mesh">
       <UniqueIdentifier>{b817707c-0551-43db-b684-027e1b6368a7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Camera">
+      <UniqueIdentifier>{6a11eb4b-4af9-4d02-bb93-ec4b728d4d0d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="D3DDeviceIndRes">
+      <UniqueIdentifier>{dcd618a3-f44a-415d-b64f-6a2e9b93509b}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -70,10 +73,13 @@
       <Filter>Shader</Filter>
     </ClCompile>
     <ClCompile Include="Camera.cpp">
-      <Filter>GameObject\Camera</Filter>
+      <Filter>Camera</Filter>
     </ClCompile>
     <ClCompile Include="Player.cpp">
       <Filter>GameObject\Player</Filter>
+    </ClCompile>
+    <ClCompile Include="D3DDeviceIndRes.cpp">
+      <Filter>D3DDeviceIndRes</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -105,10 +111,13 @@
       <Filter>Shader</Filter>
     </ClInclude>
     <ClInclude Include="Camera.h">
-      <Filter>GameObject\Camera</Filter>
+      <Filter>Camera</Filter>
     </ClInclude>
     <ClInclude Include="Player.h">
       <Filter>GameObject\Player</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DDeviceIndRes.h">
+      <Filter>D3DDeviceIndRes</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

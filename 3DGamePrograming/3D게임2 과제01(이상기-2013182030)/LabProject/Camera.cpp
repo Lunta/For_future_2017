@@ -112,7 +112,7 @@ void CCamera::GenerateProjectionMatrix(float fNearPlaneDistance, float fFarPlane
 }
 
 void CCamera::CreateShaderVariables(
-	ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *pd3dCommandList)
+	CD3DDeviceIndRes *pd3dDeviceIndRes, ID3D12GraphicsCommandList *pd3dCommandList)
 {
 }
 

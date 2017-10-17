@@ -26,13 +26,14 @@ public:
 	void SetHWNDAndHInstance(HWND hWnd, HINSTANCE hInstance);
 	void SetPlayer(CPlayer* pPlayer) { m_pPlayer = pPlayer; }
 
-	ID3D12RootSignature* CreateGraphicsRootSignature(ID3D12Device *pd3dDevice);
+	ID3D12RootSignature* CreateGraphicsRootSignature(CD3DDeviceIndRes *pd3dDeviceIndRes);
 	ID3D12RootSignature* GetGraphicsRootSignature();
 
 	CHeightMapTerrain *GetTerrain() { return(m_pTerrain); }
 
 	void BuildObjects(
-		ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *pd3dCommandList);
+		CD3DDeviceIndRes *pd3dDeviceIndRes
+		, ID3D12GraphicsCommandList *pd3dCommandList);
 	void ReleaseObjects();
 
 	void Render(ID3D12GraphicsCommandList *pd3dCommandList, CCamera *pCamera);

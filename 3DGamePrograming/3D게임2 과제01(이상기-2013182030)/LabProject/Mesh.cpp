@@ -1,7 +1,9 @@
 ﻿#include "stdafx.h"
 #include "Mesh.h"
 
-CMesh::CMesh(ID3D12Device * pd3dDevice, ID3D12GraphicsCommandList * pd3dCommandList)
+CMesh::CMesh(
+	  CD3DDeviceIndRes *pd3dDeviceIndRes
+	, ID3D12GraphicsCommandList * pd3dCommandList)
 {
 	m_nReferences = 0;
 
@@ -39,7 +41,8 @@ void CMesh::Render(ID3D12GraphicsCommandList *pd3dCommandList)
 	//pd3dCommandList->IASetVertexBuffers(m_nSlot, 1, &m_d3dVertexBufferView);
 	Render(pd3dCommandList, 1);
 }
-void CMesh::Render(ID3D12GraphicsCommandList *pd3dCommandList, UINT nInstances)
+void CMesh::Render(
+	ID3D12GraphicsCommandList *pd3dCommandList, UINT nInstances)
 {
 	pd3dCommandList->IASetVertexBuffers(m_nSlot, 1, &m_d3dVertexBufferView);
 	pd3dCommandList->IASetPrimitiveTopology(m_d3dPrimitiveTopology);
@@ -53,19 +56,25 @@ void CMesh::Render(ID3D12GraphicsCommandList *pd3dCommandList, UINT nInstances)
 		pd3dCommandList->DrawInstanced(m_nVertices, nInstances, m_nOffset, 0);
 	}
 }
-void CMesh::Render(ID3D12GraphicsCommandList *pd3dCommandList, UINT nInstances,
-	D3D12_VERTEX_BUFFER_VIEW d3dInstancingBufferView)
+void CMesh::Render(
+	ID3D12GraphicsCommandList *pd3dCommandList
+	, UINT nInstances
+	, D3D12_VERTEX_BUFFER_VIEW d3dInstancingBufferView)
 {
 	//정점 버퍼 뷰와 인스턴싱 버퍼 뷰를 입력-조립 단계에 설정한다.
-	D3D12_VERTEX_BUFFER_VIEW pVertexBufferViews[] = { m_d3dVertexBufferView,
-		d3dInstancingBufferView };
-	pd3dCommandList->IASetVertexBuffers(m_nSlot, _countof(pVertexBufferViews),
-		pVertexBufferViews);
+	D3D12_VERTEX_BUFFER_VIEW pVertexBufferViews[] = 
+	{ m_d3dVertexBufferView, d3dInstancingBufferView };
+	pd3dCommandList->IASetVertexBuffers(
+		m_nSlot
+		, _countof(pVertexBufferViews)
+		, pVertexBufferViews);
 	Render(pd3dCommandList, nInstances);
 }
 
-int CMesh::CheckRayIntersection(XMFLOAT3& xmf3RayOrigin, XMFLOAT3& xmf3RayDirection,
-	float *pfNearHitDistance)
+int CMesh::CheckRayIntersection(
+	  XMFLOAT3& xmf3RayOrigin
+	, XMFLOAT3& xmf3RayDirection
+	, float *pfNearHitDistance)
 {
 	//하나의 메쉬에서 광선은 여러 개의 삼각형과 교차할 수 있다. 교차하는 삼각형들 중 가장 가까운 삼각형을 찾는다.
 	int nIntersections = 0;
@@ -113,8 +122,10 @@ int CMesh::CheckRayIntersection(XMFLOAT3& xmf3RayOrigin, XMFLOAT3& xmf3RayDirect
 	return(nIntersections);
 }
 
-CTriangleMesh::CTriangleMesh(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList
-	*pd3dCommandList) : CMesh(pd3dDevice, pd3dCommandList)
+CTriangleMesh::CTriangleMesh(
+	  CD3DDeviceIndRes *pd3dDeviceIndRes
+	, ID3D12GraphicsCommandList *pd3dCommandList) 
+	: CMesh(pd3dDeviceIndRes, pd3dCommandList)
 {
 	//삼각형 메쉬를 정의한다.
 	m_nVertices = 3;
@@ -129,9 +140,13 @@ CTriangleMesh::CTriangleMesh(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList
 		XMFLOAT3(-0.5f, -0.5f, 0.0f), XMFLOAT4(Colors::Blue));
 
 	//삼각형 메쉬를 리소스(정점 버퍼)로 생성한다.
-	m_pd3dVertexBuffer = ::CreateBufferResource(pd3dDevice, pd3dCommandList, pVertices,
-		m_nStride * m_nVertices, D3D12_HEAP_TYPE_DEFAULT,
-		D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, &m_pd3dVertexUploadBuffer);
+	m_pd3dVertexBuffer = pd3dDeviceIndRes->CreateBufferResource(
+		  pd3dCommandList
+		, pVertices
+		, m_nStride * m_nVertices
+		, D3D12_HEAP_TYPE_DEFAULT
+		, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER
+		, &m_pd3dVertexUploadBuffer);
 
 	//정점 버퍼 뷰를 생성한다.
 	m_d3dVertexBufferView.BufferLocation = m_pd3dVertexBuffer->GetGPUVirtualAddress();
@@ -141,9 +156,9 @@ CTriangleMesh::CTriangleMesh(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList
 
 
 CCubeMeshDiffused::CCubeMeshDiffused(
-	ID3D12Device * pd3dDevice, ID3D12GraphicsCommandList * pd3dCommandList, 
+	CD3DDeviceIndRes *pd3dDeviceIndRes, ID3D12GraphicsCommandList * pd3dCommandList,
 	float fWidth, float fHeight, float fDepth, XMFLOAT4 xmf4Color) :
-	CMesh(pd3dDevice, pd3dCommandList)
+	CMesh(pd3dDeviceIndRes, pd3dCommandList)
 {
 	//직육면체는 꼭지점(정점)이 8개이다.
 	m_nVertices = 8;
@@ -175,9 +190,13 @@ CCubeMeshDiffused::CCubeMeshDiffused(
 		m_pVertices[7] = CDiffusedVertex(XMFLOAT3(-fx, -fy, +fz), xmf4Color);
 	}
 	
-	m_pd3dVertexBuffer = ::CreateBufferResource(pd3dDevice, pd3dCommandList, m_pVertices,
-		m_nStride * m_nVertices, D3D12_HEAP_TYPE_DEFAULT,
-		D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, &m_pd3dVertexUploadBuffer);
+	m_pd3dVertexBuffer = pd3dDeviceIndRes->CreateBufferResource(
+		pd3dCommandList
+		, m_pVertices
+		, m_nStride * m_nVertices
+		, D3D12_HEAP_TYPE_DEFAULT
+		, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER
+		, &m_pd3dVertexUploadBuffer);
 	m_d3dVertexBufferView.BufferLocation = m_pd3dVertexBuffer->GetGPUVirtualAddress();
 	m_d3dVertexBufferView.StrideInBytes = m_nStride;
 	m_d3dVertexBufferView.SizeInBytes = m_nStride * m_nVertices;
@@ -211,9 +230,13 @@ CCubeMeshDiffused::CCubeMeshDiffused(
 	//ⓛ 옆면(Right) 사각형의 아래쪽 삼각형
 	m_pnIndices[33] = 7; m_pnIndices[34] = 4; m_pnIndices[35] = 6;
 	//인덱스 버퍼를 생성한다.
-	m_pd3dIndexBuffer = ::CreateBufferResource(pd3dDevice, pd3dCommandList, m_pnIndices,
-		sizeof(UINT) * m_nIndices, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_INDEX_BUFFER,
-		&m_pd3dIndexUploadBuffer);
+	m_pd3dIndexBuffer = pd3dDeviceIndRes->CreateBufferResource(
+		  pd3dCommandList
+		, m_pnIndices
+		, sizeof(UINT) * m_nIndices
+		, D3D12_HEAP_TYPE_DEFAULT
+		, D3D12_RESOURCE_STATE_INDEX_BUFFER
+		, &m_pd3dIndexUploadBuffer);
 	//인덱스 버퍼 뷰를 생성한다.
 	m_d3dIndexBufferView.BufferLocation = m_pd3dIndexBuffer->GetGPUVirtualAddress();
 	m_d3dIndexBufferView.Format = DXGI_FORMAT_R32_UINT;
@@ -228,9 +251,9 @@ CCubeMeshDiffused::~CCubeMeshDiffused()
 {
 }
 
-CSphereMeshDiffused::CSphereMeshDiffused(ID3D12Device *pd3dDevice,
+CSphereMeshDiffused::CSphereMeshDiffused(CD3DDeviceIndRes *pd3dDeviceIndRes,
 	ID3D12GraphicsCommandList *pd3dCommandList, float fRadius, int nSlices, int nStacks) :
-	CMesh(pd3dDevice, pd3dCommandList)
+	CMesh(pd3dDeviceIndRes, pd3dCommandList)
 {
 	/*nSlices는 구를 xz-평면에 평행하게 몇 등분할 것인 가를 나타낸다. nStacks은 원기둥을 몇 조각으로 자를 것인
 	가를 나타낸다.*/
@@ -265,9 +288,13 @@ CSphereMeshDiffused::CSphereMeshDiffused(ID3D12Device *pd3dDevice,
 	}
 	//구의 아래(남극)를 나타내는 정점이다.
 	m_pVertices[k] = CDiffusedVertex(0.0f, -fRadius, 0.0f, RANDOM_COLOR);
-	m_pd3dVertexBuffer = ::CreateBufferResource(pd3dDevice, pd3dCommandList, m_pVertices,
-		m_nStride * m_nVertices, D3D12_HEAP_TYPE_DEFAULT,
-		D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, &m_pd3dVertexUploadBuffer);
+	m_pd3dVertexBuffer = pd3dDeviceIndRes->CreateBufferResource(
+		  pd3dCommandList
+		, m_pVertices
+		, m_nStride * m_nVertices
+		, D3D12_HEAP_TYPE_DEFAULT
+		, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER
+		, &m_pd3dVertexUploadBuffer);
 	m_d3dVertexBufferView.BufferLocation = m_pd3dVertexBuffer->GetGPUVirtualAddress();
 	m_d3dVertexBufferView.StrideInBytes = m_nStride;
 	m_d3dVertexBufferView.SizeInBytes = m_nStride * m_nVertices;
@@ -308,9 +335,13 @@ CSphereMeshDiffused::CSphereMeshDiffused(ID3D12Device *pd3dDevice,
 		m_pnIndices[k++] = ((m_nVertices - 1) - nSlices) + i;
 		m_pnIndices[k++] = ((m_nVertices - 1) - nSlices) + ((i + 1) % nSlices);
 	}
-	m_pd3dIndexBuffer = ::CreateBufferResource(pd3dDevice, pd3dCommandList, m_pnIndices,
-		sizeof(UINT) * m_nIndices, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_INDEX_BUFFER,
-		&m_pd3dIndexUploadBuffer);
+	m_pd3dIndexBuffer = pd3dDeviceIndRes->CreateBufferResource(
+		  pd3dCommandList
+		, m_pnIndices
+		, sizeof(UINT) * m_nIndices
+		, D3D12_HEAP_TYPE_DEFAULT
+		, D3D12_RESOURCE_STATE_INDEX_BUFFER
+		, &m_pd3dIndexUploadBuffer);
 	m_d3dIndexBufferView.BufferLocation = m_pd3dIndexBuffer->GetGPUVirtualAddress();
 	m_d3dIndexBufferView.Format = DXGI_FORMAT_R32_UINT;
 	m_d3dIndexBufferView.SizeInBytes = sizeof(UINT) * m_nIndices;
@@ -322,9 +353,9 @@ CSphereMeshDiffused::~CSphereMeshDiffused()
 {
 }
 
-CAirplaneMeshDiffused::CAirplaneMeshDiffused(ID3D12Device *pd3dDevice,
+CAirplaneMeshDiffused::CAirplaneMeshDiffused(CD3DDeviceIndRes *pd3dDeviceIndRes,
 	ID3D12GraphicsCommandList *pd3dCommandList, float fWidth, float fHeight, float fDepth,
-	XMFLOAT4 xmf4Color) : CMesh(pd3dDevice, pd3dCommandList)
+	XMFLOAT4 xmf4Color) : CMesh(pd3dDeviceIndRes, pd3dCommandList)
 {
 	m_nVertices = 24 * 3;
 	m_nStride = sizeof(CDiffusedVertex);
@@ -489,9 +520,13 @@ CAirplaneMeshDiffused::CAirplaneMeshDiffused(ID3D12Device *pd3dDevice,
 		Vector4::Add(xmf4Color,	RANDOM_COLOR));
 	m_pVertices[i++] = CDiffusedVertex(XMFLOAT3(-fx, -y3, -fz), 
 		Vector4::Add(xmf4Color,	RANDOM_COLOR));
-	m_pd3dVertexBuffer = ::CreateBufferResource(pd3dDevice, pd3dCommandList, m_pVertices,
-		m_nStride * m_nVertices, D3D12_HEAP_TYPE_DEFAULT,
-		D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, &m_pd3dVertexUploadBuffer);
+	m_pd3dVertexBuffer = pd3dDeviceIndRes->CreateBufferResource(
+		  pd3dCommandList
+		, m_pVertices
+		, m_nStride * m_nVertices
+		, D3D12_HEAP_TYPE_DEFAULT
+		, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER
+		, &m_pd3dVertexUploadBuffer);
 	m_d3dVertexBufferView.BufferLocation = m_pd3dVertexBuffer->GetGPUVirtualAddress();
 	m_d3dVertexBufferView.StrideInBytes = m_nStride;
 	m_d3dVertexBufferView.SizeInBytes = m_nStride * m_nVertices;
@@ -607,10 +642,13 @@ float CHeightMapImage::GetHeight(float fx, float fz)
 	return(fHeight);
 }
 
-CHeightMapGridMesh::CHeightMapGridMesh(ID3D12Device *pd3dDevice,
-	ID3D12GraphicsCommandList *pd3dCommandList, int xStart, int zStart, int nWidth, int
-	nLength, XMFLOAT3 xmf3Scale, XMFLOAT4 xmf4Color, void *pContext) : CMesh(pd3dDevice,
-		pd3dCommandList)
+CHeightMapGridMesh::CHeightMapGridMesh(
+	CD3DDeviceIndRes *pd3dDeviceIndRes
+	, ID3D12GraphicsCommandList *pd3dCommandList
+	, int xStart, int zStart, int nWidth, int nLength
+	, XMFLOAT3 xmf3Scale, XMFLOAT4 xmf4Color
+	, void *pContext) 
+	: CMesh(pd3dDeviceIndRes, pd3dCommandList)
 {
 	//격자의 교점(정점)의 개수는 (nWidth * nLength)이다.
 	m_nVertices = nWidth * nLength;
@@ -638,9 +676,13 @@ CHeightMapGridMesh::CHeightMapGridMesh(ID3D12Device *pd3dDevice,
 		}
 	}
 	//다음 그림은 격자의 교점(정점)을 나열하는 순서를 보여준다.
-	m_pd3dVertexBuffer = ::CreateBufferResource(pd3dDevice, pd3dCommandList, pVertices,
-		m_nStride * m_nVertices, D3D12_HEAP_TYPE_DEFAULT,
-		D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, &m_pd3dVertexUploadBuffer);
+	m_pd3dVertexBuffer = pd3dDeviceIndRes->CreateBufferResource(
+		  pd3dCommandList
+		, pVertices
+		, m_nStride * m_nVertices
+		, D3D12_HEAP_TYPE_DEFAULT
+		, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER
+		, &m_pd3dVertexUploadBuffer);
 	m_d3dVertexBufferView.BufferLocation = m_pd3dVertexBuffer->GetGPUVirtualAddress();
 	m_d3dVertexBufferView.StrideInBytes = m_nStride;
 	m_d3dVertexBufferView.SizeInBytes = m_nStride * m_nVertices;
@@ -705,9 +747,13 @@ CHeightMapGridMesh::CHeightMapGridMesh(ID3D12Device *pd3dDevice,
 			}
 		}
 	}
-	m_pd3dIndexBuffer = ::CreateBufferResource(pd3dDevice, pd3dCommandList, pnIndices,
-		sizeof(UINT) * m_nIndices, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_INDEX_BUFFER,
-		&m_pd3dIndexUploadBuffer);
+	m_pd3dIndexBuffer = pd3dDeviceIndRes->CreateBufferResource(
+		  pd3dCommandList
+		, pnIndices
+		, sizeof(UINT) * m_nIndices
+		, D3D12_HEAP_TYPE_DEFAULT
+		, D3D12_RESOURCE_STATE_INDEX_BUFFER
+		, &m_pd3dIndexUploadBuffer);
 	m_d3dIndexBufferView.BufferLocation = m_pd3dIndexBuffer->GetGPUVirtualAddress();
 	m_d3dIndexBufferView.Format = DXGI_FORMAT_R32_UINT;
 	m_d3dIndexBufferView.SizeInBytes = sizeof(UINT) * m_nIndices;

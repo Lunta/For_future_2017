@@ -52,7 +52,7 @@ public:
 	virtual ~CPlayer();
 
 	virtual void CreateShaderVariables(
-		ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *pd3dCommandList);
+		CD3DDeviceIndRes *pd3dDeviceIndRes, ID3D12GraphicsCommandList *pd3dCommandList);
 	virtual void ReleaseShaderVariables();
 	virtual void UpdateShaderVariables(ID3D12GraphicsCommandList *pd3dCommandList);
 	//위치가 바뀔 때마다 호출되는 함수
@@ -62,8 +62,10 @@ public:
 	virtual void OnPrepareRender();
 	//플레이어의 카메라가 3인칭 카메라일 때 플레이어(메쉬)를 렌더링한다.
 	virtual void Render(ID3D12GraphicsCommandList *pd3dCommandList, CCamera *pCamera = NULL);
-	virtual CCamera *ChangeCamera(
-		ID3D12Device *pd3dDevice, DWORD nNewCameraMode, float fTimeElapsed);	
+	virtual CCamera* ChangeCamera(
+		  CD3DDeviceIndRes *pd3dDeviceIndRes
+		, DWORD nNewCameraMode
+		, float fTimeElapsed);	
 
 	XMFLOAT3	GetPosition() { return(m_xmf3Position); }
 	XMFLOAT3	GetLookVector() { return(m_xmf3Look); }
@@ -104,22 +106,22 @@ public:
 class CAirplanePlayer : public CPlayer
 {
 public:
-	CAirplanePlayer(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *pd3dCommandList,
+	CAirplanePlayer(CD3DDeviceIndRes *pd3dDeviceIndRes, ID3D12GraphicsCommandList *pd3dCommandList,
 		ID3D12RootSignature *pd3dGraphicsRootSignature, int nMeshes = 1);
 	virtual ~CAirplanePlayer();
 
 	virtual void OnPrepareRender();
-	virtual CCamera *ChangeCamera(ID3D12Device *pd3dDevice, DWORD nNewCameraMode, float fTimeElapsed);
+	virtual CCamera *ChangeCamera(CD3DDeviceIndRes *pd3dDeviceIndRes, DWORD nNewCameraMode, float fTimeElapsed);
 };
 
 class CTerrainPlayer : public CPlayer
 {
 public:
-	CTerrainPlayer(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *pd3dCommandList,
+	CTerrainPlayer(CD3DDeviceIndRes *pd3dDeviceIndRes, ID3D12GraphicsCommandList *pd3dCommandList,
 		ID3D12RootSignature *pd3dGraphicsRootSignature, void *pContext, int nMeshes = 1);
 	virtual ~CTerrainPlayer();
 	virtual CCamera *ChangeCamera(
-		ID3D12Device *pd3dDevice, DWORD nNewCameraMode, float fTimeElapsed);
+		CD3DDeviceIndRes *pd3dDeviceIndRes, DWORD nNewCameraMode, float fTimeElapsed);
 	virtual void OnPlayerUpdateCallback(float fTimeElapsed);
 	virtual void OnCameraUpdateCallback(float fTimeElapsed);
 };

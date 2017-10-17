@@ -30,8 +30,8 @@ public:
 	void Release() { if (--m_nReferences <= 0) delete this; }
 
 protected:
-	int					m_nPipelineStates{ 0 };
-	ID3D12PipelineState **m_ppd3dPipelineStates{ NULL };
+	int							m_nPipelineStates{ 0 };
+	ComPtr<ID3D12PipelineState> *m_ppd3dPipelineStates{ NULL };
 
 public:
 	D3D12_SHADER_BYTECODE CompileShaderFromFile(WCHAR *pszFileName, LPCSTR pszShaderName,
@@ -44,9 +44,9 @@ public:
 	virtual D3D12_SHADER_BYTECODE CreateVertexShader(ID3DBlob **ppd3dShaderBlob);
 	virtual D3D12_SHADER_BYTECODE CreatePixelShader(ID3DBlob **ppd3dShaderBlob);
 	virtual void CreateShader(
-		ID3D12Device *pd3dDevice, ID3D12RootSignature *pd3dGraphicsRootSignature);
+		CD3DDeviceIndRes *pd3dDeviceIndRes, ID3D12RootSignature *pd3dGraphicsRootSignature);
 	virtual void CreateShaderVariables(
-		ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *pd3dCommandList);
+		CD3DDeviceIndRes *pd3dDeviceIndRes, ID3D12GraphicsCommandList *pd3dCommandList);
 	virtual void ReleaseShaderVariables();
 	virtual void UpdateShaderVariables(ID3D12GraphicsCommandList *pd3dCommandList);
 	virtual void UpdateShaderVariable(
@@ -67,7 +67,7 @@ public:
 	virtual D3D12_SHADER_BYTECODE CreateVertexShader(ID3DBlob **ppd3dShaderBlob);
 	virtual D3D12_SHADER_BYTECODE CreatePixelShader(ID3DBlob **ppd3dShaderBlob);
 	virtual void CreateShader(
-		ID3D12Device *pd3dDevice, ID3D12RootSignature *pd3dGraphicsRootSignature);
+		CD3DDeviceIndRes *pd3dDeviceIndRes, ID3D12RootSignature *pd3dGraphicsRootSignature);
 };
 
 //“CObjectsShader” 클래스는 게임 객체들을 포함하는 셰이더 객체이다.
@@ -81,9 +81,9 @@ public:
 	virtual D3D12_SHADER_BYTECODE CreateVertexShader(ID3DBlob **ppd3dShaderBlob);
 	virtual D3D12_SHADER_BYTECODE CreatePixelShader(ID3DBlob **ppd3dShaderBlob);
 	virtual void CreateShader(
-		ID3D12Device *pd3dDevice, ID3D12RootSignature *pd3dGraphicsRootSignature);
+		CD3DDeviceIndRes *pd3dDeviceIndRes, ID3D12RootSignature *pd3dGraphicsRootSignature);
 
-	virtual void BuildObjects(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList
+	virtual void BuildObjects(CD3DDeviceIndRes *pd3dDeviceIndRes, ID3D12GraphicsCommandList
 		*pd3dCommandList, CGameObject **ppObjects = NULL, int nObjects = 0);
 
 	virtual void ReleaseObjects();
@@ -110,13 +110,13 @@ public:
 	virtual D3D12_SHADER_BYTECODE CreateVertexShader(ID3DBlob **ppd3dShaderBlob);
 	virtual D3D12_SHADER_BYTECODE CreatePixelShader(ID3DBlob **ppd3dShaderBlob);
 	virtual void CreateShader(
-		ID3D12Device *pd3dDevice, ID3D12RootSignature *pd3dGraphicsRootSignature);
+		CD3DDeviceIndRes *pd3dDeviceIndRes, ID3D12RootSignature *pd3dGraphicsRootSignature);
 	virtual void CreateShaderVariables(
-		ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *pd3dCommandList);
+		CD3DDeviceIndRes *pd3dDeviceIndRes, ID3D12GraphicsCommandList *pd3dCommandList);
 	virtual void ReleaseShaderVariables();
 	virtual void UpdateShaderVariables(ID3D12GraphicsCommandList *pd3dCommandList);
 
-	virtual void BuildObjects(ID3D12Device *pd3dDevice, 
+	virtual void BuildObjects(CD3DDeviceIndRes *pd3dDeviceIndRes, 
 		ID3D12GraphicsCommandList *pd3dCommandList, 
 		CGameObject **ppObjects, int nObjects) override;
 	virtual void ReleaseObjects();
@@ -137,6 +137,6 @@ public:
 	virtual D3D12_INPUT_LAYOUT_DESC CreateInputLayout();
 	virtual D3D12_SHADER_BYTECODE CreateVertexShader(ID3DBlob **ppd3dShaderBlob);
 	virtual D3D12_SHADER_BYTECODE CreatePixelShader(ID3DBlob **ppd3dShaderBlob);
-	virtual void CreateShader(ID3D12Device *pd3dDevice, ID3D12RootSignature
+	virtual void CreateShader(CD3DDeviceIndRes *pd3dDeviceIndRes, ID3D12RootSignature
 		*pd3dGraphicsRootSignature);
 };

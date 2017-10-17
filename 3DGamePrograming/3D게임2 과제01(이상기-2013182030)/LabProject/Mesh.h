@@ -38,9 +38,10 @@ public:
 class CMesh
 {
 public:
-	CMesh(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *pd3dCommandList);
+	CMesh(CD3DDeviceIndRes *pd3dDeviceIndRes
+		, ID3D12GraphicsCommandList *pd3dCommandList);
 	virtual ~CMesh();
-
+	
 private:
 	int m_nReferences;
 
@@ -82,9 +83,11 @@ protected:
 
 public:
 	virtual void Render(ID3D12GraphicsCommandList *pd3dCommandList);
-	virtual void Render(ID3D12GraphicsCommandList *pd3dCommandList, UINT nInstances);
-	virtual void Render(ID3D12GraphicsCommandList *pd3dCommandList, UINT nInstances,
-		D3D12_VERTEX_BUFFER_VIEW d3dInstancingBufferView);
+	virtual void Render(
+		ID3D12GraphicsCommandList *pd3dCommandList, UINT nInstances);
+	virtual void Render(
+		ID3D12GraphicsCommandList *pd3dCommandList, UINT nInstances
+		, D3D12_VERTEX_BUFFER_VIEW d3dInstancingBufferView);
 	BoundingOrientedBox GetBoundingBox() { return(m_xmBoundingBox); }
 
 	int CheckRayIntersection(XMFLOAT3& xmRayPosition, XMFLOAT3& xmRayDirection, float
@@ -94,7 +97,9 @@ public:
 class CTriangleMesh : public CMesh
 {
 public:
-	CTriangleMesh(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *pd3dCommandList);
+	CTriangleMesh(
+		CD3DDeviceIndRes *pd3dDeviceIndRes
+		, ID3D12GraphicsCommandList *pd3dCommandList);
 	virtual ~CTriangleMesh() { }
 };
 
@@ -103,26 +108,37 @@ class CCubeMeshDiffused : public CMesh
 public:
 	//직육면체의 가로, 세로, 깊이의 길이를 지정하여 직육면체 메쉬를 생성한다.
 	CCubeMeshDiffused(
-		ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *pd3dCommandList, 
-		float fWidth = 2.0f, float fHeight = 2.0f, float fDepth = 2.0f, 
-		XMFLOAT4 xmf4Color = XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f));
+		  CD3DDeviceIndRes *pd3dDeviceIndRes
+		, ID3D12GraphicsCommandList *pd3dCommandList
+		, float fWidth = 2.0f
+		, float fHeight = 2.0f
+		, float fDepth = 2.0f
+		, XMFLOAT4 xmf4Color = XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f));
 	virtual ~CCubeMeshDiffused();
 };
 
 class CSphereMeshDiffused : public CMesh
 {
 public:
-	CSphereMeshDiffused(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList
-		*pd3dCommandList, float fRadius = 2.0f, int nSlices = 20, int nStacks = 20);
+	CSphereMeshDiffused(
+		CD3DDeviceIndRes *pd3dDeviceIndRes
+		, ID3D12GraphicsCommandList *pd3dCommandList
+		, float fRadius = 2.0f
+		, int nSlices = 20
+		, int nStacks = 20);
 	virtual ~CSphereMeshDiffused();
 };
 
 class CAirplaneMeshDiffused : public CMesh
 {
 public:
-	CAirplaneMeshDiffused(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList
-		*pd3dCommandList, float fWidth = 20.0f, float fHeight = 20.0f, float fDepth = 4.0f,
-		XMFLOAT4 xmf4Color = XMFLOAT4(1.0f, 1.0f, 0.0f, 0.0f));
+	CAirplaneMeshDiffused(
+		CD3DDeviceIndRes *pd3dDeviceIndRes
+		, ID3D12GraphicsCommandList *pd3dCommandList
+		, float fWidth = 20.0f
+		, float fHeight = 20.0f
+		, float fDepth = 4.0f
+		, XMFLOAT4 xmf4Color = XMFLOAT4(1.0f, 1.0f, 0.0f, 0.0f));
 	virtual ~CAirplaneMeshDiffused();
 };
 
@@ -137,7 +153,7 @@ private:
 	//높이 맵 이미지를 실제로 몇 배 확대하여 사용할 것인가를 나타내는 스케일 벡터이다.
 	XMFLOAT3 m_xmf3Scale;
 public:
-	CHeightMapImage(LPCTSTR pFileName, int nWidth, int nLength, XMFLOAT3 xmf3Scale);
+	CHeightMapImage(LPCTSTR pFileName , int nWidth, int nLength , XMFLOAT3 xmf3Scale);
 	~CHeightMapImage(void);
 	//높이 맵 이미지에서 (x, z) 위치의 픽셀 값에 기반한 지형의 높이를 반환한다.
 	float GetHeight(float x, float z);
@@ -161,10 +177,13 @@ protected:
 	수 있다.*/
 	XMFLOAT3 m_xmf3Scale;
 public:
-	CHeightMapGridMesh(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList
-		*pd3dCommandList, int xStart, int zStart, int nWidth, int nLength, XMFLOAT3 xmf3Scale =
-		XMFLOAT3(1.0f, 1.0f, 1.0f), XMFLOAT4 xmf4Color = XMFLOAT4(1.0f, 1.0f, 0.0f, 0.0f), void
-		*pContext = NULL);
+	CHeightMapGridMesh(
+		CD3DDeviceIndRes *pd3dDeviceIndRes
+		, ID3D12GraphicsCommandList *pd3dCommandList
+		, int xStart, int zStart, int nWidth, int nLength
+		, XMFLOAT3 xmf3Scale = XMFLOAT3(1.0f, 1.0f, 1.0f)
+		, XMFLOAT4 xmf4Color = XMFLOAT4(1.0f, 1.0f, 0.0f, 0.0f)
+		, void *pContext = NULL);
 	virtual ~CHeightMapGridMesh();
 	XMFLOAT3 GetScale() { return(m_xmf3Scale); }
 	int GetWidth() { return(m_nWidth); }

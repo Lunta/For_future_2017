@@ -49,8 +49,9 @@ void CGameObject::SetShader(CShader *pShader)
 	if (m_pShader) m_pShader->AddRef();
 }
 
-void CGameObject::CreateShaderVariables(ID3D12Device *pd3dDevice,
-	ID3D12GraphicsCommandList *pd3dCommandList)
+void CGameObject::CreateShaderVariables(
+	  CD3DDeviceIndRes *pd3dDeviceIndRes
+	, ID3D12GraphicsCommandList *pd3dCommandList)
 {
 }
 void CGameObject::ReleaseShaderVariables()
@@ -315,10 +316,14 @@ void CRotatingObject::Animate(float fTimeElapsed)
 	m_bUpdatedWorldMtx = false;
 }
 
-CHeightMapTerrain::CHeightMapTerrain(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList
-	*pd3dCommandList, ID3D12RootSignature *pd3dGraphicsRootSignature, LPCTSTR pFileName, 
-	int nWidth, int nLength, int nBlockWidth, int nBlockLength, XMFLOAT3 xmf3Scale, XMFLOAT4
-	xmf4Color) : CGameObject(0)
+CHeightMapTerrain::CHeightMapTerrain(
+	  CD3DDeviceIndRes *pd3dDeviceIndRes
+	, ID3D12GraphicsCommandList *pd3dCommandList
+	, ID3D12RootSignature *pd3dGraphicsRootSignature
+	, LPCTSTR pFileName, int nWidth, int nLength
+	, int nBlockWidth, int nBlockLength
+	, XMFLOAT3 xmf3Scale, XMFLOAT4 xmf4Color) 
+	: CGameObject(0)
 {
 	m_Tag = ObjectType::Background;
 	//지형에 사용할 높이 맵의 가로, 세로의 크기이다.
@@ -349,14 +354,14 @@ CHeightMapTerrain::CHeightMapTerrain(ID3D12Device *pd3dDevice, ID3D12GraphicsCom
 			xStart = x * (nBlockWidth - 1);
 			zStart = z * (nBlockLength - 1);
 			//지형의 일부분을 나타내는 격자 메쉬를 생성하여 지형 메쉬에 저장한다.
-			pHeightMapGridMesh = new CHeightMapGridMesh(pd3dDevice, pd3dCommandList, xStart,
+			pHeightMapGridMesh = new CHeightMapGridMesh(pd3dDeviceIndRes, pd3dCommandList, xStart,
 				zStart, nBlockWidth, nBlockLength, xmf3Scale, xmf4Color, m_pHeightMapImage);
 			SetMesh(x + (z*cxBlocks), pHeightMapGridMesh);
 		}
 	}
 	//지형을 렌더링하기 위한 셰이더를 생성한다.
 	CTerrainShader *pShader = new CTerrainShader();
-	pShader->CreateShader(pd3dDevice, pd3dGraphicsRootSignature);
+	pShader->CreateShader(pd3dDeviceIndRes, pd3dGraphicsRootSignature);
 	SetShader(pShader);
 }
 CHeightMapTerrain::~CHeightMapTerrain(void)

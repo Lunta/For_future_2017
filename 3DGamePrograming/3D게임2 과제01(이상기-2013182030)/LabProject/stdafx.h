@@ -29,10 +29,10 @@
 #pragma comment (linker, "/entry:wWinMainCRTStartup /subsystem:console")
 #endif
 
-// Windows 헤더 파일:
+// Windows 헤더 파일
 #include <windows.h>
 
-// C의 런타임 헤더 파일입니다.
+// C의 런타임 헤더 파일
 #include <stdlib.h>
 #include <malloc.h>
 #include <memory.h>
@@ -40,11 +40,14 @@
 #include <math.h>
 #include <time.h>
 
-#include <string>
 #include <wrl.h>
 #include <shellapi.h>
 #include <timeapi.h>
 
+// C++의 런타임 헤더 파일
+#include <string>
+
+// Direct 헤더 파일
 #include <d3d12.h>
 #include <dxgi1_4.h>
 #include <D3Dcompiler.h>
@@ -61,6 +64,9 @@ using namespace DirectX::PackedVector;
 #pragma comment(lib, "d3d12.lib")
 #pragma comment(lib, "dxgi.lib")
 
+// 사용자 정의
+#include "D3DDeviceIndRes.h"
+
 #define FRAME_BUFFER_WIDTH 640
 #define FRAME_BUFFER_HEIGHT 480
 #define ALLOWABLE_ERROR 0.0000001f
@@ -68,16 +74,6 @@ using namespace DirectX::PackedVector;
 #define RANDOM_NUM(MIN, MAX)	((rand()%((MAX) - (MIN) + 1)) + (MIN))
 
 // TODO: 프로그램에 필요한 추가 헤더는 여기에서 참조합니다.
-
-extern ID3D12Resource* CreateBufferResource(
-	ID3D12Device				*pd3dDevice,
-	ID3D12GraphicsCommandList	*pd3dCommandList, 
-	void						*pData, 
-	UINT						nBytes, 
-	D3D12_HEAP_TYPE				d3dHeapType = D3D12_HEAP_TYPE_UPLOAD, 
-	D3D12_RESOURCE_STATES		d3dResourceStates 
-									= D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, 
-	ID3D12Resource				**ppd3dUploadBuffer = NULL);
 
 inline bool IsZero(float element)
 {

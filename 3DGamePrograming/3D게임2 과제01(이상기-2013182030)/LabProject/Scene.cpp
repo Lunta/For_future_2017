@@ -25,9 +25,9 @@ ID3D12RootSignature* CScene::GetGraphicsRootSignature()
 {
 	return(m_pd3dGraphicsRootSignature.Get());
 }
-ID3D12RootSignature* CScene::CreateGraphicsRootSignature(ID3D12Device *pd3dDevice)
+ID3D12RootSignature* CScene::CreateGraphicsRootSignature(CD3DDeviceIndRes *pd3dDeviceIndRes)
 {
-	ID3D12RootSignature *pd3dGraphicsRootSignature = NULL;
+	ID3D12RootSignature* pd3dGraphicsRootSignature = NULL;
 	D3D12_ROOT_PARAMETER pd3dRootParameters[3];
 	pd3dRootParameters[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
 	pd3dRootParameters[0].Constants.Num32BitValues = 16;
@@ -64,9 +64,11 @@ ID3D12RootSignature* CScene::CreateGraphicsRootSignature(ID3D12Device *pd3dDevic
 	D3D12SerializeRootSignature(&d3dRootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1,
 		&pd3dSignatureBlob, &pd3dErrorBlob);
 
-	pd3dDevice->CreateRootSignature(0, pd3dSignatureBlob->GetBufferPointer(),
-		pd3dSignatureBlob->GetBufferSize(), __uuidof(ID3D12RootSignature), 
-		(void**)&pd3dGraphicsRootSignature);
+	pd3dDeviceIndRes->CreateRootSignature(
+		  0
+		, pd3dSignatureBlob->GetBufferPointer()
+		, pd3dSignatureBlob->GetBufferSize()
+		, &pd3dGraphicsRootSignature);
 
 	if (pd3dSignatureBlob) pd3dSignatureBlob->Release();
 	if (pd3dErrorBlob) pd3dErrorBlob->Release();
@@ -74,10 +76,10 @@ ID3D12RootSignature* CScene::CreateGraphicsRootSignature(ID3D12Device *pd3dDevic
 	return(pd3dGraphicsRootSignature);
 }
 
-void CScene::BuildObjects(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList
+void CScene::BuildObjects(CD3DDeviceIndRes *pd3dDeviceIndRes, ID3D12GraphicsCommandList
 	*pd3dCommandList)
 {
-	m_pd3dGraphicsRootSignature = CreateGraphicsRootSignature(pd3dDevice);
+	m_pd3dGraphicsRootSignature = CreateGraphicsRootSignature(pd3dDeviceIndRes);
 	//지형을 확대할 스케일 벡터이다. x-축과 z-축은 8배, y-축은 2배 확대한다.
 	XMFLOAT3 xmf3Scale(20.0f, 2.0f, 20.0f);
 	XMFLOAT4 xmf4Color(0.0f, 0.2f, 0.0f, 0.0f);
@@ -85,16 +87,16 @@ void CScene::BuildObjects(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList
 #ifdef _WITH_TERRAIN_PARTITION
 	/*하나의 격자 메쉬의 크기는 가로x세로(17x17)이다. 지형 전체는 가로 방향으로 16개, 세로 방향으로 16의 격자 메
 	쉬를 가진다. 지형을 구성하는 격자 메쉬의 개수는 총 256(16x16)개가 된다.*/
-	m_pTerrain = new CHeightMapTerrain(pd3dDevice, pd3dCommandList,
+	m_pTerrain = new CHeightMapTerrain(pd3dDeviceIndRes, pd3dCommandList,
 		m_pd3dGraphicsRootSignature, _T("Assets/Image/Terrain/HeightMap.raw"), 257, 257, 17,
 		17, xmf3Scale, xmf4Color);
 #else
 	//지형을 하나의 격자 메쉬(257x257)로 생성한다.
-	m_pTerrain = new CHeightMapTerrain(pd3dDevice, pd3dCommandList,
+	m_pTerrain = new CHeightMapTerrain(pd3dDeviceIndRes, pd3dCommandList,
 		m_pd3dGraphicsRootSignature.Get(), _T("Assets/Image/Terrain/HeightMap.raw"), 257, 257, 257,
 		257, xmf3Scale, xmf4Color);
 #endif
-	CCubeMeshDiffused *pRoofMesh = new CCubeMeshDiffused(pd3dDevice, pd3dCommandList,
+	CCubeMeshDiffused *pRoofMesh = new CCubeMeshDiffused(pd3dDeviceIndRes, pd3dCommandList,
 		1100.0f, 50.0f, 1100.0f);
 	m_pRoofObject = new CGameObject(1);
 	m_pRoofObject->SetObjectType(CGameObject::ObjectType::Wall);
@@ -102,13 +104,13 @@ void CScene::BuildObjects(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList
 	m_pRoofObject->SetOOBB(pRoofMesh->GetBoundingBox());
 	m_pRoofObject->SetPosition(525, m_pTerrain->GetHeight(525, 600) + 75.0f, 600);
 	CObjectsShader* pRoofShader = new CObjectsShader();
-	pRoofShader->CreateShader(pd3dDevice, m_pd3dGraphicsRootSignature.Get());
+	pRoofShader->CreateShader(pd3dDeviceIndRes, m_pd3dGraphicsRootSignature.Get());
 	m_pRoofObject->SetShader(pRoofShader);
 
 	m_nShaders = ObjectTag::Count;
 	m_pShaders = new CInstancingShader[m_nShaders];
 
-	m_pShaders[ObjectTag::Background].CreateShader(pd3dDevice, m_pd3dGraphicsRootSignature.Get());
+	m_pShaders[ObjectTag::Background].CreateShader(pd3dDeviceIndRes, m_pd3dGraphicsRootSignature.Get());
 	m_pppObjects = new CGameObject**[ObjectTag::Count];
 
 	m_pnObjects[ObjectTag::Background] = 0;
@@ -134,7 +136,7 @@ void CScene::BuildObjects(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList
 		new CGameObject*[m_pnObjects[ObjectTag::Background]];
 	m_Maze.m_pxmf3PathesPos = new XMFLOAT3[m_Maze.m_nPathesPos];
 
-	CCubeMeshDiffused *pCubeMesh = new CCubeMeshDiffused(pd3dDevice, pd3dCommandList,
+	CCubeMeshDiffused *pCubeMesh = new CCubeMeshDiffused(pd3dDeviceIndRes, pd3dCommandList,
 		50.0f, 50.0f, 50.0f);
 	float fxPitch = 50.0f, fyPitch = 50.0f, fzPitch = 50.0f;
 	int i = 0, nPathIdx = 0;
@@ -193,15 +195,15 @@ void CScene::BuildObjects(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList
 	}
 	
 	m_pShaders[ObjectTag::Background].BuildObjects(
-		pd3dDevice, pd3dCommandList,
+		pd3dDeviceIndRes, pd3dCommandList,
 		m_pppObjects[ObjectTag::Background], m_pnObjects[ObjectTag::Background]);
 
-	m_pShaders[ObjectTag::Objects].CreateShader(pd3dDevice, m_pd3dGraphicsRootSignature.Get());
+	m_pShaders[ObjectTag::Objects].CreateShader(pd3dDeviceIndRes, m_pd3dGraphicsRootSignature.Get());
 	m_pnObjects[ObjectTag::Objects] = 30;
 	m_pppObjects[ObjectTag::Objects] =
 		new CGameObject*[m_pnObjects[ObjectTag::Objects]];
 	CSphereMeshDiffused *pSphereMeshs =
-		new CSphereMeshDiffused(pd3dDevice, pd3dCommandList, 6.0f, 20, 20);
+		new CSphereMeshDiffused(pd3dDeviceIndRes, pd3dCommandList, 6.0f, 20, 20);
 	for (i = 0; i < m_pnObjects[ObjectTag::Objects]; ++i)
 	{
 		CRotatingObject* Sphere = new CRotatingObject();
@@ -223,15 +225,15 @@ void CScene::BuildObjects(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList
 		m_pppObjects[ObjectTag::Objects][i] = Sphere;
 	}
 	m_pShaders[ObjectTag::Objects].BuildObjects(
-		pd3dDevice, pd3dCommandList,
+		pd3dDeviceIndRes, pd3dCommandList,
 		m_pppObjects[ObjectTag::Objects], m_pnObjects[ObjectTag::Objects]);
 	
-	m_pShaders[ObjectTag::Bullet].CreateShader(pd3dDevice, m_pd3dGraphicsRootSignature.Get());
+	m_pShaders[ObjectTag::Bullet].CreateShader(pd3dDeviceIndRes, m_pd3dGraphicsRootSignature.Get());
 	m_pnObjects[ObjectTag::Bullet] = 50;
 	m_pppObjects[ObjectTag::Bullet] =
 		new CGameObject*[m_pnObjects[ObjectTag::Bullet]];
 	CCubeMeshDiffused *pBulleteMeshs =
-		new CCubeMeshDiffused(pd3dDevice, pd3dCommandList, 2.0f, 2.0f, 2.0f);
+		new CCubeMeshDiffused(pd3dDeviceIndRes, pd3dCommandList, 2.0f, 2.0f, 2.0f);
 	for (i = 0; i < m_pnObjects[ObjectTag::Bullet]; ++i)
 	{
 		CRotatingObject* Cube = new CRotatingObject();
@@ -249,15 +251,15 @@ void CScene::BuildObjects(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList
 	}
 	m_pppObjects[ObjectTag::Bullet][0]->SetMesh(0, pBulleteMeshs);
 	m_pShaders[ObjectTag::Bullet].BuildObjects(
-		pd3dDevice, pd3dCommandList,
+		pd3dDeviceIndRes, pd3dCommandList,
 		m_pppObjects[ObjectTag::Bullet], m_pnObjects[ObjectTag::Bullet]);
 	
-	m_pShaders[ObjectTag::Particle].CreateShader(pd3dDevice, m_pd3dGraphicsRootSignature.Get());
+	m_pShaders[ObjectTag::Particle].CreateShader(pd3dDeviceIndRes, m_pd3dGraphicsRootSignature.Get());
 	m_pnObjects[ObjectTag::Particle] = 500;
 	m_pppObjects[ObjectTag::Particle] =
 		new CGameObject*[m_pnObjects[ObjectTag::Particle]];
 	CCubeMeshDiffused *pParticleMeshs =
-		new CCubeMeshDiffused(pd3dDevice, pd3dCommandList, 1.0f, 1.0f, 1.0f);
+		new CCubeMeshDiffused(pd3dDeviceIndRes, pd3dCommandList, 1.0f, 1.0f, 1.0f);
 	for (i = 0; i < m_pnObjects[ObjectTag::Particle]; ++i)
 	{
 		CRotatingObject* Cube = new CRotatingObject();
@@ -275,7 +277,7 @@ void CScene::BuildObjects(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList
 	}
 	m_pppObjects[ObjectTag::Particle][0]->SetMesh(0, pParticleMeshs);
 	m_pShaders[ObjectTag::Particle].BuildObjects(
-		pd3dDevice, pd3dCommandList,
+		pd3dDeviceIndRes, pd3dCommandList,
 		m_pppObjects[ObjectTag::Particle], m_pnObjects[ObjectTag::Particle]);
 }
 
