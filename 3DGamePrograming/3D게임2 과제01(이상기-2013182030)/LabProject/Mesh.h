@@ -1,37 +1,69 @@
+//------------------------------------------------------- ----------------------
+// File: Mesh.h
+//-----------------------------------------------------------------------------
+
 #pragma once
 
-//정점을 표현하기 위한 클래스를 선언한다.
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 class CVertex
 {
-protected:
-	//정점의 위치 벡터이다(모든 정점은 최소한 위치 벡터를 가져야 한다).
-	XMFLOAT3 m_xmf3Position;
+public:
+	XMFLOAT3						m_xmf3Position;
+
 public:
 	CVertex() { m_xmf3Position = XMFLOAT3(0.0f, 0.0f, 0.0f); }
+	CVertex(float x, float y, float z) { m_xmf3Position = XMFLOAT3(x, y, z); }
 	CVertex(XMFLOAT3 xmf3Position) { m_xmf3Position = xmf3Position; }
 	~CVertex() { }
 };
 
-
 class CDiffusedVertex : public CVertex
 {
-protected:
-	//정점의 색상이다.
-	XMFLOAT4 m_xmf4Diffuse;
 public:
-	CDiffusedVertex() {
-		m_xmf3Position = XMFLOAT3(0.0f, 0.0f, 0.0f); 
-		m_xmf4Diffuse = XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f);
-	}
-	CDiffusedVertex(float x, float y, float z, XMFLOAT4 xmf4Diffuse) {
-		m_xmf3Position = XMFLOAT3(x, y, z); 
-		m_xmf4Diffuse = xmf4Diffuse;
-	}
-	CDiffusedVertex(XMFLOAT3 xmf3Position, XMFLOAT4 xmf4Diffuse) {
-		m_xmf3Position = xmf3Position; 
-		m_xmf4Diffuse = xmf4Diffuse;
-	}
+	XMFLOAT4						m_xmf4Diffuse;
+
+public:
+	CDiffusedVertex() { m_xmf3Position = XMFLOAT3(0.0f, 0.0f, 0.0f); m_xmf4Diffuse = XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f); }
+	CDiffusedVertex(float x, float y, float z, XMFLOAT4 xmf4Diffuse) { m_xmf3Position = XMFLOAT3(x, y, z); m_xmf4Diffuse = xmf4Diffuse; }
+	CDiffusedVertex(XMFLOAT3 xmf3Position, XMFLOAT4 xmf4Diffuse = XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f)) { m_xmf3Position = xmf3Position; m_xmf4Diffuse = xmf4Diffuse; }
 	~CDiffusedVertex() { }
+};
+
+class CTexturedVertex : public CVertex
+{
+public:
+	XMFLOAT2						m_xmf2TexCoord;
+
+public:
+	CTexturedVertex() { m_xmf3Position = XMFLOAT3(0.0f, 0.0f, 0.0f); m_xmf2TexCoord = XMFLOAT2(0.0f, 0.0f); }
+	CTexturedVertex(float x, float y, float z, XMFLOAT2 xmf2TexCoord) { m_xmf3Position = XMFLOAT3(x, y, z); m_xmf2TexCoord = xmf2TexCoord; }
+	CTexturedVertex(XMFLOAT3 xmf3Position, XMFLOAT2 xmf2TexCoord = XMFLOAT2(0.0f, 0.0f)) { m_xmf3Position = xmf3Position; m_xmf2TexCoord = xmf2TexCoord; }
+	~CTexturedVertex() { }
+};
+
+class CDiffusedTexturedVertex : public CDiffusedVertex
+{
+public:
+	XMFLOAT2						m_xmf2TexCoord;
+
+public:
+	CDiffusedTexturedVertex() { m_xmf3Position = XMFLOAT3(0.0f, 0.0f, 0.0f); m_xmf4Diffuse = XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f); m_xmf2TexCoord = XMFLOAT2(0.0f, 0.0f); }
+	CDiffusedTexturedVertex(float x, float y, float z, XMFLOAT4 xmf4Diffuse, XMFLOAT2 xmf2TexCoord) { m_xmf3Position = XMFLOAT3(x, y, z); m_xmf4Diffuse = xmf4Diffuse; m_xmf2TexCoord = xmf2TexCoord; }
+	CDiffusedTexturedVertex(XMFLOAT3 xmf3Position, XMFLOAT4 xmf4Diffuse = XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f), XMFLOAT2 xmf2TexCoord = XMFLOAT2(0.0f, 0.0f)) { m_xmf3Position = xmf3Position; m_xmf4Diffuse = xmf4Diffuse; m_xmf2TexCoord = xmf2TexCoord; }
+	~CDiffusedTexturedVertex() { }
+};
+
+class CDiffused2TexturedVertex : public CDiffusedVertex
+{
+public:
+	XMFLOAT2						m_xmf2TexCoord0;
+	XMFLOAT2						m_xmf2TexCoord1;
+
+public:
+	CDiffused2TexturedVertex() { m_xmf3Position = XMFLOAT3(0.0f, 0.0f, 0.0f); m_xmf4Diffuse = XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f); m_xmf2TexCoord0 = m_xmf2TexCoord1 = XMFLOAT2(0.0f, 0.0f); }
+	CDiffused2TexturedVertex(float x, float y, float z, XMFLOAT4 xmf4Diffuse, XMFLOAT2 xmf2TexCoord0, XMFLOAT2 xmf2TexCoord1) { m_xmf3Position = XMFLOAT3(x, y, z); m_xmf4Diffuse = xmf4Diffuse; m_xmf2TexCoord0 = xmf2TexCoord0; m_xmf2TexCoord1 = xmf2TexCoord1; }
+	CDiffused2TexturedVertex(XMFLOAT3 xmf3Position, XMFLOAT4 xmf4Diffuse = XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f), XMFLOAT2 xmf2TexCoord0 = XMFLOAT2(0.0f, 0.0f), XMFLOAT2 xmf2TexCoord1 = XMFLOAT2(0.0f, 0.0f)) { m_xmf3Position = xmf3Position; m_xmf4Diffuse = xmf4Diffuse; m_xmf2TexCoord0 = xmf2TexCoord0; m_xmf2TexCoord1 = xmf2TexCoord1; }
+	~CDiffused2TexturedVertex() { }
 };
 
 
@@ -53,21 +85,21 @@ public:
 protected:
 	ID3D12Resource				*m_pd3dVertexBuffer;
 	ID3D12Resource				*m_pd3dVertexUploadBuffer;
-	D3D12_VERTEX_BUFFER_VIEW	m_d3dVertexBufferView;
-	D3D12_PRIMITIVE_TOPOLOGY	m_d3dPrimitiveTopology;
 
+	ID3D12Resource				*m_pd3dIndexBuffer = NULL;
+	ID3D12Resource				*m_pd3dIndexUploadBuffer = NULL;
+
+	D3D12_VERTEX_BUFFER_VIEW	m_d3dVertexBufferView;
+	D3D12_INDEX_BUFFER_VIEW		m_d3dIndexBufferView;
+
+	D3D12_PRIMITIVE_TOPOLOGY	m_d3dPrimitiveTopology;
 	UINT						m_nSlot;
 	UINT						m_nVertices;
 	UINT						m_nStride;
 	UINT						m_nOffset;
 
-	/*인덱스 버퍼(인덱스의 배열)와 인덱스 버퍼를 위한 
-	업로드 버퍼에 대한 인터페이스 포인터이다. 
-	인덱스 버퍼는 정점 버퍼(배열)에 대한 인덱스를 가진다.*/
-	ID3D12Resource				*m_pd3dIndexBuffer = NULL;
-	ID3D12Resource				*m_pd3dIndexUploadBuffer = NULL;
+	
 	//인덱스 버퍼에 포함되는 인덱스의 개수이다.
-	D3D12_INDEX_BUFFER_VIEW		m_d3dIndexBufferView;
 	UINT						m_nIndices = 0;
 	//인덱스 버퍼에서 메쉬를 그리기 위해 사용되는 시작 인덱스이다.
 	UINT						m_nStartIndex = 0;
@@ -94,7 +126,16 @@ public:
 		*pfNearHitDistance);
 };
 
-class CTriangleMesh : public CMesh
+class CMeshDiffused : public CMesh
+{
+public:
+	CMeshDiffused(CD3DDeviceIndRes *pd3dDeviceIndRes
+		, ID3D12GraphicsCommandList *pd3dCommandList) 
+		: CMesh(pd3dDeviceIndRes, pd3dCommandList) { }
+	virtual ~CMeshDiffused() { }
+};
+
+class CTriangleMesh : public CMeshDiffused
 {
 public:
 	CTriangleMesh(
@@ -103,7 +144,7 @@ public:
 	virtual ~CTriangleMesh() { }
 };
 
-class CCubeMeshDiffused : public CMesh
+class CCubeMeshDiffused : public CMeshDiffused
 {
 public:
 	//직육면체의 가로, 세로, 깊이의 길이를 지정하여 직육면체 메쉬를 생성한다.
@@ -117,7 +158,7 @@ public:
 	virtual ~CCubeMeshDiffused();
 };
 
-class CSphereMeshDiffused : public CMesh
+class CSphereMeshDiffused : public CMeshDiffused
 {
 public:
 	CSphereMeshDiffused(
@@ -129,7 +170,7 @@ public:
 	virtual ~CSphereMeshDiffused();
 };
 
-class CAirplaneMeshDiffused : public CMesh
+class CAirplaneMeshDiffused : public CMeshDiffused
 {
 public:
 	CAirplaneMeshDiffused(
@@ -153,7 +194,11 @@ private:
 	//높이 맵 이미지를 실제로 몇 배 확대하여 사용할 것인가를 나타내는 스케일 벡터이다.
 	XMFLOAT3 m_xmf3Scale;
 public:
-	CHeightMapImage(LPCTSTR pFileName , int nWidth, int nLength , XMFLOAT3 xmf3Scale);
+	CHeightMapImage(
+		  LPCTSTR pFileName 
+		, int nWidth
+		, int nLength 
+		, XMFLOAT3 xmf3Scale);
 	~CHeightMapImage(void);
 	//높이 맵 이미지에서 (x, z) 위치의 픽셀 값에 기반한 지형의 높이를 반환한다.
 	float GetHeight(float x, float z);
@@ -165,7 +210,7 @@ public:
 	int GetHeightMapLength() { return(m_nLength); }
 };
 
-class CHeightMapGridMesh : public CMesh
+class CHeightMapGridMesh : public CMeshDiffused
 {
 protected:
 	//격자의 크기(가로: x-방향, 세로: z-방향)이다.
@@ -192,4 +237,20 @@ public:
 	virtual float OnGetHeight(int x, int z, void *pContext);
 	//격자의 좌표가 (x, z)일 때 교점(정점)의 색상을 반환하는 함수이다.
 	virtual XMFLOAT4 OnGetColor(int x, int z, void *pContext);
+};
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+class CMeshTextured : public CMesh
+{
+public:
+	CMeshTextured(CD3DDeviceIndRes *pd3dDeviceIndRes, ID3D12GraphicsCommandList *pd3dCommandList);
+	virtual ~CMeshTextured();
+};
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+class CCubeMeshTextured : public CMeshTextured
+{
+public:
+	CCubeMeshTextured(CD3DDeviceIndRes *pd3dDeviceIndRes, ID3D12GraphicsCommandList *pd3dCommandList, float fWidth = 2.0f, float fHeight = 2.0f, float fDepth = 2.0f);
+	virtual ~CCubeMeshTextured();
 };

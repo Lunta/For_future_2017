@@ -57,24 +57,29 @@ public:
 		, ID3D12Resource**				ppvResource);
 
 	ID3D12Resource* CreateBufferResource(
-		  ID3D12GraphicsCommandList		*pd3dCommandList
-		, void							*pData
+		  ID3D12GraphicsCommandList*	pd3dCommandList
+		, void*							pData
 		, UINT							nBytes
 		, D3D12_HEAP_TYPE				d3dHeapType = D3D12_HEAP_TYPE_UPLOAD
 		, D3D12_RESOURCE_STATES			d3dResourceStates = D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER
-		, ID3D12Resource				**ppd3dUploadBuffer = NULL);
+		, ID3D12Resource**				ppd3dUploadBuffer = NULL);
+	ID3D12Resource *CreateTextureResourceFromFile(
+		  ID3D12GraphicsCommandList*	pd3dCommandList
+		, wchar_t*						pszFileName
+		, ID3D12Resource**				ppd3dUploadBuffer
+		, D3D12_RESOURCE_STATES			d3dResourceStates = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
 	bool CreateDepthStencilBuffer(
 		  UINT64						BufferWidth
 		, UINT64						BufferHeight
 		, ID3D12Resource**				ppvResource);
 	void CreateRenderTargetView(
-		  ID3D12Resource				*pResource
-		, D3D12_RENDER_TARGET_VIEW_DESC	*pDesc
+		  ID3D12Resource*				pResource
+		, D3D12_RENDER_TARGET_VIEW_DESC*pDesc
 		, D3D12_CPU_DESCRIPTOR_HANDLE	DestDescriptor);
 	void CreateDepthStencilView(
-		  ID3D12Resource				*pResource
-		, D3D12_DEPTH_STENCIL_VIEW_DESC *pDesc
+		  ID3D12Resource*				pResource
+		, D3D12_DEPTH_STENCIL_VIEW_DESC*pDesc
 		, D3D12_CPU_DESCRIPTOR_HANDLE	DestDescriptor);
 
 	bool CreateDescriptorHeap(
@@ -87,12 +92,12 @@ public:
 
 	bool CreateRootSignature(
 		  UINT							nodeMask
-		, void							*pBlobWithRootSignature
+		, void*							pBlobWithRootSignature
 		, SIZE_T						blobLengthInBytes
 		, ID3D12RootSignature**			ppd3dRootSignature);
 	bool CreateGraphicsPipelineState(
 		  D3D12_GRAPHICS_PIPELINE_STATE_DESC* pDesc
-		, ID3D12PipelineState**				ppPipelineState);
+		, ID3D12PipelineState**			ppPipelineState);
 
 	bool CheckFeatureSupport();
 	bool CheckFeatureSupport(

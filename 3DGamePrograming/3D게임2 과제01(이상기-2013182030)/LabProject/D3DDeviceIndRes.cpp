@@ -84,25 +84,28 @@ bool CD3DDeviceIndRes::CreateCommandQueue(ID3D12CommandQueue ** ppd3dCommandQueu
 	::ZeroMemory(&d3dCommandQueueDesc, sizeof(D3D12_COMMAND_QUEUE_DESC));
 	d3dCommandQueueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
 	d3dCommandQueueDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
-	return SUCCEEDED(m_pd3dDevice->CreateCommandQueue(
-		&d3dCommandQueueDesc
-		, IID_PPV_ARGS(ppd3dCommandQueue)));
+	return SUCCEEDED(
+		m_pd3dDevice->CreateCommandQueue(
+			  &d3dCommandQueueDesc
+			, IID_PPV_ARGS(ppd3dCommandQueue)));
 }
 bool CD3DDeviceIndRes::CreateCommandQueue(
 	  D3D12_COMMAND_QUEUE_DESC* pd3dCommandQueueDesc
 	, ID3D12CommandQueue**		ppd3dCommandQueue)
 {
-	return SUCCEEDED(m_pd3dDevice->CreateCommandQueue(
-		  pd3dCommandQueueDesc
-		, IID_PPV_ARGS(ppd3dCommandQueue)));
+	return SUCCEEDED(
+		m_pd3dDevice->CreateCommandQueue(
+			  pd3dCommandQueueDesc
+			, IID_PPV_ARGS(ppd3dCommandQueue)));
 }
 bool CD3DDeviceIndRes::CreateCommandAllocator(
  	  D3D12_COMMAND_LIST_TYPE	d3dCommandListType
 	, ID3D12CommandAllocator**	ppd3dCommandAllocator)
 {
-	return SUCCEEDED(m_pd3dDevice->CreateCommandAllocator(
-		d3dCommandListType
-		, IID_PPV_ARGS(ppd3dCommandAllocator)));
+	return SUCCEEDED(
+		m_pd3dDevice->CreateCommandAllocator(
+			  d3dCommandListType
+			, IID_PPV_ARGS(ppd3dCommandAllocator)));
 }
 bool CD3DDeviceIndRes::CreateCommandList(
 	  UINT nodeMask
@@ -111,12 +114,13 @@ bool CD3DDeviceIndRes::CreateCommandList(
 	, ID3D12PipelineState*			pd3dPipelineState
 	, ID3D12GraphicsCommandList**	pd3dCommandList)
 {
-	return SUCCEEDED(m_pd3dDevice->CreateCommandList(
-		nodeMask
-		, d3dCommandListType
-		, pd3dCommandAllocator
-		, pd3dPipelineState
-		, IID_PPV_ARGS(pd3dCommandList)));
+	return SUCCEEDED(
+		m_pd3dDevice->CreateCommandList(
+			  nodeMask
+			, d3dCommandListType
+			, pd3dCommandAllocator
+			, pd3dPipelineState
+			, IID_PPV_ARGS(pd3dCommandList)));
 }
 
 bool CD3DDeviceIndRes::CreateSwapChain(
@@ -225,7 +229,7 @@ ID3D12Resource* CD3DDeviceIndRes::CreateBufferResource(
 		d3dResourceInitialStates = D3D12_RESOURCE_STATE_COPY_DEST;
 
 	CreateCommittedResource(
-		&d3dHeapPropertiesDesc
+		  &d3dHeapPropertiesDesc
 		, D3D12_HEAP_FLAG_NONE
 		, &d3dResourceDesc
 		, d3dResourceInitialStates
@@ -243,7 +247,7 @@ ID3D12Resource* CD3DDeviceIndRes::CreateBufferResource(
 				//업로드 버퍼를 생성한다.
 				d3dHeapPropertiesDesc.Type = D3D12_HEAP_TYPE_UPLOAD;
 				CreateCommittedResource(
-					&d3dHeapPropertiesDesc
+					  &d3dHeapPropertiesDesc
 					, D3D12_HEAP_FLAG_NONE
 					, &d3dResourceDesc
 					, D3D12_RESOURCE_STATE_GENERIC_READ
@@ -287,10 +291,83 @@ ID3D12Resource* CD3DDeviceIndRes::CreateBufferResource(
 	}
 	return(pd3dBuffer);
 }
+ID3D12Resource * CD3DDeviceIndRes::CreateTextureResourceFromFile(
+	ID3D12GraphicsCommandList*	pd3dCommandList
+	, wchar_t*					pszFileName
+	, ID3D12Resource**			ppd3dUploadBuffer
+	, D3D12_RESOURCE_STATES		d3dResourceStates)
+{
+	ID3D12Resource *pd3dTexture = NULL;
+	std::unique_ptr<uint8_t[]> ddsData;
+	std::vector<D3D12_SUBRESOURCE_DATA> vSubresources;
+	DDS_ALPHA_MODE ddsAlphaMode = DDS_ALPHA_MODE_UNKNOWN;
+	bool bIsCubeMap = false;
+
+	HRESULT hResult = DirectX::LoadDDSTextureFromFileEx(pd3dDevice, pszFileName, 0, D3D12_RESOURCE_FLAG_NONE, DDS_LOADER_DEFAULT, &pd3dTexture, ddsData, vSubresources, &ddsAlphaMode, &bIsCubeMap);
+
+	D3D12_HEAP_PROPERTIES d3dHeapPropertiesDesc;
+	::ZeroMemory(&d3dHeapPropertiesDesc, sizeof(D3D12_HEAP_PROPERTIES));
+	d3dHeapPropertiesDesc.Type = D3D12_HEAP_TYPE_UPLOAD;
+	d3dHeapPropertiesDesc.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
+	d3dHeapPropertiesDesc.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
+	d3dHeapPropertiesDesc.CreationNodeMask = 1;
+	d3dHeapPropertiesDesc.VisibleNodeMask = 1;
+
+	//	D3D12_RESOURCE_DESC d3dResourceDesc = pd3dTexture->GetDesc();
+	//	UINT nSubResources = d3dResourceDesc.DepthOrArraySize * d3dResourceDesc.MipLevels;
+	UINT nSubResources = (UINT)vSubresources.size();
+	//	UINT64 nBytes = 0;
+	//	pd3dDevice->GetCopyableFootprints(&d3dResourceDesc, 0, nSubResources, 0, NULL, NULL, NULL, &nBytes);
+	UINT64 nBytes = GetRequiredIntermediateSize(pd3dTexture, 0, nSubResources);
+
+	D3D12_RESOURCE_DESC d3dResourceDesc;
+	::ZeroMemory(&d3dResourceDesc, sizeof(D3D12_RESOURCE_DESC));
+	d3dResourceDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER; //Upload Heap에는 텍스쳐를 생성할 수 없음
+	d3dResourceDesc.Alignment = 0;
+	d3dResourceDesc.Width = nBytes;
+	d3dResourceDesc.Height = 1;
+	d3dResourceDesc.DepthOrArraySize = 1;
+	d3dResourceDesc.MipLevels = 1;
+	d3dResourceDesc.Format = DXGI_FORMAT_UNKNOWN;
+	d3dResourceDesc.SampleDesc.Count = 1;
+	d3dResourceDesc.SampleDesc.Quality = 0;
+	d3dResourceDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+	d3dResourceDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
+
+	CreateCommittedResource(
+		  &d3dHeapPropertiesDesc
+		, D3D12_HEAP_FLAG_NONE
+		, &d3dResourceDesc
+		, D3D12_RESOURCE_STATE_GENERIC_READ
+		, NULL
+		, ppd3dUploadBuffer);
+
+	//UINT nSubResources = (UINT)vSubresources.size();
+	//D3D12_SUBRESOURCE_DATA *pd3dSubResourceData = new D3D12_SUBRESOURCE_DATA[nSubResources];
+	//for (UINT i = 0; i < nSubResources; i++) pd3dSubResourceData[i] = vSubresources.at(i);
+
+	//	std::vector<D3D12_SUBRESOURCE_DATA>::pointer ptr = &vSubresources[0];
+	::UpdateSubresources(pd3dCommandList, pd3dTexture, *ppd3dUploadBuffer, 0, 0, nSubResources, &vSubresources[0]);
+
+	D3D12_RESOURCE_BARRIER d3dResourceBarrier;
+	::ZeroMemory(&d3dResourceBarrier, sizeof(D3D12_RESOURCE_BARRIER));
+	d3dResourceBarrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+	d3dResourceBarrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+	d3dResourceBarrier.Transition.pResource = pd3dTexture;
+	d3dResourceBarrier.Transition.StateBefore = D3D12_RESOURCE_STATE_COPY_DEST;
+	d3dResourceBarrier.Transition.StateAfter = d3dResourceStates;
+	d3dResourceBarrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+	pd3dCommandList->ResourceBarrier(1, &d3dResourceBarrier);
+
+	//	delete[] pd3dSubResourceData;
+
+	return(pd3dTexture);
+}
+
 bool CD3DDeviceIndRes::CreateDepthStencilBuffer(
-	  UINT64 BufferWidth
-	, UINT64 BufferHeight
-	, ID3D12Resource** ppvResource)
+	  UINT64			BufferWidth
+	, UINT64			BufferHeight
+	, ID3D12Resource**	ppvResource)
 {
 	D3D12_RESOURCE_DESC d3dResourceDesc;
 	d3dResourceDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
@@ -301,7 +378,7 @@ bool CD3DDeviceIndRes::CreateDepthStencilBuffer(
 	d3dResourceDesc.MipLevels = 1;
 	d3dResourceDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
 	d3dResourceDesc.SampleDesc.Count = (m_bMsaa4xEnable) ? 4 : 1;
-	d3dResourceDesc.SampleDesc.Quality =
+	d3dResourceDesc.SampleDesc.Quality = 
 		(m_bMsaa4xEnable) ? (m_nMsaa4xQualityLevels - 1) : 0;
 	d3dResourceDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
 	d3dResourceDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
@@ -361,9 +438,10 @@ bool CD3DDeviceIndRes::CreateDescriptorHeap(
 	d3dDescriptorHeapDesc.NumDescriptors = NumDescriptors;
 	d3dDescriptorHeapDesc.Flags = Flags;
 	d3dDescriptorHeapDesc.NodeMask = NodeMask;
-	return SUCCEEDED(m_pd3dDevice->CreateDescriptorHeap(
-		  &d3dDescriptorHeapDesc
-		, IID_PPV_ARGS(ppd3dDescriptorHeap)));
+	return SUCCEEDED(
+		m_pd3dDevice->CreateDescriptorHeap(
+			  &d3dDescriptorHeapDesc
+			, IID_PPV_ARGS(ppd3dDescriptorHeap)));
 }
 
 UINT CD3DDeviceIndRes::GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE DescriptorHeapType)
@@ -402,8 +480,9 @@ bool CD3DDeviceIndRes::CheckFeatureSupport()
 	d3dMsaaQualityLevels.Flags = D3D12_MULTISAMPLE_QUALITY_LEVELS_FLAG_NONE;
 	d3dMsaaQualityLevels.NumQualityLevels = 0;
 
-	bool bSucceeded = SUCCEEDED(m_pd3dDevice->CheckFeatureSupport(
-		D3D12_FEATURE_MULTISAMPLE_QUALITY_LEVELS
+	bool bSucceeded = SUCCEEDED(
+		m_pd3dDevice->CheckFeatureSupport(
+		  D3D12_FEATURE_MULTISAMPLE_QUALITY_LEVELS
 		, &d3dMsaaQualityLevels
 		, sizeof(D3D12_FEATURE_DATA_MULTISAMPLE_QUALITY_LEVELS)));
 
@@ -420,7 +499,7 @@ bool CD3DDeviceIndRes::CheckFeatureSupport(
 {
 	return SUCCEEDED(
 		m_pd3dDevice->CheckFeatureSupport(
-			feature
+			  feature
 			, pFeatureSupportData
 			, FeatureSupportDataSize));
 }

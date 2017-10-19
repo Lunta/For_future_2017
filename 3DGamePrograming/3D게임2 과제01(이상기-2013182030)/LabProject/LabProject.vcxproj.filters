@@ -46,6 +46,15 @@
     <Filter Include="D3DDeviceIndRes">
       <UniqueIdentifier>{dcd618a3-f44a-415d-b64f-6a2e9b93509b}</UniqueIdentifier>
     </Filter>
+    <Filter Include="TextureLoader">
+      <UniqueIdentifier>{7ef88132-d45b-4bb4-bd85-18ba1204c7b6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="TextureLoader\DDSTextureLoader12">
+      <UniqueIdentifier>{ce3192b6-6b1f-4ab7-859f-97864222f14f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="TextureLoader\WICTextureLoader12">
+      <UniqueIdentifier>{52ff4fb4-f7d3-4232-94be-b72ddfc643ed}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="LabProject.cpp">
@@ -80,6 +89,12 @@
     </ClCompile>
     <ClCompile Include="D3DDeviceIndRes.cpp">
       <Filter>D3DDeviceIndRes</Filter>
+    </ClCompile>
+    <ClCompile Include="DDSTextureLoader12.cpp">
+      <Filter>TextureLoader\DDSTextureLoader12</Filter>
+    </ClCompile>
+    <ClCompile Include="WICTextureLoader12.cpp">
+      <Filter>TextureLoader\WICTextureLoader12</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -118,6 +133,12 @@
     </ClInclude>
     <ClInclude Include="D3DDeviceIndRes.h">
       <Filter>D3DDeviceIndRes</Filter>
+    </ClInclude>
+    <ClInclude Include="DDSTextureLoader12.h">
+      <Filter>TextureLoader\DDSTextureLoader12</Filter>
+    </ClInclude>
+    <ClInclude Include="WICTextureLoader12.h">
+      <Filter>TextureLoader\WICTextureLoader12</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

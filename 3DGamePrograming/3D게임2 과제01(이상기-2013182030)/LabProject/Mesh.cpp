@@ -125,7 +125,7 @@ int CMesh::CheckRayIntersection(
 CTriangleMesh::CTriangleMesh(
 	  CD3DDeviceIndRes *pd3dDeviceIndRes
 	, ID3D12GraphicsCommandList *pd3dCommandList) 
-	: CMesh(pd3dDeviceIndRes, pd3dCommandList)
+	: CMeshDiffused(pd3dDeviceIndRes, pd3dCommandList)
 {
 	//삼각형 메쉬를 정의한다.
 	m_nVertices = 3;
@@ -156,9 +156,11 @@ CTriangleMesh::CTriangleMesh(
 
 
 CCubeMeshDiffused::CCubeMeshDiffused(
-	CD3DDeviceIndRes *pd3dDeviceIndRes, ID3D12GraphicsCommandList * pd3dCommandList,
-	float fWidth, float fHeight, float fDepth, XMFLOAT4 xmf4Color) :
-	CMesh(pd3dDeviceIndRes, pd3dCommandList)
+	  CD3DDeviceIndRes *pd3dDeviceIndRes
+	, ID3D12GraphicsCommandList * pd3dCommandList
+	, float fWidth, float fHeight, float fDepth
+	, XMFLOAT4 xmf4Color) 
+	: CMeshDiffused(pd3dDeviceIndRes, pd3dCommandList)
 {
 	//직육면체는 꼭지점(정점)이 8개이다.
 	m_nVertices = 8;
@@ -251,9 +253,11 @@ CCubeMeshDiffused::~CCubeMeshDiffused()
 {
 }
 
-CSphereMeshDiffused::CSphereMeshDiffused(CD3DDeviceIndRes *pd3dDeviceIndRes,
-	ID3D12GraphicsCommandList *pd3dCommandList, float fRadius, int nSlices, int nStacks) :
-	CMesh(pd3dDeviceIndRes, pd3dCommandList)
+CSphereMeshDiffused::CSphereMeshDiffused(
+	CD3DDeviceIndRes *pd3dDeviceIndRes
+	, ID3D12GraphicsCommandList *pd3dCommandList
+	, float fRadius, int nSlices, int nStacks) 
+	: CMeshDiffused(pd3dDeviceIndRes, pd3dCommandList)
 {
 	/*nSlices는 구를 xz-평면에 평행하게 몇 등분할 것인 가를 나타낸다. nStacks은 원기둥을 몇 조각으로 자를 것인
 	가를 나타낸다.*/
@@ -353,21 +357,30 @@ CSphereMeshDiffused::~CSphereMeshDiffused()
 {
 }
 
-CAirplaneMeshDiffused::CAirplaneMeshDiffused(CD3DDeviceIndRes *pd3dDeviceIndRes,
-	ID3D12GraphicsCommandList *pd3dCommandList, float fWidth, float fHeight, float fDepth,
-	XMFLOAT4 xmf4Color) : CMesh(pd3dDeviceIndRes, pd3dCommandList)
+CAirplaneMeshDiffused::CAirplaneMeshDiffused(
+	CD3DDeviceIndRes *pd3dDeviceIndRes
+	, ID3D12GraphicsCommandList *pd3dCommandList
+	, float fWidth, float fHeight, float fDepth
+	, XMFLOAT4 xmf4Color) 
+	: CMeshDiffused(pd3dDeviceIndRes, pd3dCommandList)
 {
 	m_nVertices = 24 * 3;
 	m_nStride = sizeof(CDiffusedVertex);
 	m_nOffset = 0;
 	m_nSlot = 0;
 	m_d3dPrimitiveTopology = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+
 	float fx = fWidth*0.5f, fy = fHeight*0.5f, fz = fDepth*0.5f;
+
 	//위의 그림과 같은 비행기 메쉬를 표현하기 위한 정점 데이터이다.
 	m_pVertices = new CDiffusedVertex[m_nVertices];
-	float x1 = fx * 0.2f, y1 = fy * 0.2f, x2 = fx * 0.1f, y3 = fy * 0.3f, y2 = ((y1 - (fy -
-		y3)) / x1) * x2 + (fy - y3);
+	float x1 = fx * 0.2f
+		, y1 = fy * 0.2f
+		, x2 = fx * 0.1f
+		, y3 = fy * 0.3f
+		, y2 = ((y1 - (fy - y3)) / x1) * x2 + (fy - y3);
 	int i = 0;
+
 	//비행기 메쉬의 위쪽 면
 	m_pVertices[i++] = CDiffusedVertex(XMFLOAT3(0.0f, +(fy + y3), -fz),
 		Vector4::Add(xmf4Color, RANDOM_COLOR));
@@ -539,16 +552,25 @@ CAirplaneMeshDiffused::~CAirplaneMeshDiffused()
 {
 }
 
-CHeightMapImage::CHeightMapImage(LPCTSTR pFileName, int nWidth, int nLength, XMFLOAT3
-	xmf3Scale)
+CHeightMapImage::CHeightMapImage(
+	  LPCTSTR	pFileName
+	, int		nWidth
+	, int		nLength
+	, XMFLOAT3	xmf3Scale)
 {
 	m_nWidth = nWidth;
 	m_nLength = nLength;
 	m_xmf3Scale = xmf3Scale;
 	BYTE *pHeightMapPixels = new BYTE[m_nWidth * m_nLength];
 	//파일을 열고 읽는다. 높이 맵 이미지는 파일 헤더가 없는 RAW 이미지이다.
-	HANDLE hFile = ::CreateFile(pFileName, GENERIC_READ, 0, NULL, OPEN_EXISTING,
-		FILE_ATTRIBUTE_NORMAL | FILE_ATTRIBUTE_READONLY, NULL);
+	HANDLE hFile = ::CreateFile(
+		pFileName
+		, GENERIC_READ
+		, 0
+		, NULL
+		, OPEN_EXISTING
+		, FILE_ATTRIBUTE_NORMAL | FILE_ATTRIBUTE_READONLY
+		, NULL);
 	DWORD dwBytesRead;
 	::ReadFile(hFile, pHeightMapPixels, (m_nWidth * m_nLength), &dwBytesRead, NULL);
 	::CloseHandle(hFile);
@@ -648,7 +670,7 @@ CHeightMapGridMesh::CHeightMapGridMesh(
 	, int xStart, int zStart, int nWidth, int nLength
 	, XMFLOAT3 xmf3Scale, XMFLOAT4 xmf4Color
 	, void *pContext) 
-	: CMesh(pd3dDeviceIndRes, pd3dCommandList)
+	: CMeshDiffused(pd3dDeviceIndRes, pd3dCommandList)
 {
 	//격자의 교점(정점)의 개수는 (nWidth * nLength)이다.
 	m_nVertices = nWidth * nLength;
@@ -799,4 +821,153 @@ XMFLOAT4 CHeightMapGridMesh::OnGetColor(int x, int z, void *pContext)
 	//fScale은 조명 색상(밝기)이 반사되는 비율이다.
 	XMFLOAT4 xmf4Color = Vector4::Multiply(fScale, xmf4IncidentLightColor);
 	return(xmf4Color);
+}
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+CMeshTextured::CMeshTextured(
+	CD3DDeviceIndRes *pd3dDeviceIndRes
+	, ID3D12GraphicsCommandList *pd3dCommandList)
+	: CMesh(pd3dDeviceIndRes, pd3dCommandList)
+{
+}
+
+CMeshTextured::~CMeshTextured()
+{
+}
+
+//////////////////////////////////////////////////////////////////////////////////
+//
+CCubeMeshTextured::CCubeMeshTextured(
+	CD3DDeviceIndRes *pd3dDeviceIndRes
+	, ID3D12GraphicsCommandList *pd3dCommandList
+	, float fWidth, float fHeight, float fDepth) 
+	: CMeshTextured(pd3dDeviceIndRes, pd3dCommandList)
+{
+	m_nVertices = 36;
+	m_nStride = sizeof(CTexturedVertex);
+	m_nOffset = 0;
+	m_nSlot = 0;
+	m_d3dPrimitiveTopology = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+
+	float fx = fWidth*0.5f, fy = fHeight*0.5f, fz = fDepth*0.5f;
+
+	XMFLOAT3 pxmf3Positions[36];
+	int i = 0;
+	pxmf3Positions[i++] = XMFLOAT3(-fx, +fy, -fz);
+	pxmf3Positions[i++] = XMFLOAT3(+fx, +fy, -fz);
+	pxmf3Positions[i++] = XMFLOAT3(+fx, -fy, -fz);
+
+	pxmf3Positions[i++] = XMFLOAT3(-fx, +fy, -fz);
+	pxmf3Positions[i++] = XMFLOAT3(+fx, -fy, -fz);
+	pxmf3Positions[i++] = XMFLOAT3(-fx, -fy, -fz);
+
+	pxmf3Positions[i++] = XMFLOAT3(-fx, +fy, +fz);
+	pxmf3Positions[i++] = XMFLOAT3(+fx, +fy, +fz);
+	pxmf3Positions[i++] = XMFLOAT3(+fx, +fy, -fz);
+
+	pxmf3Positions[i++] = XMFLOAT3(-fx, +fy, +fz);
+	pxmf3Positions[i++] = XMFLOAT3(+fx, +fy, -fz);
+	pxmf3Positions[i++] = XMFLOAT3(-fx, +fy, -fz);
+
+	pxmf3Positions[i++] = XMFLOAT3(-fx, -fy, +fz);
+	pxmf3Positions[i++] = XMFLOAT3(+fx, -fy, +fz);
+	pxmf3Positions[i++] = XMFLOAT3(+fx, +fy, +fz);
+
+	pxmf3Positions[i++] = XMFLOAT3(-fx, -fy, +fz);
+	pxmf3Positions[i++] = XMFLOAT3(+fx, +fy, +fz);
+	pxmf3Positions[i++] = XMFLOAT3(-fx, +fy, +fz);
+
+	pxmf3Positions[i++] = XMFLOAT3(-fx, -fy, -fz);
+	pxmf3Positions[i++] = XMFLOAT3(+fx, -fy, -fz);
+	pxmf3Positions[i++] = XMFLOAT3(+fx, -fy, +fz);
+
+	pxmf3Positions[i++] = XMFLOAT3(-fx, -fy, -fz);
+	pxmf3Positions[i++] = XMFLOAT3(+fx, -fy, +fz);
+	pxmf3Positions[i++] = XMFLOAT3(-fx, -fy, +fz);
+
+	pxmf3Positions[i++] = XMFLOAT3(-fx, +fy, +fz);
+	pxmf3Positions[i++] = XMFLOAT3(-fx, +fy, -fz);
+	pxmf3Positions[i++] = XMFLOAT3(-fx, -fy, -fz);
+
+	pxmf3Positions[i++] = XMFLOAT3(-fx, +fy, +fz);
+	pxmf3Positions[i++] = XMFLOAT3(-fx, -fy, -fz);
+	pxmf3Positions[i++] = XMFLOAT3(-fx, -fy, +fz);
+
+	pxmf3Positions[i++] = XMFLOAT3(+fx, +fy, -fz);
+	pxmf3Positions[i++] = XMFLOAT3(+fx, +fy, +fz);
+	pxmf3Positions[i++] = XMFLOAT3(+fx, -fy, +fz);
+
+	pxmf3Positions[i++] = XMFLOAT3(+fx, +fy, -fz);
+	pxmf3Positions[i++] = XMFLOAT3(+fx, -fy, +fz);
+	pxmf3Positions[i++] = XMFLOAT3(+fx, -fy, -fz);
+
+	XMFLOAT2 pxmf2TexCoords[36];
+	i = 0;
+	pxmf2TexCoords[i++] = XMFLOAT2(0.0f, 0.0f);
+	pxmf2TexCoords[i++] = XMFLOAT2(1.0f, 0.0f);
+	pxmf2TexCoords[i++] = XMFLOAT2(1.0f, 1.0f);
+
+	pxmf2TexCoords[i++] = XMFLOAT2(0.0f, 0.0f);
+	pxmf2TexCoords[i++] = XMFLOAT2(1.0f, 1.0f);
+	pxmf2TexCoords[i++] = XMFLOAT2(0.0f, 1.0f);
+
+	pxmf2TexCoords[i++] = XMFLOAT2(0.0f, 0.0f);
+	pxmf2TexCoords[i++] = XMFLOAT2(1.0f, 0.0f);
+	pxmf2TexCoords[i++] = XMFLOAT2(1.0f, 1.0f);
+
+	pxmf2TexCoords[i++] = XMFLOAT2(0.0f, 0.0f);
+	pxmf2TexCoords[i++] = XMFLOAT2(1.0f, 1.0f);
+	pxmf2TexCoords[i++] = XMFLOAT2(0.0f, 1.0f);
+
+	pxmf2TexCoords[i++] = XMFLOAT2(0.0f, 0.0f);
+	pxmf2TexCoords[i++] = XMFLOAT2(1.0f, 0.0f);
+	pxmf2TexCoords[i++] = XMFLOAT2(1.0f, 1.0f);
+
+	pxmf2TexCoords[i++] = XMFLOAT2(0.0f, 0.0f);
+	pxmf2TexCoords[i++] = XMFLOAT2(1.0f, 1.0f);
+	pxmf2TexCoords[i++] = XMFLOAT2(0.0f, 1.0f);
+
+	pxmf2TexCoords[i++] = XMFLOAT2(0.0f, 0.0f);
+	pxmf2TexCoords[i++] = XMFLOAT2(1.0f, 0.0f);
+	pxmf2TexCoords[i++] = XMFLOAT2(1.0f, 1.0f);
+
+	pxmf2TexCoords[i++] = XMFLOAT2(0.0f, 0.0f);
+	pxmf2TexCoords[i++] = XMFLOAT2(1.0f, 1.0f);
+	pxmf2TexCoords[i++] = XMFLOAT2(0.0f, 1.0f);
+
+	pxmf2TexCoords[i++] = XMFLOAT2(0.0f, 0.0f);
+	pxmf2TexCoords[i++] = XMFLOAT2(1.0f, 0.0f);
+	pxmf2TexCoords[i++] = XMFLOAT2(1.0f, 1.0f);
+
+	pxmf2TexCoords[i++] = XMFLOAT2(0.0f, 0.0f);
+	pxmf2TexCoords[i++] = XMFLOAT2(1.0f, 1.0f);
+	pxmf2TexCoords[i++] = XMFLOAT2(0.0f, 1.0f);
+
+	pxmf2TexCoords[i++] = XMFLOAT2(0.0f, 0.0f);
+	pxmf2TexCoords[i++] = XMFLOAT2(1.0f, 0.0f);
+	pxmf2TexCoords[i++] = XMFLOAT2(1.0f, 1.0f);
+
+	pxmf2TexCoords[i++] = XMFLOAT2(0.0f, 0.0f);
+	pxmf2TexCoords[i++] = XMFLOAT2(1.0f, 1.0f);
+	pxmf2TexCoords[i++] = XMFLOAT2(0.0f, 1.0f);
+
+	CTexturedVertex pVertices[36];
+	for (int i = 0; i < 36; i++) pVertices[i] = CTexturedVertex(pxmf3Positions[i], pxmf2TexCoords[i]);
+
+	m_pd3dVertexBuffer = 
+		pd3dDeviceIndRes->CreateBufferResource(
+			  pd3dCommandList
+			, pVertices
+			, m_nStride * m_nVertices
+			, D3D12_HEAP_TYPE_DEFAULT
+			, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER
+			, &m_pd3dVertexUploadBuffer);
+
+	m_d3dVertexBufferView.BufferLocation = m_pd3dVertexBuffer->GetGPUVirtualAddress();
+	m_d3dVertexBufferView.StrideInBytes = m_nStride;
+	m_d3dVertexBufferView.SizeInBytes = m_nStride * m_nVertices;
+}
+
+CCubeMeshTextured::~CCubeMeshTextured()
+{
 }

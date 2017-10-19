@@ -59,19 +59,19 @@ ID3D12RootSignature* CScene::CreateGraphicsRootSignature(CD3DDeviceIndRes *pd3dD
 	d3dRootSignatureDesc.pStaticSamplers = NULL;
 	d3dRootSignatureDesc.Flags = d3dRootSignatureFlags;
 
-	ID3DBlob *pd3dSignatureBlob = NULL;
-	ID3DBlob *pd3dErrorBlob = NULL;
-	D3D12SerializeRootSignature(&d3dRootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1,
-		&pd3dSignatureBlob, &pd3dErrorBlob);
+	ComPtr<ID3DBlob> pd3dSignatureBlob = NULL;
+	ComPtr<ID3DBlob> pd3dErrorBlob = NULL;
+	D3D12SerializeRootSignature(
+		  &d3dRootSignatureDesc
+		, D3D_ROOT_SIGNATURE_VERSION_1
+		, &pd3dSignatureBlob
+		, &pd3dErrorBlob);
 
 	pd3dDeviceIndRes->CreateRootSignature(
 		  0
 		, pd3dSignatureBlob->GetBufferPointer()
 		, pd3dSignatureBlob->GetBufferSize()
 		, &pd3dGraphicsRootSignature);
-
-	if (pd3dSignatureBlob) pd3dSignatureBlob->Release();
-	if (pd3dErrorBlob) pd3dErrorBlob->Release();
 
 	return(pd3dGraphicsRootSignature);
 }
