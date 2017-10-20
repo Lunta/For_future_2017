@@ -120,8 +120,8 @@ void CGameFramework::OnProcessingMouseMessage(
 		case WM_LBUTTONDOWN:
 		case WM_RBUTTONDOWN:
 			//마우스가 눌려지면 마우스 픽킹을 하여 선택한 게임 객체를 찾는다.
-			m_pSelectedObject = m_pScene->PickObjectPointedByCursor(LOWORD(lParam),
-				HIWORD(lParam), m_pCamera);
+			//m_pSelectedObject = m_pScene->PickObjectPointedByCursor(LOWORD(lParam),
+			//	HIWORD(lParam), m_pCamera);
 			//마우스 캡쳐를 하고 현재 마우스 위치를 가져온다.
 			::SetCapture(hWnd);
 			::GetCursorPos(&m_ptOldCursorPos);
@@ -291,7 +291,20 @@ void CGameFramework::FrameAdvance()
 	m_pd3dCommandQueue->ExecuteCommandLists(1, ppd3dCommandLists);
 
 	WaitForGpuComplete();
+#ifdef _WITH_PRESENT_PARAMETERS
+	DXGI_PRESENT_PARAMETERS dxgiPresentParameters;
+	dxgiPresentParameters.DirtyRectsCount = 0;
+	dxgiPresentParameters.pDirtyRects = NULL;
+	dxgiPresentParameters.pScrollRect = NULL;
+	dxgiPresentParameters.pScrollOffset = NULL;
+	m_pdxgiSwapChain->Present1(1, 0, &dxgiPresentParameters);
+#else
+#ifdef _WITH_SYNCH_SWAPCHAIN
+	m_pdxgiSwapChain->Present(1, 0);
+#else
 	m_pdxgiSwapChain->Present(0, 0);
+#endif
+#endif
 	MoveToNextFrame();
 
 	m_GameTimer.GetFrameRate(m_pszFrameRate + 12, 37);
@@ -405,8 +418,11 @@ void CGameFramework::BuildObjects()
 			m_pScene->BuildObjects(m_pd3dDeviceIndRes, m_pd3dCommandList.Get());
 		}
 
-		m_pPlayer = new CTerrainPlayer(m_pd3dDeviceIndRes, m_pd3dCommandList.Get(),
-			m_pScene->GetGraphicsRootSignature(), m_pScene->GetTerrain(), 1);
+		m_pPlayer = new CTerrainPlayer(
+			m_pd3dDeviceIndRes
+			, m_pd3dCommandList.Get()
+			, m_pScene->GetGraphicsRootSignature()
+			, m_pScene->GetTerrain(), 1);
 		m_pScene->SetPlayer(m_pPlayer);
 		m_pCamera = m_pPlayer->GetCamera();
 	}
@@ -437,7 +453,6 @@ void CGameFramework::ProcessInput()
 		m_pScene->ProcessInput(m_GameTimer.GetTimeElapsed());
 	
 }
-
 void CGameFramework::AnimateObjects()
 {
 	if (m_pScene) 

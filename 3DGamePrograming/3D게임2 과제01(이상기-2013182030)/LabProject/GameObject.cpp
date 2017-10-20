@@ -3,6 +3,27 @@
 
 #include "Shader.h"
 
+CMaterial::CMaterial()
+{
+	m_xmf4Albedo = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
+}
+
+CMaterial::~CMaterial()
+{
+	if (m_pShader)
+	{
+		m_pShader->ReleaseShaderVariables();
+		m_pShader->Release();
+	}
+}
+
+void CMaterial::SetShader(CShader *pShader)
+{
+	if (m_pShader) m_pShader->Release();
+	m_pShader = pShader;
+	if (m_pShader) m_pShader->AddRef();
+}
+
 CGameObject::CGameObject(int nMeshes)
 {
 	m_xmf4x4World = Matrix4x4::Identity();
@@ -26,11 +47,7 @@ CGameObject::~CGameObject()
 		}
 		delete[] m_ppMeshes;
 	}
-	if (m_pShader)
-	{
-		m_pShader->ReleaseShaderVariables();
-		m_pShader->Release();
-	}
+	if (m_pMaterial) m_pMaterial->Release();
 }
 
 void CGameObject::SetMesh(int nIndex, CMesh *pMesh)
@@ -44,9 +61,25 @@ void CGameObject::SetMesh(int nIndex, CMesh *pMesh)
 }
 void CGameObject::SetShader(CShader *pShader)
 {
-	if (m_pShader) m_pShader->Release();
-	m_pShader = pShader;
-	if (m_pShader) m_pShader->AddRef();
+	if (!m_pMaterial)
+	{
+		m_pMaterial = new CMaterial();
+		m_pMaterial->AddRef();
+	}
+	if (m_pMaterial) m_pMaterial->SetShader(pShader);
+}
+
+void CGameObject::SetMaterial(CMaterial *pMaterial)
+{
+	if (m_pMaterial) m_pMaterial->Release();
+	m_pMaterial = pMaterial;
+	if (m_pMaterial) m_pMaterial->AddRef();
+}
+
+void CGameObject::SetMaterial(UINT nReflection)
+{
+	if (!m_pMaterial) m_pMaterial = new CMaterial();
+	m_pMaterial->m_nReflection = nReflection;
 }
 
 void CGameObject::CreateShaderVariables(
@@ -59,31 +92,29 @@ void CGameObject::ReleaseShaderVariables()
 }
 void CGameObject::UpdateShaderVariables(ID3D12GraphicsCommandList *pd3dCommandList)
 {
-	XMFLOAT4X4 xmf4x4World;
-	XMStoreFloat4x4(&xmf4x4World, XMMatrixTranspose(XMLoadFloat4x4(&m_xmf4x4World)));
-	//객체의 월드 변환 행렬을 루트 상수(32-비트 값)를 통하여 셰이더 변수(상수 버퍼)로 복사한다.
-	pd3dCommandList->SetGraphicsRoot32BitConstants(0, 16, &xmf4x4World, 0);
 }
 
-void CGameObject::OnPrepareRender()
-{
-}
 void CGameObject::Render(ID3D12GraphicsCommandList *pd3dCommandList, CCamera *pCamera)
 {
 	if (!m_bActive) return;
 	//게임 객체가 카메라에 보이면 렌더링한다.
 	if (IsVisible(pCamera))
 	{
-		//객체의 정보를 셰이더 변수(상수 버퍼)로 복사한다.
-		UpdateShaderVariables(pd3dCommandList);
-		if (m_pShader) m_pShader->Render(pd3dCommandList, pCamera);
-		if (m_ppMeshes)
+		OnPrepareRender();
+
+		if (m_pMaterial)
 		{
-			for (int i = 0; i < m_nMeshes; i++)
+			if (m_pMaterial->m_pShader)
 			{
-				if (m_ppMeshes[i]) m_ppMeshes[i]->Render(pd3dCommandList);
+				m_pMaterial->m_pShader->Render(pd3dCommandList, pCamera);
+				m_pMaterial->m_pShader->UpdateShaderVariable(pd3dCommandList, &m_xmf4x4World);
 			}
 		}
+		//pd3dCommandList->SetGraphicsRootDescriptorTable(2, m_d3dCbvGPUDescriptorHandle);
+
+		if (m_ppMeshes) 
+			for (int i = 0; i < m_nMeshes; i++)
+				if (m_ppMeshes[i]) m_ppMeshes[i]->Render(pd3dCommandList);
 	}
 }
 void CGameObject::Render(ID3D12GraphicsCommandList * pd3dCommandList, CCamera * pCamera, UINT nInstances)
@@ -93,9 +124,8 @@ void CGameObject::Render(ID3D12GraphicsCommandList * pd3dCommandList, CCamera * 
 	if (m_ppMeshes)
 	{
 		for (int i = 0; i < m_nMeshes; i++)
-		{
-			if (m_ppMeshes[i]) m_ppMeshes[i]->Render(pd3dCommandList, nInstances);
-		}
+			if (m_ppMeshes[i]) 
+				m_ppMeshes[i]->Render(pd3dCommandList, nInstances);
 	}
 }
 //인스턴싱 정점 버퍼 뷰를 사용하여 메쉬를 렌더링한다.
@@ -207,8 +237,10 @@ void CGameObject::Move(XMFLOAT3 & vDirection, float fSpeed)
 void CGameObject::Rotate(float fPitch, float fYaw, float fRoll)
 {
 	if (!m_bActive) return;
-	XMMATRIX mtxRotate = XMMatrixRotationRollPitchYaw(XMConvertToRadians(fPitch),
-		XMConvertToRadians(fYaw), XMConvertToRadians(fRoll));
+	XMMATRIX mtxRotate = XMMatrixRotationRollPitchYaw(
+		XMConvertToRadians(fPitch),
+		XMConvertToRadians(fYaw), 
+		XMConvertToRadians(fRoll));
 	m_xmf4x4World = Matrix4x4::Multiply(mtxRotate, m_xmf4x4World);
 	m_bUpdatedWorldMtx = true;
 }
@@ -312,8 +344,28 @@ void CRotatingObject::Animate(float fTimeElapsed)
 
 	if (!m_bUpdatedWorldMtx) return;
 	m_xmOOBBTransformed.Transform(m_xmOOBB, XMLoadFloat4x4(&m_xmf4x4World));
-	XMStoreFloat4(&m_xmOOBBTransformed.Orientation, XMQuaternionNormalize(XMLoadFloat4(&m_xmOOBBTransformed.Orientation)));
+	XMStoreFloat4(&m_xmOOBBTransformed.Orientation, 
+		XMQuaternionNormalize(XMLoadFloat4(
+			&m_xmOOBBTransformed.Orientation)));
 	m_bUpdatedWorldMtx = false;
+}
+
+CRevolvingObject::CRevolvingObject()
+{
+	m_xmf3RevolutionAxis = XMFLOAT3(1.0f, 0.0f, 0.0f);
+	m_fRevolutionSpeed = 0.0f;
+}
+
+CRevolvingObject::~CRevolvingObject()
+{
+}
+
+void CRevolvingObject::Animate(float fTimeElapsed)
+{
+	XMMATRIX mtxRotate = XMMatrixRotationAxis(
+		XMLoadFloat3(&m_xmf3RevolutionAxis), 
+		XMConvertToRadians(m_fRevolutionSpeed * fTimeElapsed));
+	m_xmf4x4World = Matrix4x4::Multiply(m_xmf4x4World, mtxRotate);
 }
 
 CHeightMapTerrain::CHeightMapTerrain(
@@ -360,9 +412,12 @@ CHeightMapTerrain::CHeightMapTerrain(
 		}
 	}
 	//지형을 렌더링하기 위한 셰이더를 생성한다.
+	SetMaterial((UINT)7);
 	CTerrainShader *pShader = new CTerrainShader();
 	pShader->CreateShader(pd3dDeviceIndRes, pd3dGraphicsRootSignature);
-	SetShader(pShader);
+	pShader->SetTerrain(this);
+	pShader->CreateShaderVariables(pd3dDeviceIndRes, pd3dCommandList);
+	m_pMaterial->SetShader(pShader);
 }
 CHeightMapTerrain::~CHeightMapTerrain(void)
 {

@@ -4,6 +4,38 @@
 
 class CShader;
 
+
+struct MATERIAL
+{
+	XMFLOAT4						m_xmf4Ambient;
+	XMFLOAT4						m_xmf4Diffuse;
+	XMFLOAT4						m_xmf4Specular; //(r,g,b,a=power)
+	XMFLOAT4						m_xmf4Emissive;
+};
+
+class CMaterial
+{
+public:
+	CMaterial();
+	virtual ~CMaterial();
+
+private:
+	int								m_nReferences = 0;
+
+public:
+	void AddRef() { m_nReferences++; }
+	void Release() { if (--m_nReferences <= 0) delete this; }
+
+	XMFLOAT4						m_xmf4Albedo = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
+
+	UINT							m_nReflection = 0;
+	CShader							*m_pShader = NULL;
+
+	void SetAlbedo(XMFLOAT4& xmf4Albedo) { m_xmf4Albedo = xmf4Albedo; }
+	void SetReflection(UINT nReflection) { m_nReflection = nReflection; }
+	void SetShader(CShader *pShader);
+};
+
 class CGameObject
 {
 public:
@@ -34,39 +66,63 @@ public:
 	bool IsActive() const { return m_bActive; }
 
 protected:
-	ObjectType				m_Tag;
+	ObjectType						m_Tag;
 
-	XMFLOAT4X4				m_xmf4x4World;
-	//게임 객체는 여러 개의 메쉬를 포함하는 경우 게임 객체가 가지는 메쉬들에 대한 포인터와 그 개수이다.
-	int						m_nMeshes = 0;
-	CMesh					**m_ppMeshes = NULL;
-	CShader					*m_pShader = NULL;
+	XMFLOAT4X4						m_xmf4x4World;
 
-	BoundingOrientedBox		m_xmOOBB;
-	BoundingOrientedBox		m_xmOOBBTransformed;
-	CGameObject				*m_pCollider;
+	int								m_nMeshes = 0;
+	CMesh							**m_ppMeshes = NULL;
+	CShader							*m_pShader = NULL;
+	CMaterial						*m_pMaterial = NULL;
 
-	bool					m_bUpdatedWorldMtx = true;
+	D3D12_GPU_DESCRIPTOR_HANDLE		m_d3dCbvGPUDescriptorHandle;
+
+	BoundingOrientedBox				m_xmOOBB;
+	BoundingOrientedBox				m_xmOOBBTransformed;
+	CGameObject						*m_pCollider;
+
+	bool							m_bUpdatedWorldMtx = true;
 
 public:
-	virtual void SetMesh(int nIndex, CMesh *pMesh);
-	virtual void SetShader(CShader *pShader);
-	//상수 버퍼
+	void SetMesh(int nIndex, CMesh *pMesh);
+	void SetShader(CShader *pShader);
+	void SetMaterial(CMaterial *pMaterial);
+	void SetMaterial(UINT nReflection);
+
+	void SetCbvGPUDescriptorHandle(UINT64 nCbvGPUDescriptorHandlePtr) { m_d3dCbvGPUDescriptorHandle.ptr = nCbvGPUDescriptorHandlePtr; }
+	D3D12_GPU_DESCRIPTOR_HANDLE GetCbvGPUDescriptorHandle() { return(m_d3dCbvGPUDescriptorHandle); }
+
+	virtual void BuildMaterials(
+		CD3DDeviceIndRes *pd3dDeviceIndRes
+		, ID3D12GraphicsCommandList *pd3dCommandList) { }
+
 	virtual void CreateShaderVariables(
-		CD3DDeviceIndRes *pd3dDeviceIndRes, ID3D12GraphicsCommandList *pd3dCommandList);
+		CD3DDeviceIndRes *pd3dDeviceIndRes
+		, ID3D12GraphicsCommandList *pd3dCommandList);
 	virtual void ReleaseShaderVariables();
-	virtual void UpdateShaderVariables(ID3D12GraphicsCommandList *pd3dCommandList);
-	virtual void OnPrepareRender();
-	virtual void Render(ID3D12GraphicsCommandList *pd3dCommandList, CCamera *pCamera);
-	virtual void Render(ID3D12GraphicsCommandList *pd3dCommandList, CCamera *pCamera, 
-		UINT nInstances);
-	virtual void Render(ID3D12GraphicsCommandList *pd3dCommandList, CCamera *pCamera, 
-		UINT nInstances, D3D12_VERTEX_BUFFER_VIEW d3dInstancingBufferView);
+	virtual void UpdateShaderVariables(
+		ID3D12GraphicsCommandList *pd3dCommandList);
+	virtual void ReleaseUploadBuffers();
+
+	virtual void OnPrepareRender() {};
+	virtual void Render(
+		ID3D12GraphicsCommandList *pd3dCommandList
+		, CCamera *pCamera);
+	virtual void Render(
+		ID3D12GraphicsCommandList *pd3dCommandList
+		, CCamera *pCamera
+		, UINT nInstances);
+	virtual void Render(
+		ID3D12GraphicsCommandList *pd3dCommandList
+		, CCamera *pCamera
+		, UINT nInstances
+		, D3D12_VERTEX_BUFFER_VIEW d3dInstancingBufferView);
 	virtual void Animate(float fTimeElapsed);
 	virtual void Rotate(XMFLOAT3 *pxmf3Axis, float fAngle);
-	
+
 	//게임 객체의 월드 변환 행렬에서 위치 벡터와 방향(x-축, y-축, z-축) 벡터를 반환한다.
 	ObjectType	GetObjectTag() const { return m_Tag; }
+	CMaterial*	GetMaterial() const { return m_pMaterial; }
 	XMFLOAT4X4	GetWorldMtx();
 	XMFLOAT3	GetPosition();
 	XMFLOAT3	GetLook();
@@ -91,8 +147,6 @@ public:
 	void Move(XMFLOAT3& vDirection, float fSpeed);
 	//게임 객체를 회전(x-축, y-축, z-축)한다.
 	void Rotate(float fPitch = 10.0f, float fYaw = 10.0f, float fRoll = 10.0f);
-
-	void ReleaseUploadBuffers();
 
 	//게임 객체가 카메라에 보인는 가를 검사한다.
 	bool IsVisible(CCamera *pCamera = NULL);
@@ -132,6 +186,24 @@ public:
 	float& GetMovingSpeed() { return m_fMovingSpeed; }
 	float& GetMovingRange() { return m_fMovingRange; }
 };
+
+class CRevolvingObject : public CGameObject
+{
+public:
+	CRevolvingObject();
+	virtual ~CRevolvingObject();
+
+private:
+	XMFLOAT3					m_xmf3RevolutionAxis;
+	float						m_fRevolutionSpeed;
+
+public:
+	void SetRevolutionSpeed(float fRevolutionSpeed) { m_fRevolutionSpeed = fRevolutionSpeed; }
+	void SetRevolutionAxis(XMFLOAT3 xmf3RevolutionAxis) { m_xmf3RevolutionAxis = xmf3RevolutionAxis; }
+
+	virtual void Animate(float fTimeElapsed);
+};
+
 
 class CHeightMapTerrain : public CGameObject
 {

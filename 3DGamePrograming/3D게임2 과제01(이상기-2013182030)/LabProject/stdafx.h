@@ -41,6 +41,8 @@
 #include <DirectXColors.h>
 #include <DirectXCollision.h>
 
+#include <Mmsystem.h>
+
 using namespace DirectX;
 using namespace DirectX::PackedVector;
 
@@ -48,6 +50,13 @@ using Microsoft::WRL::ComPtr;
 
 #define FRAME_BUFFER_WIDTH		640
 #define FRAME_BUFFER_HEIGHT		480
+
+#define MAX_LIGHTS				8 
+#define MAX_MATERIALS			8 
+
+#define POINT_LIGHT				1
+#define SPOT_LIGHT				2
+#define DIRECTIONAL_LIGHT		3
 
 //#define _WITH_CB_GAMEOBJECT_32BIT_CONSTANTS
 //#define _WITH_CB_GAMEOBJECT_ROOT_DESCRIPTOR

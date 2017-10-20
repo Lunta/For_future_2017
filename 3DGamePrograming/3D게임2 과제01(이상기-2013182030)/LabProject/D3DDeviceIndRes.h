@@ -21,6 +21,13 @@ public:
 
 	bool Initialize();
 	bool CreateDirect3DDevice();
+	bool CreateSwapChain(
+		HWND							hWnd
+		, UINT							BufferCount
+		, UINT							BufferWidth
+		, UINT							BufferHeight
+		, ID3D12CommandQueue*			pd3dCommandQueue
+		, IDXGISwapChain**				ppdxgiSwapChain);
 
 	bool CreateCommandQueue(ID3D12CommandQueue** ppd3dCommandQueue);
 	bool CreateCommandQueue(
@@ -35,14 +42,7 @@ public:
 		, ID3D12CommandAllocator*		pd3dCommandAllocator
 		, ID3D12PipelineState*			pd3dPipelineState
 		, ID3D12GraphicsCommandList**	pd3dCommandList);
-
-	bool CreateSwapChain(
-		  HWND							hWnd
-		, UINT							BufferCount
-		, UINT							BufferWidth
-		, UINT							BufferHeight
-		, ID3D12CommandQueue*			pd3dCommandQueue
-		, IDXGISwapChain**				ppdxgiSwapChain);
+	
 	bool CreateFence(
 		  UINT64						InitialValue
 		, D3D12_FENCE_FLAGS				Flags
@@ -80,6 +80,9 @@ public:
 	void CreateDepthStencilView(
 		  ID3D12Resource*				pResource
 		, D3D12_DEPTH_STENCIL_VIEW_DESC*pDesc
+		, D3D12_CPU_DESCRIPTOR_HANDLE	DestDescriptor);
+	void CreateConstantBufferView(
+		  D3D12_CONSTANT_BUFFER_VIEW_DESC*pDesc
 		, D3D12_CPU_DESCRIPTOR_HANDLE	DestDescriptor);
 
 	bool CreateDescriptorHeap(

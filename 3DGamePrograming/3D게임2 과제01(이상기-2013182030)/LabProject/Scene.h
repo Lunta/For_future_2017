@@ -6,6 +6,34 @@
 #define BulletDelay 0.1f
 #define REPULSIVE_FORCE 50.0f
 
+struct LIGHT
+{
+	XMFLOAT4				m_xmf4Ambient;
+	XMFLOAT4				m_xmf4Diffuse;
+	XMFLOAT4				m_xmf4Specular;
+	XMFLOAT3				m_xmf3Position;
+	float 					m_fFalloff;
+	XMFLOAT3				m_xmf3Direction;
+	float 					m_fTheta; //cos(m_fTheta)
+	XMFLOAT3				m_xmf3Attenuation;
+	float					m_fPhi; //cos(m_fPhi)
+	bool					m_bEnable;
+	int						m_nType;
+	float					m_fRange;
+	float					padding;
+};
+
+struct LIGHTS
+{
+	LIGHT					m_pLights[MAX_LIGHTS];
+	XMFLOAT4				m_xmf4GlobalAmbient;
+};
+
+struct MATERIALS
+{
+	MATERIAL				m_pReflections[MAX_MATERIALS];
+};
+
 class CGameFramework;
 class CScene
 {
@@ -26,11 +54,17 @@ public:
 	void SetHWNDAndHInstance(HWND hWnd, HINSTANCE hInstance);
 	void SetPlayer(CPlayer* pPlayer) { m_pPlayer = pPlayer; }
 
-	ID3D12RootSignature* CreateGraphicsRootSignature(CD3DDeviceIndRes *pd3dDeviceIndRes);
+	ID3D12RootSignature* CreateGraphicsRootSignature(
+		CD3DDeviceIndRes *pd3dDeviceIndRes);
 	ID3D12RootSignature* GetGraphicsRootSignature();
 
 	CHeightMapTerrain *GetTerrain() { return(m_pTerrain); }
 
+	virtual void CreateShaderVariables(CD3DDeviceIndRes *pd3dDeviceIndRes, ID3D12GraphicsCommandList *pd3dCommandList);
+	virtual void UpdateShaderVariables(ID3D12GraphicsCommandList *pd3dCommandList);
+	virtual void ReleaseShaderVariables();
+
+	void BuildLightsAndMaterials();
 	void BuildObjects(
 		CD3DDeviceIndRes *pd3dDeviceIndRes
 		, ID3D12GraphicsCommandList *pd3dCommandList);
@@ -61,25 +95,37 @@ protected:
 
 	CGameFramework				*m_pFramework = NULL;
 
-	CPlayer						*m_pPlayer = NULL;
-	Maze						m_Maze;
-	int							m_nCurrentBulletIdx = 0;
-	int							m_nCurrentParticleIdx = 0;
+	ComPtr<ID3D12RootSignature> m_pd3dGraphicsRootSignature = NULL;
 
 	int							m_nShaders = ObjectTag::Count;
 	CInstancingShader			*m_pShaders = NULL;
 	CHeightMapTerrain			*m_pTerrain = NULL;
-	ComPtr<ID3D12RootSignature> m_pd3dGraphicsRootSignature = NULL;
+
+	LIGHTS						*m_pLights = NULL;
+
+	ComPtr<ID3D12Resource>		m_pd3dcbLights = NULL;
+	LIGHTS						*m_pcbMappedLights = NULL;
+
+	MATERIALS					*m_pMaterials = NULL;
+
+	ComPtr<ID3D12Resource>		m_pd3dcbMaterials = NULL;
+	MATERIAL					*m_pcbMappedMaterials = NULL;
 
 	int							m_pnObjects[ObjectTag::Count];
 	CGameObject					***m_pppObjects = NULL;
-	CGameObject					*m_pRoofObject = NULL;
-	CGameObject					*m_pSelectedObject = NULL;
 
+	CGameObject					*m_pSelectedObject = NULL;
 	POINT						m_ptOldCursorPos;
+
+	CPlayer						*m_pPlayer = NULL;
+	Maze						m_Maze;
+	CGameObject					*m_pRoofObject = NULL;
+
+	int							m_nCurrentBulletIdx = 0;
+	int							m_nCurrentParticleIdx = 0;
+
 	float						m_fRestartCounter;
 	float						m_fBulletTimer;
 
 	bool						m_bGameOver;
-
 };

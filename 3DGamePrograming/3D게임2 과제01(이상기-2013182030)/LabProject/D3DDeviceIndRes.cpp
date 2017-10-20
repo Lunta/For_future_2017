@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "D3DDeviceIndRes.h"
 
+#include "DDSTextureLoader12.h"
 
 CD3DDeviceIndRes::CD3DDeviceIndRes() :
 	// MSAA 다중 샘플링을 활성화하고 다중 샘플링 레벨을 설정한다.
@@ -78,6 +79,44 @@ bool CD3DDeviceIndRes::CreateDirect3DDevice()
 	return false;
 }
 
+bool CD3DDeviceIndRes::CreateSwapChain(
+	HWND					hWnd
+	, UINT					BufferCount
+	, UINT					BufferWidth
+	, UINT					BufferHeight
+	, ID3D12CommandQueue*	pd3dCommandQueue
+	, IDXGISwapChain**		ppdxgiSwapChain)
+{
+	//스왑체인을 생성한다.
+	DXGI_SWAP_CHAIN_DESC dxgiSwapChainDesc;
+	::ZeroMemory(&dxgiSwapChainDesc, sizeof(dxgiSwapChainDesc));
+	dxgiSwapChainDesc.Windowed = TRUE;
+	dxgiSwapChainDesc.OutputWindow = hWnd;
+	dxgiSwapChainDesc.BufferCount = BufferCount;
+	dxgiSwapChainDesc.BufferDesc.Width = BufferWidth;
+	dxgiSwapChainDesc.BufferDesc.Height = BufferHeight;
+	dxgiSwapChainDesc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	dxgiSwapChainDesc.BufferDesc.RefreshRate.Numerator = 60;
+	dxgiSwapChainDesc.BufferDesc.RefreshRate.Denominator = 1;
+	dxgiSwapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+	dxgiSwapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
+	dxgiSwapChainDesc.SampleDesc.Count = (m_bMsaa4xEnable) ? 4 : 1;
+	dxgiSwapChainDesc.SampleDesc.Quality =
+		(m_bMsaa4xEnable) ? (m_nMsaa4xQualityLevels - 1) : 0;
+#ifdef _WITH_ONLY_RESIZE_BACKBUFFERS
+	//전체화면 모드에서 바탕화면의 해상도를 바꾸지 않고 후면버퍼의 크기를 바탕화면 크기로 변경한다.
+	dxgiSwapChainDesc.Flags = 0;
+#else
+	//전체화면 모드에서 바탕화면의 해상도를 스왑체인(후면버퍼)의 크기에 맞게 변경한다.
+	dxgiSwapChainDesc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
+#endif
+	return SUCCEEDED(
+		m_pdxgiFactory->CreateSwapChain(
+			pd3dCommandQueue
+			, &dxgiSwapChainDesc
+			, ppdxgiSwapChain));
+}
+
 bool CD3DDeviceIndRes::CreateCommandQueue(ID3D12CommandQueue ** ppd3dCommandQueue)
 {
 	D3D12_COMMAND_QUEUE_DESC d3dCommandQueueDesc;
@@ -121,44 +160,6 @@ bool CD3DDeviceIndRes::CreateCommandList(
 			, pd3dCommandAllocator
 			, pd3dPipelineState
 			, IID_PPV_ARGS(pd3dCommandList)));
-}
-
-bool CD3DDeviceIndRes::CreateSwapChain(
-	  HWND					hWnd
-	, UINT					BufferCount
-	, UINT					BufferWidth
-	, UINT					BufferHeight
-	, ID3D12CommandQueue*	pd3dCommandQueue
-	, IDXGISwapChain**		ppdxgiSwapChain)
-{
-	//스왑체인을 생성한다.
-	DXGI_SWAP_CHAIN_DESC dxgiSwapChainDesc;
-	::ZeroMemory(&dxgiSwapChainDesc, sizeof(dxgiSwapChainDesc));
-	dxgiSwapChainDesc.Windowed = TRUE;
-	dxgiSwapChainDesc.OutputWindow = hWnd;
-	dxgiSwapChainDesc.BufferCount = BufferCount;
-	dxgiSwapChainDesc.BufferDesc.Width = BufferWidth;
-	dxgiSwapChainDesc.BufferDesc.Height = BufferHeight;
-	dxgiSwapChainDesc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-	dxgiSwapChainDesc.BufferDesc.RefreshRate.Numerator = 60;
-	dxgiSwapChainDesc.BufferDesc.RefreshRate.Denominator = 1;
-	dxgiSwapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-	dxgiSwapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
-	dxgiSwapChainDesc.SampleDesc.Count = (m_bMsaa4xEnable) ? 4 : 1;
-	dxgiSwapChainDesc.SampleDesc.Quality =
-		(m_bMsaa4xEnable) ? (m_nMsaa4xQualityLevels - 1) : 0;
-#ifdef _WITH_ONLY_RESIZE_BACKBUFFERS
-	//전체화면 모드에서 바탕화면의 해상도를 바꾸지 않고 후면버퍼의 크기를 바탕화면 크기로 변경한다.
-	dxgiSwapChainDesc.Flags = 0;
-#else
-	//전체화면 모드에서 바탕화면의 해상도를 스왑체인(후면버퍼)의 크기에 맞게 변경한다.
-	dxgiSwapChainDesc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
-#endif
-	return SUCCEEDED(
-		m_pdxgiFactory->CreateSwapChain(
-			  pd3dCommandQueue
-			, &dxgiSwapChainDesc
-			, ppdxgiSwapChain));
 }
 
 bool CD3DDeviceIndRes::CreateFence(
@@ -303,8 +304,23 @@ ID3D12Resource * CD3DDeviceIndRes::CreateTextureResourceFromFile(
 	DDS_ALPHA_MODE ddsAlphaMode = DDS_ALPHA_MODE_UNKNOWN;
 	bool bIsCubeMap = false;
 
-	HRESULT hResult = DirectX::LoadDDSTextureFromFileEx(pd3dDevice, pszFileName, 0, D3D12_RESOURCE_FLAG_NONE, DDS_LOADER_DEFAULT, &pd3dTexture, ddsData, vSubresources, &ddsAlphaMode, &bIsCubeMap);
-
+	if (FAILED(DirectX::LoadDDSTextureFromFileEx(
+		m_pd3dDevice.Get()
+		, pszFileName
+		, 0
+		, D3D12_RESOURCE_FLAG_NONE, DDS_LOADER_DEFAULT
+		, &pd3dTexture
+		, ddsData
+		, vSubresources
+		, &ddsAlphaMode
+		, &bIsCubeMap)))
+	{
+		MessageBox(
+			nullptr
+			, TEXT("LoadDDSTextureFromFileEx() failed.")
+			, TEXT("Error!"), MB_OK);
+		return false;
+	}
 	D3D12_HEAP_PROPERTIES d3dHeapPropertiesDesc;
 	::ZeroMemory(&d3dHeapPropertiesDesc, sizeof(D3D12_HEAP_PROPERTIES));
 	d3dHeapPropertiesDesc.Type = D3D12_HEAP_TYPE_UPLOAD;
@@ -424,6 +440,12 @@ void CD3DDeviceIndRes::CreateDepthStencilView(
 		  pResource
 		, pDesc
 		, DestDescriptor);
+}
+void CD3DDeviceIndRes::CreateConstantBufferView(
+	  D3D12_CONSTANT_BUFFER_VIEW_DESC* pDesc
+	, D3D12_CPU_DESCRIPTOR_HANDLE DestDescriptor)
+{
+	m_pd3dDevice->CreateConstantBufferView(pDesc, DestDescriptor);
 }
 bool CD3DDeviceIndRes::CreateDescriptorHeap(
 	  D3D12_DESCRIPTOR_HEAP_TYPE	Type

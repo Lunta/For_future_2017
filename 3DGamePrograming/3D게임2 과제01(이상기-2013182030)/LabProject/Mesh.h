@@ -66,6 +66,17 @@ public:
 	~CDiffused2TexturedVertex() { }
 };
 
+class CIlluminatedVertex : public CVertex
+{
+public:
+	XMFLOAT3						m_xmf3Normal;
+
+public:
+	CIlluminatedVertex() { m_xmf3Position = XMFLOAT3(0.0f, 0.0f, 0.0f); m_xmf3Normal = XMFLOAT3(0.0f, 0.0f, 0.0f); }
+	CIlluminatedVertex(float x, float y, float z, XMFLOAT3 xmf3Normal = XMFLOAT3(0.0f, 0.0f, 0.0f)) { m_xmf3Position = XMFLOAT3(x, y, z); m_xmf3Normal = xmf3Normal; }
+	CIlluminatedVertex(XMFLOAT3 xmf3Position, XMFLOAT3 xmf3Normal = XMFLOAT3(0.0f, 0.0f, 0.0f)) { m_xmf3Position = xmf3Position; m_xmf3Normal = xmf3Normal; }
+	~CIlluminatedVertex() { }
+};
 
 class CMesh
 {
@@ -98,19 +109,13 @@ protected:
 	UINT						m_nStride;
 	UINT						m_nOffset;
 
-	
-	//인덱스 버퍼에 포함되는 인덱스의 개수이다.
 	UINT						m_nIndices = 0;
-	//인덱스 버퍼에서 메쉬를 그리기 위해 사용되는 시작 인덱스이다.
 	UINT						m_nStartIndex = 0;
-	//인덱스 버퍼의 인덱스에 더해질 인덱스이다.
 	int							m_nBaseVertex = 0;
 
 	BoundingOrientedBox			m_xmBoundingBox;
 
-	//정점을 픽킹을 위하여 저장한다(정점 버퍼를 Map()하여 읽지 않아도 되도록).
 	CDiffusedVertex				*m_pVertices = NULL;
-	//메쉬의 인덱스를 저장한다(인덱스 버퍼를 Map()하여 읽지 않아도 되도록).
 	UINT						*m_pnIndices = NULL;
 
 public:
@@ -253,4 +258,60 @@ class CCubeMeshTextured : public CMeshTextured
 public:
 	CCubeMeshTextured(CD3DDeviceIndRes *pd3dDeviceIndRes, ID3D12GraphicsCommandList *pd3dCommandList, float fWidth = 2.0f, float fHeight = 2.0f, float fDepth = 2.0f);
 	virtual ~CCubeMeshTextured();
+};
+
+class CMeshIlluminated : public CMesh
+{
+public:
+	CMeshIlluminated(CD3DDeviceIndRes *pd3dDeviceIndRes, ID3D12GraphicsCommandList *pd3dCommandList);
+	virtual ~CMeshIlluminated();
+
+public:
+	void CalculateTriangleListVertexNormals(XMFLOAT3 *pxmf3Normals, XMFLOAT3 *pxmf3Positions, int nVertices);
+	void CalculateTriangleListVertexNormals(XMFLOAT3 *pxmf3Normals, XMFLOAT3 *pxmf3Positions, UINT nVertices, UINT *pnIndices, UINT nIndices);
+	void CalculateTriangleStripVertexNormals(XMFLOAT3 *pxmf3Normals, XMFLOAT3 *pxmf3Positions, UINT nVertices, UINT *pnIndices, UINT nIndices);
+	void CalculateVertexNormals(XMFLOAT3 *pxmf3Normals, XMFLOAT3 *pxmf3Positions, int nVertices, UINT *pnIndices, int nIndices);
+};
+
+class CCubeMeshIlluminated : public CMeshIlluminated
+{
+public:
+	CCubeMeshIlluminated(CD3DDeviceIndRes *pd3dDeviceIndRes, ID3D12GraphicsCommandList *pd3dCommandList, float fWidth = 2.0f, float fHeight = 2.0f, float fDepth = 2.0f);
+	virtual ~CCubeMeshIlluminated();
+};
+
+class CSphereMeshIlluminated : public CMeshIlluminated
+{
+public:
+	CSphereMeshIlluminated(CD3DDeviceIndRes *pd3dDeviceIndRes, ID3D12GraphicsCommandList *pd3dCommandList, float fRadius = 2.0f, UINT nSlices = 20, UINT nStacks = 20);
+	virtual ~CSphereMeshIlluminated();
+};
+
+class CHeightMapGridMeshIlluminated : public CMeshIlluminated
+{
+protected:
+	//격자의 크기(가로: x-방향, 세로: z-방향)이다.
+	int m_nWidth;
+	int m_nLength;
+	/*격자의 스케일(가로: x-방향, 세로: z-방향, 높이: y-방향) 벡터이다. 실제 격자 메쉬의 각 정점의 x-좌표, y-좌표,
+	z-좌표는 스케일 벡터의 x-좌표, y-좌표, z-좌표로 곱한 값을 갖는다. 즉, 실제 격자의 x-축 방향의 간격은 1이 아니
+	라 스케일 벡터의 x-좌표가 된다. 이렇게 하면 작은 격자(적은 정점)를 사용하더라도 큰 크기의 격자(지형)를 생성할
+	수 있다.*/
+	XMFLOAT3 m_xmf3Scale;
+public:
+	CHeightMapGridMeshIlluminated(
+		CD3DDeviceIndRes *pd3dDeviceIndRes
+		, ID3D12GraphicsCommandList *pd3dCommandList
+		, int xStart, int zStart, int nWidth, int nLength
+		, XMFLOAT3 xmf3Scale = XMFLOAT3(1.0f, 1.0f, 1.0f)
+		, XMFLOAT4 xmf4Color = XMFLOAT4(1.0f, 1.0f, 0.0f, 0.0f)
+		, void *pContext = NULL);
+	virtual ~CHeightMapGridMeshIlluminated();
+	XMFLOAT3 GetScale() { return(m_xmf3Scale); }
+	int GetWidth() { return(m_nWidth); }
+	int GetLength() { return(m_nLength); }
+	//격자의 좌표가 (x, z)일 때 교점(정점)의 높이를 반환하는 함수이다.
+	virtual float OnGetHeight(int x, int z, void *pContext);
+	//격자의 좌표가 (x, z)일 때 교점(정점)의 색상을 반환하는 함수이다.
+	virtual XMFLOAT4 OnGetColor(int x, int z, void *pContext);
 };
