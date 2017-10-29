@@ -175,7 +175,7 @@ private:
 public:
 	virtual void Animate(float fTimeElapsed) override;
 
-	void SetMovingDirection(XMFLOAT3& xmf3MovingDirection) { m_xmf3MovingDirection = Vector3::Normalize(xmf3MovingDirection); }
+	void SetMovingDirection(XMFLOAT3& xmf3MovingDirection);
 	void SetMovingSpeed(float fSpeed) { m_fMovingSpeed = fSpeed; }
 	void SetMovingRange(float fRange) { m_fMovingRange = fRange; }
 
@@ -200,6 +200,9 @@ private:
 public:
 	void SetRevolutionSpeed(float fRevolutionSpeed) { m_fRevolutionSpeed = fRevolutionSpeed; }
 	void SetRevolutionAxis(XMFLOAT3 xmf3RevolutionAxis) { m_xmf3RevolutionAxis = xmf3RevolutionAxis; }
+
+	void SetDay();
+	void SetNight();
 
 	virtual void Animate(float fTimeElapsed);
 };

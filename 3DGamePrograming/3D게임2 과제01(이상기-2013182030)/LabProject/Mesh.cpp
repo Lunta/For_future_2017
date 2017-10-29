@@ -583,6 +583,8 @@ CHeightMapImage::CHeightMapImage(
 		{
 			m_pHeightMapPixels[x + ((m_nLength - 1 - y)*m_nWidth)] = pHeightMapPixels[x +
 				(y*m_nWidth)];
+			if (y > m_nLength / 2 && x < m_nWidth / 2)
+				m_pHeightMapPixels[x + ((m_nLength - 1 - y)*m_nWidth)] = 100.f;
 		}
 	}
 	if (pHeightMapPixels) delete[] pHeightMapPixels;
@@ -689,8 +691,10 @@ CHeightMapGridMesh::CHeightMapGridMesh(
 		for (int x = xStart; x < (xStart + nWidth); x++, i++)
 		{
 			//정점의 높이와 색상을 높이 맵으로부터 구한다.
-			XMFLOAT3 xmf3Position = XMFLOAT3((x*m_xmf3Scale.x), OnGetHeight(x, z, pContext),
-				(z*m_xmf3Scale.z));
+			XMFLOAT3 xmf3Position = XMFLOAT3(
+				  (x*m_xmf3Scale.x)
+				, OnGetHeight(x, z, pContext)
+				, (z*m_xmf3Scale.z));
 			XMFLOAT4 xmf3Color = Vector4::Add(OnGetColor(x, z, pContext), xmf4Color);
 			pVertices[i] = CDiffusedVertex(xmf3Position, xmf3Color);
 			if (fHeight < fMinHeight) fMinHeight = fHeight;
@@ -792,6 +796,8 @@ float CHeightMapGridMesh::OnGetHeight(int x, int z, void *pContext)
 	XMFLOAT3 xmf3Scale = pHeightMapImage->GetScale();
 	int nWidth = pHeightMapImage->GetHeightMapWidth();
 	float fHeight = pHeightMapPixels[x + (z*nWidth)] * xmf3Scale.y;
+
+
 	return(fHeight);
 }
 

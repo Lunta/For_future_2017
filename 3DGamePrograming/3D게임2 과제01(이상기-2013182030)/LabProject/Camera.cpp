@@ -101,7 +101,7 @@ void CCamera::RegenerateViewMatrix()
 	m_xmf4x4View._41 = -Vector3::DotProduct(m_xmf3Position, m_xmf3Right);
 	m_xmf4x4View._42 = -Vector3::DotProduct(m_xmf3Position, m_xmf3Up);
 	m_xmf4x4View._43 = -Vector3::DotProduct(m_xmf3Position, m_xmf3Look);
-	GenerateFrustum();
+	//GenerateFrustum();
 }
 void CCamera::GenerateProjectionMatrix(float fNearPlaneDistance, float fFarPlaneDistance,
 	float fAspectRatio, float fFOVAngle)

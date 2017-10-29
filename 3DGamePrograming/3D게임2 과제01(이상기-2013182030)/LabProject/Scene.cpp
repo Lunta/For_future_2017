@@ -134,48 +134,63 @@ void CScene::BuildLightsAndMaterials()
 	m_pLights = new LIGHTS;
 	::ZeroMemory(m_pLights, sizeof(LIGHTS));
 
-	m_pLights->m_xmf4GlobalAmbient = XMFLOAT4(0.1f, 0.1f, 0.1f, 1.0f);
+	m_pLights->m_xmf4GlobalAmbient = XMFLOAT4(0.001f, 0.001f, 0.001f, 1.0f);
 
+	// 플레이어 손전등
 	m_pLights->m_pLights[0].m_bEnable = true;
-	m_pLights->m_pLights[0].m_nType = POINT_LIGHT;
-	m_pLights->m_pLights[0].m_fRange = 100.0f;
-	m_pLights->m_pLights[0].m_xmf4Ambient = XMFLOAT4(0.1f, 0.0f, 0.0f, 1.0f);
-	m_pLights->m_pLights[0].m_xmf4Diffuse = XMFLOAT4(0.8f, 0.0f, 0.0f, 1.0f);
-	m_pLights->m_pLights[0].m_xmf4Specular = XMFLOAT4(0.1f, 0.1f, 0.1f, 0.0f);
-	m_pLights->m_pLights[0].m_xmf3Position = XMFLOAT3(130.0f, 30.0f, 30.0f);
-	m_pLights->m_pLights[0].m_xmf3Direction = XMFLOAT3(0.0f, 0.0f, 0.0f);
-	m_pLights->m_pLights[0].m_xmf3Attenuation = XMFLOAT3(1.0f, 0.001f, 0.0001f);
+	m_pLights->m_pLights[0].m_nType = SPOT_LIGHT;
+	m_pLights->m_pLights[0].m_fRange = 300.0f;
+	m_pLights->m_pLights[0].m_xmf4Ambient = XMFLOAT4(0.1f, 0.1f, 0.1f, 1.0f);
+	m_pLights->m_pLights[0].m_xmf4Diffuse = XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f);
+	m_pLights->m_pLights[0].m_xmf4Specular = XMFLOAT4(0.3f, 0.3f, 0.3f, 0.0f);
+	m_pLights->m_pLights[0].m_xmf3Position = XMFLOAT3(-50.0f, 20.0f, -5.0f);
+	m_pLights->m_pLights[0].m_xmf3Direction = XMFLOAT3(0.0f, 0.0f, 1.0f);
+	m_pLights->m_pLights[0].m_xmf3Attenuation = XMFLOAT3(1.0f, 0.01f, 0.0001f);
+	m_pLights->m_pLights[0].m_fFalloff = 9.0f;
+	m_pLights->m_pLights[0].m_fPhi = (float)cos(XMConvertToRadians(70.0f));
+	m_pLights->m_pLights[0].m_fTheta = (float)cos(XMConvertToRadians(35.0f));
+
+	// 태양
 	m_pLights->m_pLights[1].m_bEnable = true;
-	m_pLights->m_pLights[1].m_nType = SPOT_LIGHT;
-	m_pLights->m_pLights[1].m_fRange = 100.0f;
-	m_pLights->m_pLights[1].m_xmf4Ambient = XMFLOAT4(0.1f, 0.1f, 0.1f, 1.0f);
+	m_pLights->m_pLights[1].m_nType = DIRECTIONAL_LIGHT;
+	m_pLights->m_pLights[1].m_xmf4Ambient = XMFLOAT4(0.2f, 0.2f, 0.2f, 1.0f);
 	m_pLights->m_pLights[1].m_xmf4Diffuse = XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f);
-	m_pLights->m_pLights[1].m_xmf4Specular = XMFLOAT4(0.1f, 0.1f, 0.1f, 0.0f);
-	m_pLights->m_pLights[1].m_xmf3Position = XMFLOAT3(-50.0f, 20.0f, -5.0f);
-	m_pLights->m_pLights[1].m_xmf3Direction = XMFLOAT3(0.0f, 0.0f, 1.0f);
-	m_pLights->m_pLights[1].m_xmf3Attenuation = XMFLOAT3(1.0f, 0.01f, 0.0001f);
-	m_pLights->m_pLights[1].m_fFalloff = 8.0f;
-	m_pLights->m_pLights[1].m_fPhi = (float)cos(XMConvertToRadians(40.0f));
-	m_pLights->m_pLights[1].m_fTheta = (float)cos(XMConvertToRadians(20.0f));
+	m_pLights->m_pLights[1].m_xmf4Specular = XMFLOAT4(0.3f, 0.3f, 0.3f, 0.0f);
+	m_pLights->m_pLights[1].m_xmf3Direction = XMFLOAT3(0.0f, -1.0f, 0.0f);
+	m_pLights->m_pLights[1].m_xmf3Position = XMFLOAT3(-50.0f, 1020.0f, -5.0f);
+
+	// 달
 	m_pLights->m_pLights[2].m_bEnable = true;
-	m_pLights->m_pLights[2].m_nType = DIRECTIONAL_LIGHT;
+	m_pLights->m_pLights[2].m_nType = POINT_LIGHT;
+	m_pLights->m_pLights[2].m_fRange = 2000.0f;
 	m_pLights->m_pLights[2].m_xmf4Ambient = XMFLOAT4(0.1f, 0.1f, 0.1f, 1.0f);
 	m_pLights->m_pLights[2].m_xmf4Diffuse = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
-	m_pLights->m_pLights[2].m_xmf4Specular = XMFLOAT4(1.0f, 1.0f, 1.0f, 0.0f);
-	m_pLights->m_pLights[2].m_xmf3Direction = XMFLOAT3(0.0f, -1.0f, 0.0f);
-	m_pLights->m_pLights[1].m_xmf3Position = XMFLOAT3(-50.0f, 1020.0f, -5.0f);
-	m_pLights->m_pLights[3].m_bEnable = true;
-	m_pLights->m_pLights[3].m_nType = SPOT_LIGHT;
-	m_pLights->m_pLights[3].m_fRange = 60.0f;
-	m_pLights->m_pLights[3].m_xmf4Ambient = XMFLOAT4(0.1f, 0.1f, 0.1f, 1.0f);
-	m_pLights->m_pLights[3].m_xmf4Diffuse = XMFLOAT4(0.5f, 0.0f, 0.0f, 1.0f);
-	m_pLights->m_pLights[3].m_xmf4Specular = XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f);
-	m_pLights->m_pLights[3].m_xmf3Position = XMFLOAT3(-150.0f, 30.0f, 30.0f);
-	m_pLights->m_pLights[3].m_xmf3Direction = XMFLOAT3(0.0f, 1.0f, 1.0f);
-	m_pLights->m_pLights[3].m_xmf3Attenuation = XMFLOAT3(1.0f, 0.01f, 0.0001f);
-	m_pLights->m_pLights[3].m_fFalloff = 8.0f;
-	m_pLights->m_pLights[3].m_fPhi = (float)cos(XMConvertToRadians(90.0f));
-	m_pLights->m_pLights[3].m_fTheta = (float)cos(XMConvertToRadians(30.0f));
+	m_pLights->m_pLights[2].m_xmf4Specular = XMFLOAT4(0.1f, 0.1f, 0.1f, 0.0f);
+	m_pLights->m_pLights[2].m_xmf3Position = XMFLOAT3(130.0f, 30.0f, 30.0f);
+	m_pLights->m_pLights[2].m_xmf3Direction = XMFLOAT3(0.0f, 0.0f, 0.0f);
+	m_pLights->m_pLights[2].m_xmf3Attenuation = XMFLOAT3(1.0f, 0.000004f, 0.0000004f);
+
+	// 미로조명
+	float stride = (float)m_Maze.m_nPathesPos / (float)(MAX_LIGHTS - 3);
+	float fLightHeight = m_pRoofObject->GetPosition().y - 20;
+	int idx = 0;
+	for (int i = 3; i < MAX_LIGHTS; ++i, ++idx)
+	{
+		m_pLights->m_pLights[i].m_bEnable = true;
+		m_pLights->m_pLights[i].m_nType = SPOT_LIGHT;
+		m_pLights->m_pLights[i].m_fRange = 60.0f;
+		m_pLights->m_pLights[i].m_xmf4Ambient = XMFLOAT4(0.1f, 0.1f, 0.1f, 1.0f);
+		m_pLights->m_pLights[i].m_xmf4Diffuse = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
+		m_pLights->m_pLights[i].m_xmf4Specular = XMFLOAT4(0.2f, 0.2f, 0.2f, 0.0f);
+		XMFLOAT3 pos = m_Maze.m_pxmf3PathesPos[(int)(stride*(float)idx)];
+		pos.y = fLightHeight;
+		m_pLights->m_pLights[i].m_xmf3Position = pos;
+		m_pLights->m_pLights[i].m_xmf3Direction = XMFLOAT3(0.0f, -1.0f, 0.0f);
+		m_pLights->m_pLights[i].m_xmf3Attenuation = XMFLOAT3(1.0f, 0.001f, 0.0001f);
+		m_pLights->m_pLights[i].m_fFalloff = 9.0f;
+		m_pLights->m_pLights[i].m_fPhi = (float)cos(XMConvertToRadians(90.0f));
+		m_pLights->m_pLights[i].m_fTheta = (float)cos(XMConvertToRadians(35.0f));
+	}
 
 	m_pMaterials = new MATERIALS;
 	::ZeroMemory(m_pMaterials, sizeof(MATERIALS));
@@ -185,16 +200,17 @@ void CScene::BuildLightsAndMaterials()
 	m_pMaterials->m_pReflections[2] = { XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f), XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f), XMFLOAT4(1.0f, 1.0f, 1.0f, 15.0f), XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f) };
 	m_pMaterials->m_pReflections[3] = { XMFLOAT4(0.5f, 0.0f, 1.0f, 1.0f), XMFLOAT4(0.0f, 0.5f, 1.0f, 1.0f), XMFLOAT4(1.0f, 1.0f, 1.0f, 20.0f), XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f) };
 	m_pMaterials->m_pReflections[4] = { XMFLOAT4(0.0f, 0.5f, 1.0f, 1.0f), XMFLOAT4(0.5f, 0.0f, 1.0f, 1.0f), XMFLOAT4(1.0f, 1.0f, 1.0f, 25.0f), XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f) };
-	m_pMaterials->m_pReflections[5] = { XMFLOAT4(0.0f, 0.5f, 0.5f, 1.0f), XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f), XMFLOAT4(1.0f, 1.0f, 1.0f, 30.0f), XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f) };
-	m_pMaterials->m_pReflections[6] = { XMFLOAT4(0.5f, 0.5f, 1.0f, 1.0f), XMFLOAT4(0.5f, 0.5f, 1.0f, 1.0f), XMFLOAT4(1.0f, 1.0f, 1.0f, 35.0f), XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f) };
+	m_pMaterials->m_pReflections[5] = { XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT4(1.0f, 1.0f, 1.0f, 30.0f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f) };
+	m_pMaterials->m_pReflections[6] = { XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT4(1.0f, 1.0f, 1.0f, 35.0f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f) };
 	m_pMaterials->m_pReflections[7] = { XMFLOAT4(0.0f, 0.8f, 0.0f, 1.0f), XMFLOAT4(0.2f, 0.2f, 0.2f, 1.0f), XMFLOAT4(1.0f, 1.0f, 1.0f, 40.0f), XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f) };
 }
-void CScene::BuildObjects(CD3DDeviceIndRes *pd3dDeviceIndRes, ID3D12GraphicsCommandList
-	*pd3dCommandList)
+void CScene::BuildObjects(
+	CD3DDeviceIndRes *pd3dDeviceIndRes
+	, ID3D12GraphicsCommandList *pd3dCommandList)
 {
 	m_pd3dGraphicsRootSignature = CreateGraphicsRootSignature(pd3dDeviceIndRes);
 	//지형을 확대할 스케일 벡터이다. x-축과 z-축은 8배, y-축은 2배 확대한다.
-	XMFLOAT3 xmf3Scale(20.0f, 2.0f, 20.0f);
+	XMFLOAT3 xmf3Scale(6.5f, 2.0f, 6.5f);
 	XMFLOAT4 xmf4Color(0.0f, 0.2f, 0.0f, 0.0f);
 	//지형을 높이 맵 이미지 파일(HeightMap.raw)을 사용하여 생성한다. 높이 맵의 크기는 가로x세로(257x257)이다.
 #ifdef _WITH_TERRAIN_PARTITION
@@ -209,20 +225,40 @@ void CScene::BuildObjects(CD3DDeviceIndRes *pd3dDeviceIndRes, ID3D12GraphicsComm
 		m_pd3dGraphicsRootSignature.Get(), _T("Assets/Image/Terrain/HeightMap.raw"), 257, 257, 257,
 		257, xmf3Scale, xmf4Color);
 #endif
-	CCubeMeshDiffused *pRoofMesh = new CCubeMeshDiffused(pd3dDeviceIndRes, pd3dCommandList,
-		1100.0f, 50.0f, 1100.0f);
+	CCubeMeshIlluminated *pRoofMesh = new CCubeMeshIlluminated(
+		pd3dDeviceIndRes, pd3dCommandList
+		, 800.0f, 40.0f, 800.0f);
 	m_pRoofObject = new CGameObject(1);
 	m_pRoofObject->SetObjectType(CGameObject::ObjectType::Wall);
 	m_pRoofObject->SetMaterial(rand() % MAX_MATERIALS);
 	m_pRoofObject->SetMesh(0, pRoofMesh);
 	m_pRoofObject->SetOOBB(pRoofMesh->GetBoundingBox());
-	m_pRoofObject->SetPosition(525, m_pTerrain->GetHeight(525, 600) + 60.0f, 600);
+	m_pRoofObject->SetPosition(375, m_pTerrain->GetHeight(375, 450) + 60.0f, 450);
 	CObjectsShader* pRoofShader = new CObjectsShader();
 	pRoofShader->CreateShader(pd3dDeviceIndRes, m_pd3dGraphicsRootSignature.Get());
 	CGameObject** container = new CGameObject*[1];
 	container[0] = m_pRoofObject;
 	pRoofShader->BuildObjects(pd3dDeviceIndRes, pd3dCommandList, container, 1);
 	m_pRoofObject->GetMaterial()->SetShader(pRoofShader);
+
+	CSphereMeshIlluminated *pHeavenlyBody = new CSphereMeshIlluminated(
+		pd3dDeviceIndRes
+		, pd3dCommandList, 50.0f);
+	m_ppHeavenlyBody = new CRevolvingObject*[2];
+	m_ppHeavenlyBody[0] = new CRevolvingObject();
+	m_ppHeavenlyBody[0]->SetObjectType(CGameObject::ObjectType::Background);
+	m_ppHeavenlyBody[0]->SetMaterial(5);
+	m_ppHeavenlyBody[0]->SetMesh(0, pHeavenlyBody);
+	m_ppHeavenlyBody[1] = new CRevolvingObject();
+	m_ppHeavenlyBody[1]->SetObjectType(CGameObject::ObjectType::Background);
+	m_ppHeavenlyBody[1]->SetMaterial(6);
+	m_ppHeavenlyBody[1]->SetMesh(0, pHeavenlyBody);
+	CObjectsShader* pHeavenlyBodyShader = new CObjectsShader();
+	pHeavenlyBodyShader->CreateShader(pd3dDeviceIndRes, m_pd3dGraphicsRootSignature.Get());
+	pHeavenlyBodyShader->BuildObjects(pd3dDeviceIndRes, pd3dCommandList
+		, reinterpret_cast<CGameObject**>(m_ppHeavenlyBody), 2);
+	m_ppHeavenlyBody[0]->GetMaterial()->SetShader(pHeavenlyBodyShader);
+	m_ppHeavenlyBody[1]->GetMaterial()->SetShader(pHeavenlyBodyShader);
 
 	m_nShaders = ObjectTag::Count;
 	m_pShaders = new CInstancingShader[m_nShaders];
@@ -253,8 +289,8 @@ void CScene::BuildObjects(CD3DDeviceIndRes *pd3dDeviceIndRes, ID3D12GraphicsComm
 		new CGameObject*[m_pnObjects[ObjectTag::Background]];
 	m_Maze.m_pxmf3PathesPos = new XMFLOAT3[m_Maze.m_nPathesPos];
 
-	CCubeMeshDiffused *pCubeMesh = new CCubeMeshDiffused(pd3dDeviceIndRes, pd3dCommandList,
-		50.0f, 50.0f, 50.0f);
+	CCubeMeshIlluminated *pCubeMesh = new CCubeMeshIlluminated(
+		pd3dDeviceIndRes, pd3dCommandList, 50.0f, 50.0f, 50.0f);
 	float fxPitch = 50.0f, fyPitch = 50.0f, fzPitch = 50.0f;
 	int i = 0, nPathIdx = 0;
 	//XMFLOAT3 xmf3RotateAxis, xmf3SurfaceNormal;
@@ -305,11 +341,13 @@ void CScene::BuildObjects(CD3DDeviceIndRes *pd3dDeviceIndRes, ID3D12GraphicsComm
 		m_pppObjects[ObjectTag::Background], m_pnObjects[ObjectTag::Background]);
 
 	m_pShaders[ObjectTag::Objects].CreateShader(pd3dDeviceIndRes, m_pd3dGraphicsRootSignature.Get());
-	m_pnObjects[ObjectTag::Objects] = 30;
+	m_pnObjects[ObjectTag::Objects] = 50;
 	m_pppObjects[ObjectTag::Objects] =
 		new CGameObject*[m_pnObjects[ObjectTag::Objects]];
-	CSphereMeshDiffused *pSphereMeshs =
-		new CSphereMeshDiffused(pd3dDeviceIndRes, pd3dCommandList, 6.0f, 20, 20);
+	CSphereMeshIlluminated *pSphereMeshs =
+		new CSphereMeshIlluminated(pd3dDeviceIndRes, pd3dCommandList, 6.0f, 20, 20);
+
+	XMFLOAT3 mazePos = m_pRoofObject->GetPosition();
 	for (i = 0; i < m_pnObjects[ObjectTag::Objects]; ++i)
 	{
 		CRotatingObject* Sphere = new CRotatingObject();
@@ -317,18 +355,20 @@ void CScene::BuildObjects(CD3DDeviceIndRes *pd3dDeviceIndRes, ID3D12GraphicsComm
 		Sphere->SetMaterial(i % MAX_MATERIALS);
 		Sphere->SetMesh(0, pSphereMeshs);
 		Sphere->SetObjectType(CGameObject::ObjectType::Enemy);
-		Sphere->SetMovingDirection(XMFLOAT3(0.0f, 0.0f, 0.0f));
-		Sphere->SetPosition(
-			m_Maze.m_pxmf3PathesPos[idx].x + (float)RANDOM_NUM(-19, 19),
-			m_Maze.m_pxmf3PathesPos[idx].y -19,
-			m_Maze.m_pxmf3PathesPos[idx].z + (float)RANDOM_NUM(-19, 19));
+		Sphere->SetMovingDirection(Vector3::Normalize(XMFLOAT3(
+			(float)RANDOM_NUM(-1000, 1000),
+			(float)RANDOM_NUM(-1000, 1000),
+			(float)RANDOM_NUM(-1000, 1000))));
+		Sphere->SetPosition(XMFLOAT3(
+			(float)RANDOM_NUM((int)mazePos.x + 450, 1500), 100,
+			(float)RANDOM_NUM((int)mazePos.z + 450, 1500)));
 		Sphere->SetOOBB(pSphereMeshs->GetBoundingBox());
 		Sphere->SetRotationAxis(XMFLOAT3(
 			(float)RANDOM_NUM(-1000, 1000),
 			(float)RANDOM_NUM(-1000, 1000),
 			(float)RANDOM_NUM(-1000, 1000)));
 		Sphere->SetRotationSpeed((float)RANDOM_NUM(50, 100));
-		Sphere->SetMovingSpeed((float)RANDOM_NUM(10, 20));
+		Sphere->SetMovingSpeed((float)RANDOM_NUM(50, 100));
 		m_pppObjects[ObjectTag::Objects][i] = Sphere;
 	}
 	m_pShaders[ObjectTag::Objects].BuildObjects(
@@ -339,8 +379,8 @@ void CScene::BuildObjects(CD3DDeviceIndRes *pd3dDeviceIndRes, ID3D12GraphicsComm
 	m_pnObjects[ObjectTag::Bullet] = 50;
 	m_pppObjects[ObjectTag::Bullet] =
 		new CGameObject*[m_pnObjects[ObjectTag::Bullet]];
-	CCubeMeshDiffused *pBulleteMeshs =
-		new CCubeMeshDiffused(pd3dDeviceIndRes, pd3dCommandList, 2.0f, 2.0f, 2.0f);
+	CCubeMeshIlluminated *pBulleteMeshs =
+		new CCubeMeshIlluminated(pd3dDeviceIndRes, pd3dCommandList, 2.0f, 2.0f, 2.0f);
 	for (i = 0; i < m_pnObjects[ObjectTag::Bullet]; ++i)
 	{
 		CRotatingObject* Cube = new CRotatingObject();
@@ -366,8 +406,8 @@ void CScene::BuildObjects(CD3DDeviceIndRes *pd3dDeviceIndRes, ID3D12GraphicsComm
 	m_pnObjects[ObjectTag::Particle] = 500;
 	m_pppObjects[ObjectTag::Particle] =
 		new CGameObject*[m_pnObjects[ObjectTag::Particle]];
-	CCubeMeshDiffused *pParticleMeshs =
-		new CCubeMeshDiffused(pd3dDeviceIndRes, pd3dCommandList, 1.0f, 1.0f, 1.0f);
+	CCubeMeshIlluminated *pParticleMeshs =
+		new CCubeMeshIlluminated(pd3dDeviceIndRes, pd3dCommandList, 1.0f, 1.0f, 1.0f);
 	for (i = 0; i < m_pnObjects[ObjectTag::Particle]; ++i)
 	{
 		CRotatingObject* Cube = new CRotatingObject();
@@ -425,6 +465,8 @@ void CScene::Render(ID3D12GraphicsCommandList *pd3dCommandList, CCamera *pCamera
 	pd3dCommandList->SetGraphicsRootConstantBufferView(3, d3dcbMaterialsGpuVirtualAddress);
 
 	if (m_pTerrain) m_pTerrain->Render(pd3dCommandList, pCamera);
+	m_ppHeavenlyBody[0]->Render(pd3dCommandList, pCamera);
+	m_ppHeavenlyBody[1]->Render(pd3dCommandList, pCamera);
 	for (int i = 0; i < m_nShaders; i++)
 	{
 		m_pShaders[i].Render(pd3dCommandList, pCamera);
@@ -443,12 +485,26 @@ bool CScene::ProcessInput(float fTimeElapsed)
 		if (pKeyBuffer['S'] & 0xF0) dwDirection |= DIR_BACKWARD;
 		if (pKeyBuffer['A'] & 0xF0) dwDirection |= DIR_LEFT;
 		if (pKeyBuffer['D'] & 0xF0) dwDirection |= DIR_RIGHT;
-		if (pKeyBuffer['R'] & 0xF0) dwDirection |= DIR_UP;
-		if (pKeyBuffer['F'] & 0xF0) dwDirection |= DIR_DOWN;
+		if (pKeyBuffer['Q'] & 0xF0) dwDirection |= DIR_UP;
+		if (pKeyBuffer['E'] & 0xF0) dwDirection |= DIR_DOWN;
+		if (pKeyBuffer['F'] & 0xF0)
+			m_pLights->m_pLights[0].m_bEnable = true;
+		if (pKeyBuffer['G'] & 0xF0)
+			m_pLights->m_pLights[0].m_bEnable = false;
 		if (pKeyBuffer['P'] & 0xF0)
 			m_pPlayer->SetPosition(m_Maze.m_xmf3EntrancePos);
 		if (pKeyBuffer[VK_SPACE] & 0xF0)
 			ShootBullet();
+		if (pKeyBuffer['M'] & 0xF0)
+		{
+			m_ppHeavenlyBody[0]->SetDay();
+			m_ppHeavenlyBody[1]->SetDay();
+		}
+		if (pKeyBuffer['N'] & 0xF0)
+		{
+			m_ppHeavenlyBody[0]->SetNight();
+			m_ppHeavenlyBody[1]->SetNight();
+		}
 	}
 
 	float cxDelta = 0.0f, cyDelta = 0.0f;
@@ -461,7 +517,6 @@ bool CScene::ProcessInput(float fTimeElapsed)
 		cxDelta = (float)(ptCursorPos.x - m_ptOldCursorPos.x) / 3.0f;
 		cyDelta = (float)(ptCursorPos.y - m_ptOldCursorPos.y) / 3.0f;
 		::SetCursorPos(m_ptOldCursorPos.x, m_ptOldCursorPos.y);
-
 	}
 
 	if ((dwDirection != 0) || (cxDelta != 0.0f) || (cyDelta != 0.0f))
@@ -499,11 +554,12 @@ void CScene::AnimateObjects(float fTimeElapsed)
 	}
 	m_fBulletTimer += fTimeElapsed;
 	for (int i = 0; i < m_nShaders; i++)
-	{
 		m_pShaders[i].AnimateObjects(fTimeElapsed);
-	}
 	m_pPlayer->Animate(fTimeElapsed);
-	//PhysicsProcessing(fTimeElapsed);
+	m_ppHeavenlyBody[0]->Animate(fTimeElapsed);
+	m_ppHeavenlyBody[1]->Animate(fTimeElapsed);
+
+	PhysicsProcessing(fTimeElapsed);
 
 	for (int i = 0; i < m_pnObjects[ObjectTag::Bullet]; ++i)
 	{
@@ -523,19 +579,10 @@ void CScene::AnimateObjects(float fTimeElapsed)
 		CRotatingObject* Object = dynamic_cast<CRotatingObject*>(
 			m_pppObjects[ObjectTag::Objects][i]);
 		XMFLOAT3 ObjectPos = Object->GetPosition();
-		Object->SetPosition(ObjectPos.x, 
+		Object->SetPosition(
+			ObjectPos.x, 
 			m_pTerrain->GetHeight(ObjectPos.x, ObjectPos.z) + 6.0f, 
 			ObjectPos.z);
-		XMFLOAT3 direct = Vector3::Add(PlayerPos, ObjectPos, -1.0f);
-		if (XMVector3Length(XMLoadFloat3(&direct)).m128_f32[0] < 150.0f)
-		{
-			XMFLOAT3 look = Vector3::Normalize(direct);
-			Object->SetMovingDirection(look);
-		}
-		else
-		{
-			Object->SetMovingDirection(XMFLOAT3(0.0f, 0.0f, 0.0f));
-		}
 	}
 
 	for (int i = 0; i < m_pnObjects[ObjectTag::Particle]; ++i)
@@ -552,8 +599,41 @@ void CScene::AnimateObjects(float fTimeElapsed)
 	}
 	if (m_pLights)
 	{
-		m_pLights->m_pLights[1].m_xmf3Position = m_pPlayer->GetPosition();
-		m_pLights->m_pLights[1].m_xmf3Direction = m_pPlayer->GetLookVector();
+		XMFLOAT3 PlayerPos = m_pPlayer->GetPosition();
+		XMFLOAT3 mazePos = m_pRoofObject->GetPosition();
+		XMFLOAT3 sunPos = m_ppHeavenlyBody[0]->GetPosition();
+		XMFLOAT3 moonPos = m_ppHeavenlyBody[1]->GetPosition();
+
+		m_pLights->m_pLights[0].m_xmf3Position = PlayerPos;
+		m_pLights->m_pLights[0].m_xmf3Direction = m_pPlayer->GetLookVector();
+		m_pLights->m_pLights[1].m_xmf3Position = sunPos;
+		m_pLights->m_pLights[1].m_xmf3Direction = Vector3::Normalize(
+			Vector3::Add(XMFLOAT3(800, 0, 800), sunPos, -1));
+		m_pLights->m_pLights[2].m_xmf3Position = moonPos;
+
+		if (PlayerPos.x < mazePos.x + 350 &&
+			PlayerPos.x > mazePos.x - 350 &&
+			PlayerPos.z < mazePos.z + 350 &&
+			PlayerPos.z > mazePos.z - 350)
+		{
+			m_pLights->m_pLights[1].m_bEnable = false;
+			m_pLights->m_pLights[2].m_bEnable = false;
+			for (int i = 3; i < MAX_LIGHTS; ++i)
+				m_pLights->m_pLights[i].m_bEnable = true;
+		}
+		else
+		{
+			for (int i = 3; i < MAX_LIGHTS; ++i)
+				m_pLights->m_pLights[i].m_bEnable = false;
+			if (sunPos.y > 0)
+				m_pLights->m_pLights[1].m_bEnable = true;
+			else
+				m_pLights->m_pLights[1].m_bEnable = false;
+			if (moonPos.y > 0)
+				m_pLights->m_pLights[2].m_bEnable = true;
+			else
+				m_pLights->m_pLights[2].m_bEnable = false;
+		}
 	}
 }
 
@@ -594,12 +674,6 @@ void CScene::PhysicsProcessing(float fTimeElapsed)
 			switch (containType)
 			{
 			case CONTAINS:
-			{
-				m_pppObjects[ObjectTag::Bullet][j]->SetPosition(0.0f, 1000.0f, 0.0f);
-				m_pppObjects[ObjectTag::Bullet][j]->Animate(fTimeElapsed);
-				m_pppObjects[ObjectTag::Bullet][j]->Sleep();
-				break;
-			}
 			case INTERSECTS:
 			{
 				m_pppObjects[ObjectTag::Bullet][j]->SetPosition(0.0f, 1000.0f, 0.0f);
@@ -620,38 +694,6 @@ void CScene::PhysicsProcessing(float fTimeElapsed)
 			switch (containType)
 			{
 			case CONTAINS:
-			{
-				CRotatingObject* Particle = dynamic_cast<CRotatingObject*>(
-					m_pppObjects[ObjectTag::Particle][j]);
-				int plane_idx = -1;
-				float dot = 1;
-				for (int k = 0; k < 4; k++)
-				{
-					XMVECTOR xmvDot = XMPlaneDotNormal(XMLoadFloat4(&pxmf4WallPlanes[k]),
-						XMLoadFloat3(&Particle->GetMovingDirection()));
-					if (dot > xmvDot.m128_f32[0])
-					{
-						dot = xmvDot.m128_f32[0];
-						plane_idx = k;
-					}
-				}
-				XMVECTOR xmvNormal = XMVectorSet(
-					pxmf4WallPlanes[plane_idx].x,
-					pxmf4WallPlanes[plane_idx].y,
-					pxmf4WallPlanes[plane_idx].z, 0.0f);
-				XMVECTOR xmvReflect = XMVector3Reflect(XMLoadFloat3(
-					&Particle->GetMovingDirection()), xmvNormal);
-				XMStoreFloat3(&Particle->GetMovingDirection(), XMLoadFloat3(
-					&Vector3::Normalize(Vector3::XMVectorToFloat3(xmvReflect))));
-				Particle->Move(Vector3::Normalize(
-					Vector3::Add(XMFLOAT3(
-						pxmf4WallPlanes[plane_idx].x,
-						pxmf4WallPlanes[plane_idx].y,
-						pxmf4WallPlanes[plane_idx].z),
-						Vector3::XMVectorToFloat3(xmvReflect))),
-					REPULSIVE_FORCE * fTimeElapsed);
-				break;
-			}
 			case INTERSECTS:
 			{
 				CRotatingObject* Particle = dynamic_cast<CRotatingObject*>(
@@ -687,44 +729,12 @@ void CScene::PhysicsProcessing(float fTimeElapsed)
 			}
 			}
 		}
-		for (int j = 0; j < m_pnObjects[ObjectTag::Objects]; ++j)
-		{
-			BoundingOrientedBox wmObjectOOBB =
-				m_pppObjects[ObjectTag::Objects][j]->GetOOBB();
-			ContainmentType containType = wmWallOOBB.Contains(wmObjectOOBB);
-			switch (containType)
-			{
-			case CONTAINS:
-			{
-				CRotatingObject* Object = dynamic_cast<CRotatingObject*>(
-					m_pppObjects[ObjectTag::Objects][j]);
-				Object->Move(Vector3::Normalize(Vector3::Add(
-					Object->GetPosition(), Wall->GetPosition(), -1)),
-					REPULSIVE_FORCE * fTimeElapsed);
-				break;
-			}
-			case INTERSECTS:
-			{
-				CRotatingObject* Object = dynamic_cast<CRotatingObject*>(
-					m_pppObjects[ObjectTag::Objects][j]);
-				Object->Move(Vector3::Normalize(Vector3::Add(
-					Object->GetPosition(), Wall->GetPosition(), -1)),
-					REPULSIVE_FORCE * fTimeElapsed);
-				break;
-			}
-			}
-		}
+
 		BoundingOrientedBox wmPlayerOOBB = m_pPlayer->GetOOBB();
 		ContainmentType containType = wmWallOOBB.Contains(wmPlayerOOBB);
 		switch (containType)
 		{
 		case CONTAINS:
-		{
-			m_pPlayer->Move(Vector3::ScalarProduct(Vector3::Add(
-				m_pPlayer->GetPosition(), Wall->GetPosition(), -1),
-				2 * REPULSIVE_FORCE * fTimeElapsed), false);
-			break;
-		}
 		case INTERSECTS:
 		{
 			m_pPlayer->Move(Vector3::ScalarProduct(Vector3::Add(
@@ -736,9 +746,47 @@ void CScene::PhysicsProcessing(float fTimeElapsed)
 	}
 
 	// Collision check between all objects
+	float terrainWidth = m_pTerrain->GetWidth();
+	float terrainLength = m_pTerrain->GetLength();
 	for (int i = 0; i < m_pnObjects[ObjectTag::Objects]; ++i)
 	{
 		m_pppObjects[ObjectTag::Objects][i]->SetCollider(NULL);
+		CRotatingObject* Object = dynamic_cast<CRotatingObject*>(
+			m_pppObjects[ObjectTag::Objects][i]);
+		XMFLOAT3 pos = Object->GetPosition();
+		XMFLOAT3 direction = Object->GetMovingDirection();
+		if (pos.x < 10) { 
+			direction.x = -direction.x; 
+			pos.x = 10;
+		}
+		else if (pos.x > terrainWidth - 10) {
+			direction.x = -direction.x; 
+			pos.x = terrainWidth - 10;
+		}
+		if (pos.z < 10) {
+			direction.z = -direction.z;
+			pos.z = 10;
+		}
+		else if (pos.z > terrainLength - 10) {
+			direction.z = -direction.z;
+			pos.z = terrainLength - 10;
+		}
+		if (pos.x < terrainWidth / 2.f &&
+			pos.z < terrainLength / 2.f)
+		{
+			if (pos.x > pos.z)
+			{
+				direction.x = -direction.x;
+				pos.x = terrainWidth / 2.0f;
+			}
+			else
+			{
+				direction.z = -direction.z;
+				pos.z = terrainLength / 2.0f;
+			}
+		}
+		Object->SetMovingDirection(direction);
+		Object->SetPosition(pos);
 	}
 	for (int i = 0; i < m_pnObjects[ObjectTag::Objects]; ++i)
 	{
@@ -780,12 +828,14 @@ void CScene::PhysicsProcessing(float fTimeElapsed)
 			XMFLOAT3 direct = Vector3::Normalize(Vector3::Add(
 				xmf3ObjPos, xmf3ColliderPos, -1.0f));
 
+			Object->SetMovingDirection(direct);
 			Object->SetMovingSpeed(Collider->GetMovingSpeed());
 			Object->Move(direct, REPULSIVE_FORCE * fTimeElapsed);
 
 			direct = Vector3::Normalize(Vector3::Add(
 				xmf3ColliderPos, xmf3ObjPos, -1.0f));
 			
+			Collider->SetMovingDirection(direct);
 			Collider->SetMovingSpeed(fMovingSpeed);
 			Collider->Move(direct, REPULSIVE_FORCE * fTimeElapsed);
 
@@ -919,19 +969,21 @@ void CScene::ShootBullet()
 
 void CScene::ResetObjects(CRotatingObject * Object)
 {
-	int idx = rand() % m_Maze.m_nPathesPos;
+	XMFLOAT3 mazePos = m_pRoofObject->GetPosition();
 	Object->SetObjectType(CGameObject::ObjectType::Enemy);
-	Object->SetMovingDirection(XMFLOAT3(0.0f, 0.0f, 0.0f));
-	Object->SetPosition(
-		m_Maze.m_pxmf3PathesPos[idx].x + (float)RANDOM_NUM(-19, 19),
-		m_Maze.m_pxmf3PathesPos[idx].y - 19,
-		m_Maze.m_pxmf3PathesPos[idx].z + (float)RANDOM_NUM(-19, 19));
+	Object->SetMovingDirection(Vector3::Normalize(XMFLOAT3(
+		(float)RANDOM_NUM(-1000, 1000),
+		(float)RANDOM_NUM(-1000, 1000),
+		(float)RANDOM_NUM(-1000, 1000))));
+	Object->SetPosition(XMFLOAT3(
+		(float)RANDOM_NUM((int)mazePos.x + 450, 1500), 100,
+		(float)RANDOM_NUM((int)mazePos.z + 450, 1500)));
 	Object->SetRotationAxis(XMFLOAT3(
 		(float)RANDOM_NUM(-1000, 1000),
 		(float)RANDOM_NUM(-1000, 1000),
 		(float)RANDOM_NUM(-1000, 1000)));
 	Object->SetRotationSpeed((float)RANDOM_NUM(50, 100));
-	Object->SetMovingSpeed((float)RANDOM_NUM(30, 50));
+	Object->SetMovingSpeed((float)RANDOM_NUM(50, 100));
 }
 
 void CScene::PopParticles(XMFLOAT3& pos, int nParticles)

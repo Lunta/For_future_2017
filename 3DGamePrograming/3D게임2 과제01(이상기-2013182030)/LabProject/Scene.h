@@ -120,6 +120,7 @@ protected:
 	CPlayer						*m_pPlayer = NULL;
 	Maze						m_Maze;
 	CGameObject					*m_pRoofObject = NULL;
+	CRevolvingObject			**m_ppHeavenlyBody = NULL;
 
 	int							m_nCurrentBulletIdx = 0;
 	int							m_nCurrentParticleIdx = 0;

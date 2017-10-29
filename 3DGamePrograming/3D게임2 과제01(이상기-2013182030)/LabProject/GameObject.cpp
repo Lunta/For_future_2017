@@ -98,7 +98,7 @@ void CGameObject::Render(ID3D12GraphicsCommandList *pd3dCommandList, CCamera *pC
 {
 	if (!m_bActive) return;
 	//게임 객체가 카메라에 보이면 렌더링한다.
-	if (IsVisible(pCamera))
+	//if (IsVisible(pCamera))
 	{
 		OnPrepareRender();
 
@@ -350,22 +350,54 @@ void CRotatingObject::Animate(float fTimeElapsed)
 	m_bUpdatedWorldMtx = false;
 }
 
-CRevolvingObject::CRevolvingObject()
+void CRotatingObject::SetMovingDirection(XMFLOAT3 & xmf3MovingDirection)
 {
-	m_xmf3RevolutionAxis = XMFLOAT3(1.0f, 0.0f, 0.0f);
-	m_fRevolutionSpeed = 0.0f;
+	m_xmf3MovingDirection = Vector3::Normalize(xmf3MovingDirection);
+	m_xmf3RotationAxis = Vector3::CrossProduct(m_xmf3MovingDirection, XMFLOAT3(0, 1, 0));
+}
+
+int n = 0;
+CRevolvingObject::CRevolvingObject()
+	:CGameObject(1)
+{
+	m_xmf3RevolutionAxis = XMFLOAT3(n, 0.0f, 1.0f);
+	if (n++ == 0)
+		m_fRevolutionSpeed = 0.0f;
+	else
+		m_fRevolutionSpeed = 3.14f;
 }
 
 CRevolvingObject::~CRevolvingObject()
 {
 }
 
+void CRevolvingObject::SetDay()
+{
+	if (m_xmf3RevolutionAxis.x == 0)
+		m_fRevolutionSpeed = 0.0f;
+	else if(m_xmf3RevolutionAxis.x == 1)
+		m_fRevolutionSpeed = 3.14f;
+}
+
+void CRevolvingObject::SetNight()
+{
+	if (m_xmf3RevolutionAxis.x == 0)
+		m_fRevolutionSpeed = 3.14f;
+	else if (m_xmf3RevolutionAxis.x == 1)
+		m_fRevolutionSpeed = 0.0f;
+}
+
 void CRevolvingObject::Animate(float fTimeElapsed)
 {
-	XMMATRIX mtxRotate = XMMatrixRotationAxis(
-		XMLoadFloat3(&m_xmf3RevolutionAxis), 
-		XMConvertToRadians(m_fRevolutionSpeed * fTimeElapsed));
-	m_xmf4x4World = Matrix4x4::Multiply(m_xmf4x4World, mtxRotate);
+	m_fRevolutionSpeed += fTimeElapsed * 0.3f;
+	m_xmf4x4World._41 = 1400 * cos(m_fRevolutionSpeed) + 800;
+	m_xmf4x4World._42 = 1400 * sin(m_fRevolutionSpeed);
+	m_xmf4x4World._43 = 800;
+	if (m_fRevolutionSpeed > 6.28) m_fRevolutionSpeed -= 6.28;
+	//XMMATRIX mtxRotate = XMMatrixRotationAxis(
+	//	XMLoadFloat3(&m_xmf3RevolutionAxis), 
+	//	XMConvertToRadians(m_fRevolutionSpeed * fTimeElapsed));
+	//m_xmf4x4World = Matrix4x4::Multiply(m_xmf4x4World, mtxRotate);
 }
 
 CHeightMapTerrain::CHeightMapTerrain(
