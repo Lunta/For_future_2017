@@ -1,68 +1,107 @@
 
-//게임 객체의 정보를 위한 상수 버퍼를 선언한다.
-cbuffer cbGameObjectInfo : register(b0)
+cbuffer cbPlayerInfo : register(b0)
 {
-	matrix gmtxWorld : packoffset(c0);
+    matrix gmtxPlayerWorld : packoffset(c0);
 };
-//카메라의 정보를 위한 상수 버퍼를 선언한다.
+
 cbuffer cbCameraInfo : register(b1)
 {
-	matrix gmtxView : packoffset(c0);
-	matrix gmtxProjection : packoffset(c4);
+    matrix gmtxView : packoffset(c0);
+    matrix gmtxProjection : packoffset(c4);
+    float3 gvCameraPosition : packoffset(c8);
 };
-//정점 셰이더의 입력을 위한 구조체를 선언한다.
-struct VS_INPUT
+
+struct GAMEOBJECTINFO
 {
-	float3 position : POSITION;
-	float4 color : COLOR;
+    matrix m_mtxGameObject;
+    uint m_nMaterial;
 };
-//정점 셰이더의 출력(픽셀 셰이더의 입력)을 위한 구조체를 선언한다.
-struct VS_OUTPUT
+
+StructuredBuffer<GAMEOBJECTINFO> gGameObjectInfos : register(t0);
+
+static uint gnMaterial;
+
+#include "Light.hlsl"
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+struct VS_DIFFUSED_INPUT
 {
-	float4 position : SV_POSITION;
-	float4 color : COLOR;
+    float3 position : POSITION;
+    float4 color : COLOR;
 };
-//정점 셰이더를 정의한다.
-VS_OUTPUT VSDiffused(VS_INPUT input)
+
+struct VS_DIFFUSED_OUTPUT
 {
-	VS_OUTPUT output;
-	output.position = mul(mul(mul(float4(input.position, 1.0f), gmtxWorld), gmtxView),
-		gmtxProjection);
-	output.color = input.color;
-	return(output);
-}
-//픽셀 셰이더를 정의한다.
-float4 PSDiffused(VS_OUTPUT input) : SV_TARGET
+    float4 position : SV_POSITION;
+    float4 color : COLOR;
+};
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+VS_DIFFUSED_OUTPUT VSPlayer(VS_DIFFUSED_INPUT input)
 {
-	return(input.color);
+    VS_DIFFUSED_OUTPUT output;
+
+    output.position = mul(mul(mul(float4(input.position, 1.0f), gmtxPlayerWorld), gmtxView), gmtxProjection);
+    output.color = input.color;
+
+    return (output);
 }
 
-struct INSTANCEDGAMEOBJECTINFO
+float4 PSPlayer(VS_DIFFUSED_OUTPUT input) : SV_TARGET
 {
-	matrix m_mtxGameObject;
-	float4 m_cColor;
-};
-StructuredBuffer<INSTANCEDGAMEOBJECTINFO> gGameObjectInfos : register(t0);
-struct VS_INSTANCING_INPUT
-{
-	float3 position : POSITION;
-	float4 color : COLOR;
-};
-struct VS_INSTANCING_OUTPUT
-{
-	float4 position : SV_POSITION;
-	float4 color : COLOR;
-};
-VS_INSTANCING_OUTPUT VSInstancing(VS_INSTANCING_INPUT input, uint nInstanceID :
-SV_InstanceID)
-{
-	VS_INSTANCING_OUTPUT output;
-	output.position = mul(mul(mul(float4(input.position, 1.0f),
-		gGameObjectInfos[nInstanceID].m_mtxGameObject), gmtxView), gmtxProjection);
-	output.color = input.color + gGameObjectInfos[nInstanceID].m_cColor;
-	return(output);
+    return (input.color);
 }
-float4 PSInstancing(VS_INSTANCING_OUTPUT input) : SV_TARGET
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+//#define _WITH_VERTEX_LIGHTING
+
+struct VS_LIGHTING_INPUT
 {
-	return(input.color);
+    float3 position : POSITION;
+    float3 normal : NORMAL;
+};
+
+struct VS_LIGHTING_OUTPUT
+{
+    float4 position : SV_POSITION;
+    float3 positionW : POSITION;
+    float3 normalW : NORMAL;
+    uint material : MATERIAL;
+//	nointerpolation float3 normalW : NORMAL;
+#ifdef _WITH_VERTEX_LIGHTING
+    float4 color : COLOR;
+    
+#endif
+};
+
+VS_LIGHTING_OUTPUT VSLighting(VS_LIGHTING_INPUT input, uint nInstanceID : SV_InstanceID)
+{
+    VS_LIGHTING_OUTPUT output;
+
+    output.normalW = mul(input.normal, (float3x3) gGameObjectInfos[nInstanceID].m_mtxGameObject);
+    output.positionW = (float3) mul(float4(input.position, 1.0f), gGameObjectInfos[nInstanceID].m_mtxGameObject);
+    output.position = mul(mul(float4(output.positionW, 1.0f), gmtxView), gmtxProjection);
+#ifdef _WITH_VERTEX_LIGHTING
+    gnMaterial = gGameObjectInfos[nInstanceID].m_nMaterial;
+    output.normalW = normalize(output.normalW);
+    output.color = Lighting(output.positionW, output.normalW);
+#else
+    output.material = gGameObjectInfos[nInstanceID].m_nMaterial;
+#endif
+    return (output);
+}
+
+float4 PSLighting(VS_LIGHTING_OUTPUT input) : SV_TARGET
+{
+#ifdef _WITH_VERTEX_LIGHTING
+    return (input.color);
+#else
+	input.normalW = normalize(input.normalW);
+    gnMaterial = input.material;
+	float4 color = Lighting(input.positionW, input.normalW);
+	return(color);
+#endif
 }

@@ -32,7 +32,7 @@ ID3D12RootSignature* CScene::CreateGraphicsRootSignature(CD3DDeviceIndRes *pd3dD
 	pd3dRootParameters[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
 	pd3dRootParameters[0].Descriptor.ShaderRegister = 0; //Player
 	pd3dRootParameters[0].Descriptor.RegisterSpace = 0;
-	pd3dRootParameters[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX;
+	pd3dRootParameters[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 
 	pd3dRootParameters[1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
 	pd3dRootParameters[1].Descriptor.ShaderRegister = 1; //Camera
@@ -42,7 +42,7 @@ ID3D12RootSignature* CScene::CreateGraphicsRootSignature(CD3DDeviceIndRes *pd3dD
 	pd3dRootParameters[2].ParameterType = D3D12_ROOT_PARAMETER_TYPE_SRV;
 	pd3dRootParameters[2].Descriptor.ShaderRegister = 0; //t0
 	pd3dRootParameters[2].Descriptor.RegisterSpace = 0;
-	pd3dRootParameters[2].ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX;
+	pd3dRootParameters[2].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 
 	pd3dRootParameters[3].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
 	pd3dRootParameters[3].Descriptor.ShaderRegister = 3; //Materials
@@ -58,8 +58,8 @@ ID3D12RootSignature* CScene::CreateGraphicsRootSignature(CD3DDeviceIndRes *pd3dD
 		D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT |
 		D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS |
 		D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS |
-		D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS |
-		D3D12_ROOT_SIGNATURE_FLAG_DENY_PIXEL_SHADER_ROOT_ACCESS;
+		D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS;
+		//| D3D12_ROOT_SIGNATURE_FLAG_DENY_PIXEL_SHADER_ROOT_ACCESS;
 
 	D3D12_ROOT_SIGNATURE_DESC d3dRootSignatureDesc;
 	::ZeroMemory(&d3dRootSignatureDesc, sizeof(D3D12_ROOT_SIGNATURE_DESC));
@@ -168,7 +168,7 @@ void CScene::BuildLightsAndMaterials()
 	m_pLights->m_pLights[2].m_xmf4Specular = XMFLOAT4(0.1f, 0.1f, 0.1f, 0.0f);
 	m_pLights->m_pLights[2].m_xmf3Position = XMFLOAT3(130.0f, 30.0f, 30.0f);
 	m_pLights->m_pLights[2].m_xmf3Direction = XMFLOAT3(0.0f, 0.0f, 0.0f);
-	m_pLights->m_pLights[2].m_xmf3Attenuation = XMFLOAT3(1.0f, 0.000004f, 0.0000004f);
+	m_pLights->m_pLights[2].m_xmf3Attenuation = XMFLOAT3(1.0f, 0.00001f, 0.000001f);
 
 	// 미로조명
 	float stride = (float)m_Maze.m_nPathesPos / (float)(MAX_LIGHTS - 3);
@@ -200,8 +200,8 @@ void CScene::BuildLightsAndMaterials()
 	m_pMaterials->m_pReflections[2] = { XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f), XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f), XMFLOAT4(1.0f, 1.0f, 1.0f, 15.0f), XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f) };
 	m_pMaterials->m_pReflections[3] = { XMFLOAT4(0.5f, 0.0f, 1.0f, 1.0f), XMFLOAT4(0.0f, 0.5f, 1.0f, 1.0f), XMFLOAT4(1.0f, 1.0f, 1.0f, 20.0f), XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f) };
 	m_pMaterials->m_pReflections[4] = { XMFLOAT4(0.0f, 0.5f, 1.0f, 1.0f), XMFLOAT4(0.5f, 0.0f, 1.0f, 1.0f), XMFLOAT4(1.0f, 1.0f, 1.0f, 25.0f), XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f) };
-	m_pMaterials->m_pReflections[5] = { XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT4(1.0f, 1.0f, 1.0f, 30.0f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f) };
-	m_pMaterials->m_pReflections[6] = { XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT4(1.0f, 1.0f, 1.0f, 35.0f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f) };
+	m_pMaterials->m_pReflections[5] = { XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f), XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f), XMFLOAT4(1.0f, 1.0f, 1.0f, 30.0f), XMFLOAT4(1.0f, 1.0f, 0.0f, 1.0f) };
+	m_pMaterials->m_pReflections[6] = { XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f), XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f), XMFLOAT4(1.0f, 1.0f, 1.0f, 35.0f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f) };
 	m_pMaterials->m_pReflections[7] = { XMFLOAT4(0.0f, 0.8f, 0.0f, 1.0f), XMFLOAT4(0.2f, 0.2f, 0.2f, 1.0f), XMFLOAT4(1.0f, 1.0f, 1.0f, 40.0f), XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f) };
 }
 void CScene::BuildObjects(
@@ -614,7 +614,8 @@ void CScene::AnimateObjects(float fTimeElapsed)
 		if (PlayerPos.x < mazePos.x + 350 &&
 			PlayerPos.x > mazePos.x - 350 &&
 			PlayerPos.z < mazePos.z + 350 &&
-			PlayerPos.z > mazePos.z - 350)
+			PlayerPos.z > mazePos.z - 350 &&
+			PlayerPos.y < mazePos.y)
 		{
 			m_pLights->m_pLights[1].m_bEnable = false;
 			m_pLights->m_pLights[2].m_bEnable = false;
@@ -735,6 +736,12 @@ void CScene::PhysicsProcessing(float fTimeElapsed)
 		switch (containType)
 		{
 		case CONTAINS:
+		{
+			m_pPlayer->Move(Vector3::ScalarProduct(Vector3::Add(
+				m_pPlayer->GetPosition(), Wall->GetPosition(), -1),
+				2 * REPULSIVE_FORCE * fTimeElapsed), false);
+			break;
+		}
 		case INTERSECTS:
 		{
 			m_pPlayer->Move(Vector3::ScalarProduct(Vector3::Add(

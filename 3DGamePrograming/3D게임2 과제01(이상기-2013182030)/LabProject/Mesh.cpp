@@ -972,6 +972,9 @@ CCubeMeshTextured::CCubeMeshTextured(
 	m_d3dVertexBufferView.BufferLocation = m_pd3dVertexBuffer->GetGPUVirtualAddress();
 	m_d3dVertexBufferView.StrideInBytes = m_nStride;
 	m_d3dVertexBufferView.SizeInBytes = m_nStride * m_nVertices;
+
+	m_xmBoundingBox = BoundingOrientedBox(XMFLOAT3(0.0f, 0.0f, 0.0f), XMFLOAT3(fx, fy,
+		fz), XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f));
 }
 
 CCubeMeshTextured::~CCubeMeshTextured()
@@ -1143,6 +1146,8 @@ CCubeMeshIlluminated::CCubeMeshIlluminated(CD3DDeviceIndRes *pd3dDeviceIndRes, I
 	m_d3dVertexBufferView.BufferLocation = m_pd3dVertexBuffer->GetGPUVirtualAddress();
 	m_d3dVertexBufferView.StrideInBytes = m_nStride;
 	m_d3dVertexBufferView.SizeInBytes = m_nStride * m_nVertices;
+	m_xmBoundingBox = BoundingOrientedBox(XMFLOAT3(0.0f, 0.0f, 0.0f), XMFLOAT3(fx, fy,
+		fz), XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f));
 }
 
 CCubeMeshIlluminated::~CCubeMeshIlluminated()
@@ -1306,6 +1311,8 @@ CSphereMeshIlluminated::CSphereMeshIlluminated(
 	UINT pnBufferOffsets[2] = { 0, 0 };
 	AssembleToVertexBuffer(2, pd3dBuffers, pnBufferStrides, pnBufferOffsets);
 #endif
+	m_xmBoundingBox = BoundingOrientedBox(XMFLOAT3(0.0f, 0.0f, 0.0f), XMFLOAT3(fRadius / 2.0f,
+		fRadius / 2.0f, fRadius / 2.0f), XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f));
 }
 
 CSphereMeshIlluminated::~CSphereMeshIlluminated()
@@ -1332,17 +1339,21 @@ CHeightMapGridMeshIlluminated::CHeightMapGridMeshIlluminated(
 	CIlluminatedVertex *pVertices = new CIlluminatedVertex[m_nVertices];
 	/*xStart와 zStart는 격자의 시작 위치(x-좌표와 z-좌표)를 나타낸다. 커다란 지형은 격자들의 이차원 배열로 만들 필
 	요가 있기 때문에 전체 지형에서 각 격자의 시작 위치를 나타내는 정보가 필요하다.*/
-	XMFLOAT3 *pxmf3Vertices = new XMFLOAT3[m_nVertices];
-	XMFLOAT3 *pxmf3Normals = new XMFLOAT3[m_nVertices];
+	CHeightMapImage *pHeightMapImage = (CHeightMapImage *)pContext;
+	//XMFLOAT3 *pxmf3Vertices = new XMFLOAT3[m_nVertices];
+	//XMFLOAT3 *pxmf3Normals = new XMFLOAT3[m_nVertices];
 	float fHeight = 0.0f, fMinHeight = +FLT_MAX, fMaxHeight = -FLT_MAX;
 	for (int i = 0, z = zStart; z < (zStart + nLength); z++)
 	{
 		for (int x = xStart; x < (xStart + nWidth); x++, i++)
 		{
+			pVertices[i] = CIlluminatedVertex(XMFLOAT3((x*m_xmf3Scale.x)
+				, OnGetHeight(x, z, pContext)
+				, (z*m_xmf3Scale.z)), pHeightMapImage->GetHeightMapNormal(x, z));
 			//정점의 높이와 색상을 높이 맵으로부터 구한다.
-			pxmf3Vertices[i] = XMFLOAT3((x*m_xmf3Scale.x)
-					, OnGetHeight(x, z, pContext)
-					, (z*m_xmf3Scale.z));
+			//pxmf3Vertices[i] = XMFLOAT3((x*m_xmf3Scale.x)
+			//		, OnGetHeight(x, z, pContext)
+			//		, (z*m_xmf3Scale.z));
 			if (fHeight < fMinHeight) fMinHeight = fHeight;
 			if (fHeight > fMaxHeight) fMaxHeight = fHeight;
 		}
@@ -1379,16 +1390,16 @@ CHeightMapGridMeshIlluminated::CHeightMapGridMeshIlluminated(
 			}
 		}
 	}
-	CalculateVertexNormals(
-		pxmf3Normals
-		, pxmf3Vertices
-		, m_nVertices
-		, pnIndices
-		, m_nIndices);
-	for (int j = 0; j < m_nVertices; ++j)
-		pVertices[j] = CIlluminatedVertex(pxmf3Vertices[j], pxmf3Normals[j]);
-	delete[] pxmf3Vertices;
-	delete[] pxmf3Normals;
+	//CalculateVertexNormals(
+	//	pxmf3Normals
+	//	, pxmf3Vertices
+	//	, m_nVertices
+	//	, pnIndices
+	//	, m_nIndices);
+	//for (int j = 0; j < m_nVertices; ++j)
+	//	pVertices[j] = CIlluminatedVertex(pxmf3Vertices[j], pxmf3Normals[j]);
+	//delete[] pxmf3Vertices;
+	//delete[] pxmf3Normals;
 
 	m_pd3dVertexBuffer = pd3dDeviceIndRes->CreateBufferResource(
 		pd3dCommandList

@@ -429,7 +429,7 @@ CHeightMapTerrain::CHeightMapTerrain(
 	//지형 전체를 표현하기 위한 격자 메쉬에 대한 포인터 배열을 생성한다.
 	m_ppMeshes = new CMesh*[m_nMeshes];
 	for (int i = 0; i < m_nMeshes; i++) m_ppMeshes[i] = NULL;
-	CHeightMapGridMesh *pHeightMapGridMesh = NULL;
+	CHeightMapGridMeshIlluminated *pHeightMapGridMesh = NULL;
 	for (int z = 0, zStart = 0; z < czBlocks; z++)
 	{
 		for (int x = 0, xStart = 0; x < cxBlocks; x++)
@@ -438,7 +438,7 @@ CHeightMapTerrain::CHeightMapTerrain(
 			xStart = x * (nBlockWidth - 1);
 			zStart = z * (nBlockLength - 1);
 			//지형의 일부분을 나타내는 격자 메쉬를 생성하여 지형 메쉬에 저장한다.
-			pHeightMapGridMesh = new CHeightMapGridMesh(pd3dDeviceIndRes, pd3dCommandList, xStart,
+			pHeightMapGridMesh = new CHeightMapGridMeshIlluminated(pd3dDeviceIndRes, pd3dCommandList, xStart,
 				zStart, nBlockWidth, nBlockLength, xmf3Scale, xmf4Color, m_pHeightMapImage);
 			SetMesh(x + (z*cxBlocks), pHeightMapGridMesh);
 		}
