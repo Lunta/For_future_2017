@@ -22,7 +22,9 @@ public:
 
 private:
 
-	ComPtr<ID2D1SolidColorBrush>	m_pd2dsbrDefault	{ nullptr }	;
+	ComPtr<ID2D1SolidColorBrush>	m_pd2dsbrDefault	{ nullptr };
+	ComPtr<ID2D1SolidColorBrush>	m_pd2dsbrGrid1		{ nullptr };
+	ComPtr<ID2D1SolidColorBrush>	m_pd2dsbrGrid2		{ nullptr }	;
 	//ComPtr<IDWriteTextFormat>		m_pdwTextFormat		{ nullptr }	;
 	//ComPtr<IDWriteTextLayout>		m_pdwTextLayout		{ nullptr }	;
 	//

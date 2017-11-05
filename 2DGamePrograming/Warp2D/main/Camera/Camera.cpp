@@ -30,10 +30,17 @@ void CCamera::SetMatrix()
 
 D2D1_POINT_2F CCamera::GetCameraPosition()
 {
+	float fClientScaleFactor = (1.f / m_fScale) * 0.5f;
 	return D2D1_POINT_2F
 	{
-	  Interpolation(m_d2dptPosition.x - m_d2dptClientSize.x * 2.f, m_d2dptPosition.x, m_d2dptAnchor.x * -0.5f + 0.5f)
-	, Interpolation(m_d2dptPosition.y - m_d2dptClientSize.y * 2.f, m_d2dptPosition.y, m_d2dptAnchor.y * -0.5f + 0.5f)
+		  Interpolation(
+			  m_d2dptPosition.x - m_d2dptClientSize.x * fClientScaleFactor
+			, m_d2dptPosition.x + m_d2dptClientSize.x * fClientScaleFactor
+			, -m_d2dptAnchor.x * 0.5f)					
+		, Interpolation(								
+			  m_d2dptPosition.y - m_d2dptClientSize.y * fClientScaleFactor
+			, m_d2dptPosition.y + m_d2dptClientSize.y * fClientScaleFactor
+			, -m_d2dptAnchor.y * 0.5f)
 	};
 }
 

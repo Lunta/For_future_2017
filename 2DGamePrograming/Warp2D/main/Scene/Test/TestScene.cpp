@@ -103,9 +103,11 @@ bool CTestScene::OnCreate(wstring && tag, CWarp2DFramework * pFramework)
 	auto rendertarget = pFramework->GetRenderTarget();
 
 	rendertarget->CreateSolidColorBrush(ColorF{ ColorF::Crimson }, &m_pd2dsbrDefault);
+	rendertarget->CreateSolidColorBrush(ColorF{ ColorF::Green }, &m_pd2dsbrGrid1);
+	rendertarget->CreateSolidColorBrush(ColorF{ ColorF::GreenYellow }, &m_pd2dsbrGrid2);
 
 	m_Camera.SetPosition(m_ptPlayer);
-	m_Camera.SetAnchor(Point2F(-0.5f, -0.5f));
+	m_Camera.SetAnchor(Point2F(0.0f, 0.0f));
 	//auto dwFactoy = m_pIndRes->dwFactory();
 	//
 	//dwFactoy->CreateTextFormat(
@@ -154,11 +156,26 @@ void CTestScene::Draw(ID2D1HwndRenderTarget * pd2dRenderTarget)
 	auto cameramtx = m_Camera.RegenerateViewMatrix();
 	pd2dRenderTarget->SetTransform(cameramtx);
 
+	for (int i = -50; i < 50; ++i)
+		for (int j = -50; j < 50; ++j)
+		{
+			if ((i + j) % 2)
+				pd2dRenderTarget->FillRectangle(
+					RectF(-10, -10, 10, 10) + 
+					Point2F(20.f*j, 20.f*i)
+					, m_pd2dsbrGrid1.Get());
+			else
+				pd2dRenderTarget->FillRectangle(
+					RectF(-10, -10, 10, 10) + 
+					Point2F(20.f*j, 20.f*i)
+					, m_pd2dsbrGrid2.Get());
+		}
+
 	pd2dRenderTarget->FillRectangle(
-		RectF(-10, -10, 10, 10 ) + m_ptPlayer
+		RectF(-10, -10, 10, 10) + m_ptPlayer
 		, m_pd2dsbrDefault.Get());
 	pd2dRenderTarget->DrawRectangle(
-		RectF(50, 50, 70, 70)
+		RectF(60, 60, 80, 80)
 		, m_pd2dsbrDefault.Get());
 
 	//pd2dRenderTarget->DrawRectangle(
