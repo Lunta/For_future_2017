@@ -108,6 +108,14 @@ bool CTestScene::OnCreate(wstring && tag, CWarp2DFramework * pFramework)
 
 	m_Camera.SetPosition(m_ptPlayer);
 	m_Camera.SetAnchor(Point2F(0.0f, 0.0f));
+
+	m_upItem = make_unique<CItem>(
+		Point2F(100, 100)
+		, RectF(-10, -10, 10, 10));
+	m_upItem->RegisterImage(
+		m_pIndRes.get()
+		, rendertarget.Get()
+		, "Buckler.png");
 	//auto dwFactoy = m_pIndRes->dwFactory();
 	//
 	//dwFactoy->CreateTextFormat(
@@ -177,6 +185,8 @@ void CTestScene::Draw(ID2D1HwndRenderTarget * pd2dRenderTarget)
 	pd2dRenderTarget->DrawRectangle(
 		RectF(60, 60, 80, 80)
 		, m_pd2dsbrDefault.Get());
+
+	m_upItem->Draw(pd2dRenderTarget);
 
 	//pd2dRenderTarget->DrawRectangle(
 	//	RectF(-50 + fPositionX, 100, 50 + fPositionX, 200)

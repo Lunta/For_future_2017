@@ -59,8 +59,6 @@ void CWarp2DFramework::Update(float fTimeElapsed)
 	if (m_pCurrentScene) m_pCurrentScene->Update(fTimeElapsed);
 }
 
-
-
 bool CWarp2DFramework::OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam)
 {
 	switch (nMessageID)
@@ -180,7 +178,6 @@ void CWarp2DFramework::ChangeScene(wstring Tag, bool bDestroyPostScene)
 		{ return s->FindByTag(DestroyTag); }
 		);
 	}
-
 	m_pCurrentScene = pChangeScene;
 }
 
@@ -192,8 +189,6 @@ CScene * CWarp2DFramework::FindScene(std::wstring Tag)
 	);
 	return ChangeScene == end(m_lstScenes) ? nullptr : ChangeScene->get();
 }
-
-
 
 LRESULT CALLBACK CWarp2DFramework::WndProc(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam)
 {

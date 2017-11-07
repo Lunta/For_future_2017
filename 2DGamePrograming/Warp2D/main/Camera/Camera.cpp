@@ -1,14 +1,13 @@
 #include "stdafx.h"
 #include "Camera.h"
 
-CCamera::CCamera()
+CCamera::CCamera() : 
+	  m_d2dmtxWorld(Matrix3x2F::Identity())
+	, m_d2dptPosition(Point2F(0.f, 0.f))
+	, m_bControlLock(false)
+	, m_fScale(1.f)
 {
-	m_d2dmtxWorld = Matrix3x2F::Identity();
-	m_d2dptPosition = Point2F(0.f, 0.f);
-	m_bControlLock = false;
-	m_fScale = 1.f;
 }
-
 CCamera::~CCamera()
 {
 }
@@ -31,17 +30,17 @@ void CCamera::SetMatrix()
 D2D1_POINT_2F CCamera::GetCameraPosition()
 {
 	float fClientScaleFactor = (1.f / m_fScale) * 0.5f;
-	return D2D1_POINT_2F
-	{
+	return Point2F
+	(
 		  Interpolation(
 			  m_d2dptPosition.x - m_d2dptClientSize.x * fClientScaleFactor
 			, m_d2dptPosition.x + m_d2dptClientSize.x * fClientScaleFactor
-			, -m_d2dptAnchor.x * 0.5f)					
-		, Interpolation(								
+			, -m_d2dptAnchor.x * 0.5f)
+		, Interpolation(
 			  m_d2dptPosition.y - m_d2dptClientSize.y * fClientScaleFactor
 			, m_d2dptPosition.y + m_d2dptClientSize.y * fClientScaleFactor
 			, -m_d2dptAnchor.y * 0.5f)
-	};
+	);
 }
 
 D2D_MATRIX_3X2_F CCamera::RegenerateViewMatrix()

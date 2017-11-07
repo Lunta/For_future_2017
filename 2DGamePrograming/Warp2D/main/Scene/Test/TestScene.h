@@ -2,6 +2,7 @@
 
 #include "Scene/Scene.h"
 #include "Camera\Camera.h"
+#include "Object\Item\Item.h"
 
 class CTestScene :
 	public CScene
@@ -33,5 +34,7 @@ private:
 	//float							fPositionX{ 100.f };
 	D2D_POINT_2F					m_ptPlayer{ Point2F(0,0) };
 	CCamera							m_Camera;
+
+	unique_ptr<CItem>				m_upItem;
 };
 

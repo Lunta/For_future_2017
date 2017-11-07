@@ -29,6 +29,9 @@
 #include <string>
 using namespace std;
 
+#include <filesystem>
+using namespace experimental::filesystem;
+
 // ComPtr
 #include <wrl.h>
 using namespace Microsoft::WRL;

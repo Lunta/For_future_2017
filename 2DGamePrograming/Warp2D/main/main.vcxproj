@@ -161,6 +161,8 @@
     <ClInclude Include="Framework\Timer\Timer.h" />
     <ClInclude Include="Framework\Warp2DFramework.h" />
     <ClInclude Include="main.h" />
+    <ClInclude Include="Object\Item\Item.h" />
+    <ClInclude Include="Object\Object.h" />
     <ClInclude Include="pch\D2D_Operator.h" />
     <ClInclude Include="pch\inlineFuncs.h" />
     <ClInclude Include="pch\stdafx.h" />
@@ -176,6 +178,8 @@
     <ClCompile Include="Framework\Timer\Timer.cpp" />
     <ClCompile Include="Framework\Warp2DFramework.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="Object\Item\Item.cpp" />
+    <ClCompile Include="Object\Object.cpp" />
     <ClCompile Include="pch\stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>

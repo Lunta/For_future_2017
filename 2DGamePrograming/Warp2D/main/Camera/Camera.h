@@ -29,9 +29,9 @@ public:
 	virtual void SetAnchor(D2D1_POINT_2F& ptAnchor) { m_d2dptAnchor = ptAnchor; }
 
 	virtual void Rotate(float fPitch = 0.0f, float fYaw = 0.0f, float fRoll = 0.0f) { }
-	virtual void Scale(float Scale){ m_fScale = Scale; }
+	virtual void Scale(float Scale){ if(Scale > 0) m_fScale = Scale; }
 	float GetScale(){ return m_fScale; }
-	void AgjustScale(float Scale){ m_fScale += Scale; }
+	void AgjustScale(float Scale){ if (m_fScale+Scale > 0) m_fScale += Scale; }
 	virtual void SetLookAt(D2D1_POINT_2F& d2dptLookAt) { }
 	D2D_MATRIX_3X2_F GetCameraMatrix(){ SetMatrix(); return m_d2dmtxWorld; }
 	D2D_MATRIX_3X2_F RegenerateViewMatrix();
