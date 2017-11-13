@@ -3,6 +3,8 @@
 #include "Scene/Scene.h"
 #include "Camera\Camera.h"
 #include "Object\Item\Item.h"
+#include "UI\Invectory\Inventory.h"
+#include "Object\Unit\Player\Player.h"
 
 class CTestScene :
 	public CScene
@@ -26,15 +28,12 @@ private:
 	ComPtr<ID2D1SolidColorBrush>	m_pd2dsbrDefault	{ nullptr };
 	ComPtr<ID2D1SolidColorBrush>	m_pd2dsbrGrid1		{ nullptr };
 	ComPtr<ID2D1SolidColorBrush>	m_pd2dsbrGrid2		{ nullptr }	;
-	//ComPtr<IDWriteTextFormat>		m_pdwTextFormat		{ nullptr }	;
 	//ComPtr<IDWriteTextLayout>		m_pdwTextLayout		{ nullptr }	;
-	//
-	//ComPtr<ID2D1Bitmap1>			m_pd2dbmpTest		{ nullptr }	;
-	//float							currImg{ 0 };
-	//float							fPositionX{ 100.f };
-	D2D_POINT_2F					m_ptPlayer{ Point2F(0,0) };
+
+	CPlayer							m_Player;
 	CCamera							m_Camera;
 
 	unique_ptr<CItem>				m_upItem;
+	CUIInventory					m_uiInventory;
 };
 

@@ -156,13 +156,15 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Camera\Camera.h" />
-    <ClInclude Include="D2DLoadBitmap.h" />
     <ClInclude Include="Framework\IndRes\IndRes.h" />
     <ClInclude Include="Framework\Timer\Timer.h" />
     <ClInclude Include="Framework\Warp2DFramework.h" />
     <ClInclude Include="main.h" />
     <ClInclude Include="Object\Item\Item.h" />
     <ClInclude Include="Object\Object.h" />
+    <ClInclude Include="Object\Unit\Player\Player.h" />
+    <ClInclude Include="Object\Unit\Unit.h" />
+    <ClInclude Include="pch\D2DLoadBitmap.h" />
     <ClInclude Include="pch\D2D_Operator.h" />
     <ClInclude Include="pch\inlineFuncs.h" />
     <ClInclude Include="pch\stdafx.h" />
@@ -171,6 +173,8 @@
     <ClInclude Include="Scene\Scene.h" />
     <ClInclude Include="Scene\Test\TestScene.h" />
     <ClInclude Include="targetver.h" />
+    <ClInclude Include="UI\Invectory\Inventory.h" />
+    <ClInclude Include="UI\UIBase.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Camera\Camera.cpp" />
@@ -180,6 +184,8 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Object\Item\Item.cpp" />
     <ClCompile Include="Object\Object.cpp" />
+    <ClCompile Include="Object\Unit\Player\Player.cpp" />
+    <ClCompile Include="Object\Unit\Unit.cpp" />
     <ClCompile Include="pch\stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
@@ -188,6 +194,8 @@
     </ClCompile>
     <ClCompile Include="Scene\Scene.cpp" />
     <ClCompile Include="Scene\Test\TestScene.cpp" />
+    <ClCompile Include="UI\Invectory\Inventory.cpp" />
+    <ClCompile Include="UI\UIBase.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="main.rc" />

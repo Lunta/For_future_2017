@@ -34,6 +34,24 @@
     <Filter Include="Camera">
       <UniqueIdentifier>{50248688-72a4-4456-a1c4-660c691fd23f}</UniqueIdentifier>
     </Filter>
+    <Filter Include="UI">
+      <UniqueIdentifier>{2c3d8b3b-c99f-4eb7-b399-f82ff16ec631}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="UI\Inventory">
+      <UniqueIdentifier>{291f081c-7d09-44db-8d9d-010b82ddf0ad}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Object">
+      <UniqueIdentifier>{6a95a439-1ec4-462a-a90a-fd92e42329db}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Object\Item">
+      <UniqueIdentifier>{298ac580-f55a-4138-8204-30374cf23ac4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Object\Unit">
+      <UniqueIdentifier>{37eba5be-9afe-4d7b-b351-5b392b857987}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Object\Unit\Player">
+      <UniqueIdentifier>{aa6922d9-b436-4dc4-aef6-7245298e6f32}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -47,9 +65,6 @@
     </ClInclude>
     <ClInclude Include="main.h">
       <Filter>헤더 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="D2DLoadBitmap.h">
-      <Filter>pch</Filter>
     </ClInclude>
     <ClInclude Include="Framework\Warp2DFramework.h">
       <Filter>Framework</Filter>
@@ -81,11 +96,26 @@
     <ClInclude Include="pch\D2D_Operator.h">
       <Filter>pch</Filter>
     </ClInclude>
+    <ClInclude Include="pch\D2DLoadBitmap.h">
+      <Filter>pch</Filter>
+    </ClInclude>
+    <ClInclude Include="UI\UIBase.h">
+      <Filter>UI</Filter>
+    </ClInclude>
+    <ClInclude Include="UI\Invectory\Inventory.h">
+      <Filter>UI\Inventory</Filter>
+    </ClInclude>
     <ClInclude Include="Object\Object.h">
-      <Filter>소스 파일</Filter>
+      <Filter>Object</Filter>
     </ClInclude>
     <ClInclude Include="Object\Item\Item.h">
-      <Filter>소스 파일</Filter>
+      <Filter>Object\Item</Filter>
+    </ClInclude>
+    <ClInclude Include="Object\Unit\Unit.h">
+      <Filter>Object\Unit</Filter>
+    </ClInclude>
+    <ClInclude Include="Object\Unit\Player\Player.h">
+      <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -113,10 +143,22 @@
     <ClCompile Include="Camera\Camera.cpp">
       <Filter>Camera</Filter>
     </ClCompile>
+    <ClCompile Include="UI\UIBase.cpp">
+      <Filter>UI</Filter>
+    </ClCompile>
+    <ClCompile Include="UI\Invectory\Inventory.cpp">
+      <Filter>UI\Inventory</Filter>
+    </ClCompile>
     <ClCompile Include="Object\Object.cpp">
-      <Filter>소스 파일</Filter>
+      <Filter>Object</Filter>
     </ClCompile>
     <ClCompile Include="Object\Item\Item.cpp">
+      <Filter>Object\Item</Filter>
+    </ClCompile>
+    <ClCompile Include="Object\Unit\Unit.cpp">
+      <Filter>Object\Unit</Filter>
+    </ClCompile>
+    <ClCompile Include="Object\Unit\Player\Player.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>

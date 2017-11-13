@@ -24,7 +24,7 @@ public:
 	D2D1_POINT_2F GetAnchor() { return m_d2dptAnchor; }
 	D2D1_POINT_2F GetPosition(){ return m_d2dptPosition; }
 	virtual void Move(D2D1_POINT_2F& d2dptShift) { m_d2dptPosition = m_d2dptPosition + d2dptShift; }
-	virtual void SetPosition(D2D1_POINT_2F& ptPosition) { m_d2dptPosition = ptPosition; }
+	virtual void SetPosition(const D2D1_POINT_2F& ptPosition) { m_d2dptPosition = ptPosition; }
 	// (-1, -1) ¡Â ptAnchor ¡Â (+1, +1)
 	virtual void SetAnchor(D2D1_POINT_2F& ptAnchor) { m_d2dptAnchor = ptAnchor; }
 

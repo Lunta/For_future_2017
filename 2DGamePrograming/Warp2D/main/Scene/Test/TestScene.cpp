@@ -69,20 +69,25 @@ bool CTestScene::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM 
 {
 	switch (nMessageID)
 	{
+		
 	case WM_KEYDOWN:
 		switch (wParam)
 		{
-		case 'A': m_ptPlayer.x -= 10.f;
+		case 'A': m_Player.Move(-10.f, 0);
 			break;				 
-		case 'W': m_ptPlayer.y -= 10.f;
+		case 'W': m_Player.Move(0, -10.f);
 			break;				 
-		case 'D': m_ptPlayer.x += 10.f;
+		case 'D': m_Player.Move(10.f, 0);
 			break;				 
-		case 'S': m_ptPlayer.y += 10.f;
+		case 'S': m_Player.Move(0, 10.f);
 			break;
 		case 'Z': m_Camera.Scale(m_Camera.GetScale() * 2.f);
 			break;
 		case 'X': m_Camera.Scale(m_Camera.GetScale() * 0.5f);
+			break;
+		case 'G': //m_uiInventory.SetItem(m_upItem.get());
+			break;
+		case 'H': //m_uiInventory.SetItem(nullptr);
 			break;
 		default:
 			return false;
@@ -106,7 +111,7 @@ bool CTestScene::OnCreate(wstring && tag, CWarp2DFramework * pFramework)
 	rendertarget->CreateSolidColorBrush(ColorF{ ColorF::Green }, &m_pd2dsbrGrid1);
 	rendertarget->CreateSolidColorBrush(ColorF{ ColorF::GreenYellow }, &m_pd2dsbrGrid2);
 
-	m_Camera.SetPosition(m_ptPlayer);
+	m_Camera.SetPosition(m_Player.GetPos());
 	m_Camera.SetAnchor(Point2F(0.0f, 0.0f));
 
 	m_upItem = make_unique<CItem>(
@@ -115,7 +120,14 @@ bool CTestScene::OnCreate(wstring && tag, CWarp2DFramework * pFramework)
 	m_upItem->RegisterImage(
 		m_pIndRes.get()
 		, rendertarget.Get()
-		, "Buckler.png");
+		, "Assets/Icon/Buckler.png");
+
+	m_uiInventory.BuildObject(this);
+	m_Player.RegisterSpriteImage(
+		m_pIndRes.get()
+		, rendertarget.Get()
+		, "Assets/player.png"
+		, Point2F(4, 4));
 	//auto dwFactoy = m_pIndRes->dwFactory();
 	//
 	//dwFactoy->CreateTextFormat(
@@ -138,25 +150,16 @@ bool CTestScene::OnCreate(wstring && tag, CWarp2DFramework * pFramework)
 	//	, 300
 	//	, 100
 	//	, &m_pdwTextLayout);
-	//
-	//auto wicFactory = m_pIndRes->wicFactory();
-	//LoadImageFromFile(wicFactory
-	//	, rendertarget.Get()
-	//	, L"Hit1.png"
-	//	, &m_pd2dbmpTest
-	//);
 
 	return true;
 }
 
 void CTestScene::Update(float fTimeElapsed)
 {
-	//fPositionX += (100 * fTimeElapsed);
-	//if (fPositionX > 800) fPositionX -= 800.f;
-	//
-	//if ((currImg += fTimeElapsed * 10) >= 4.f)
-	//	currImg -= 4.f;
-	m_Camera.SetPosition(m_ptPlayer);
+	m_Camera.SetPosition(m_Player.GetPos());
+	m_upItem->Update(fTimeElapsed);
+	m_uiInventory.Update(fTimeElapsed);
+	m_Player.Update(fTimeElapsed);
 }
 
 void CTestScene::Draw(ID2D1HwndRenderTarget * pd2dRenderTarget)
@@ -179,42 +182,18 @@ void CTestScene::Draw(ID2D1HwndRenderTarget * pd2dRenderTarget)
 					, m_pd2dsbrGrid2.Get());
 		}
 
-	pd2dRenderTarget->FillRectangle(
-		RectF(-10, -10, 10, 10) + m_ptPlayer
-		, m_pd2dsbrDefault.Get());
+	m_Player.Draw(pd2dRenderTarget);
 	pd2dRenderTarget->DrawRectangle(
 		RectF(60, 60, 80, 80)
 		, m_pd2dsbrDefault.Get());
 
 	m_upItem->Draw(pd2dRenderTarget);
+	m_uiInventory.Draw(pd2dRenderTarget);
 
-	//pd2dRenderTarget->DrawRectangle(
-	//	RectF(-50 + fPositionX, 100, 50 + fPositionX, 200)
-	//	, m_pd2dsbrDefault.Get());
-	//
 	//pd2dRenderTarget->DrawTextLayout(
 	//	  Point2F(0, 0)
 	//	, m_pdwTextLayout.Get()
 	//	, m_pd2dsbrDefault.Get()
-	//);
-	//
-	//pd2dRenderTarget->DrawText(
-	//	  L"text"
-	//	, 4
-	//	, m_pdwTextFormat.Get()
-	//	, RectF(400, 500, 600, 600)
-	//	, m_pd2dsbrDefault.Get()
-	//);
-	//
-	//auto bmpSize = m_pd2dbmpTest->GetSize();
-	//
-	//pd2dRenderTarget->DrawBitmap(
-	//	  m_pd2dbmpTest.Get()
-	//	, RectF(100, 100, 100 + bmpSize.width * 0.25f, 100 + bmpSize.height)
-	//	, min(1.f, currImg * 0.5f)
-	//	, D2D1_BITMAP_INTERPOLATION_MODE_LINEAR
-	//	, RectF(  bmpSize.width * (int)currImg * 0.25f, 0
-	//			, bmpSize.width * ((int)currImg + 1) * 0.25f, bmpSize.height)
 	//);
 
 }
