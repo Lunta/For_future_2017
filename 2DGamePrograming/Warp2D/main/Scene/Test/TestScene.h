@@ -33,7 +33,8 @@ private:
 	CPlayer							m_Player;
 	CCamera							m_Camera;
 
-	unique_ptr<CItem>				m_upItem;
+	UINT							m_nItems;
+	CItem**							m_ppItems;
 	CUIInventory					m_uiInventory;
 };
 

@@ -7,10 +7,21 @@
 
 
 CTestScene::CTestScene()
+	: m_nItems(0)
+	, m_ppItems(nullptr)
 {
 }
 CTestScene::~CTestScene()
 {
+	if (m_ppItems)
+	{
+		for (int i = 0; i < m_nItems; ++i)
+		{
+			if(m_ppItems[i])
+				delete m_ppItems[i];
+		}
+		delete[] m_ppItems;
+	}
 }
 
 bool CTestScene::OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam)
@@ -85,10 +96,6 @@ bool CTestScene::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM 
 			break;
 		case 'X': m_Camera.Scale(m_Camera.GetScale() * 0.5f);
 			break;
-		case 'G': //m_uiInventory.SetItem(m_upItem.get());
-			break;
-		case 'H': //m_uiInventory.SetItem(nullptr);
-			break;
 		default:
 			return false;
 		}
@@ -114,15 +121,35 @@ bool CTestScene::OnCreate(wstring && tag, CWarp2DFramework * pFramework)
 	m_Camera.SetPosition(m_Player.GetPos());
 	m_Camera.SetAnchor(Point2F(0.0f, 0.0f));
 
-	m_upItem = make_unique<CItem>(
-		Point2F(100, 100)
-		, RectF(-10, -10, 10, 10));
-	m_upItem->RegisterImage(
+	m_nItems = 5;
+	m_ppItems = new CItem*[m_nItems];
+	for (int i = 0; i < m_nItems; ++i)
+		m_ppItems[i] = new CItem(
+			  Point2F(-250 + 100*i, 100)
+			, RectF(-10, -10, 10, 10));
+	m_ppItems[0]->RegisterImage(
 		m_pIndRes.get()
 		, rendertarget.Get()
 		, "Assets/Icon/Buckler.png");
+	m_ppItems[1]->RegisterImage(
+		m_pIndRes.get()
+		, rendertarget.Get()
+		, "Assets/Icon/Bastard Sword.png");
+	m_ppItems[2]->RegisterImage(
+		m_pIndRes.get()
+		, rendertarget.Get()
+		, "Assets/Icon/Gramr.png");
+	m_ppItems[3]->RegisterImage(
+		m_pIndRes.get()
+		, rendertarget.Get()
+		, "Assets/Icon/Round Shield.png");
+	m_ppItems[4]->RegisterImage(
+		m_pIndRes.get()
+		, rendertarget.Get()
+		, "Assets/Icon/Kite Shield.png");
 
 	m_uiInventory.BuildObject(this);
+	m_uiInventory.ConnectItemList(m_Player.GetpItemList());
 	m_Player.RegisterSpriteImage(
 		m_pIndRes.get()
 		, rendertarget.Get()
@@ -157,9 +184,32 @@ bool CTestScene::OnCreate(wstring && tag, CWarp2DFramework * pFramework)
 void CTestScene::Update(float fTimeElapsed)
 {
 	m_Camera.SetPosition(m_Player.GetPos());
-	m_upItem->Update(fTimeElapsed);
+	if (m_ppItems)
+	{
+		for(int i =0 ; i < m_nItems; ++i)
+			if(m_ppItems[i])
+				m_ppItems[i]->Update(fTimeElapsed);
+	}
 	m_uiInventory.Update(fTimeElapsed);
 	m_Player.Update(fTimeElapsed);
+
+	if (m_ppItems)
+	{
+		D2D1_POINT_2F player_pos = m_Player.GetPos();
+		for (int i = 0; i < m_nItems; ++i)
+			if (m_ppItems[i])
+			{
+				if (PtInRect(&(m_ppItems[i]->GetPos() +
+					m_ppItems[i]->GetSize()), player_pos))
+				{
+					if (m_Player.PickUpItem(*m_ppItems[i]))
+					{
+						delete m_ppItems[i];
+						m_ppItems[i] = nullptr;
+					}
+				}
+			}
+	}
 }
 
 void CTestScene::Draw(ID2D1HwndRenderTarget * pd2dRenderTarget)
@@ -183,11 +233,14 @@ void CTestScene::Draw(ID2D1HwndRenderTarget * pd2dRenderTarget)
 		}
 
 	m_Player.Draw(pd2dRenderTarget);
-	pd2dRenderTarget->DrawRectangle(
-		RectF(60, 60, 80, 80)
+	pd2dRenderTarget->FillRectangle(
+		RectF(-10, -10, 10, 10)
 		, m_pd2dsbrDefault.Get());
 
-	m_upItem->Draw(pd2dRenderTarget);
+	if(m_ppItems) for (int i = 0; i < m_nItems; ++i)
+		if(m_ppItems[i])
+			m_ppItems[i]->Draw(pd2dRenderTarget);
+
 	m_uiInventory.Draw(pd2dRenderTarget);
 
 	//pd2dRenderTarget->DrawTextLayout(
@@ -195,5 +248,4 @@ void CTestScene::Draw(ID2D1HwndRenderTarget * pd2dRenderTarget)
 	//	, m_pdwTextLayout.Get()
 	//	, m_pd2dsbrDefault.Get()
 	//);
-
 }

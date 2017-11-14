@@ -1,11 +1,13 @@
 #include "stdafx.h"
 #include "Framework\IndRes\IndRes.h"
+#include "Object\Item\Item.h"
 #include "Player.h"
 
 CPlayer::CPlayer(D2D_POINT_2F pt, D2D_RECT_F rc)
 	: CUnit(pt, rc)
 	, m_nSpriteImgWidth(0)
 	, m_nSpriteImgHeight(0)
+	, m_nMaxItems(5)
 {
 }
 
@@ -85,4 +87,14 @@ void CPlayer::Move(float x, float y)
 		m_ptCurrImg.y = 0;
 	else if (y < 0.f)
 		m_ptCurrImg.y = 3;
+}
+
+bool CPlayer::PickUpItem(CItem& item)
+{
+	if (m_ItemList.size() < m_nMaxItems)
+	{
+		m_ItemList.emplace_back(item);
+		return true;
+	}
+	return false;
 }

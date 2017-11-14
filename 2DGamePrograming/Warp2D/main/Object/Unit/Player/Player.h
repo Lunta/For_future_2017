@@ -2,6 +2,7 @@
 #include "Object\Unit\Unit.h"
 
 class CIndRes;
+class CItem;
 class CPlayer : public CUnit
 {
 public:
@@ -19,9 +20,15 @@ public:
 	void Move(const D2D_POINT_2F& pt);
 	void Move(float x, float y);
 
+	bool PickUpItem(CItem& item);
+	list<CItem>* GetpItemList() { return &m_ItemList; }
+
 protected:
 	D2D_POINT_2F		m_ptCurrImg;
-	unsigned int		m_nSpriteImgWidth;
-	unsigned int		m_nSpriteImgHeight;
+	UINT				m_nSpriteImgWidth;
+	UINT				m_nSpriteImgHeight;
+
+	UINT				m_nMaxItems;
+	list<CItem>			m_ItemList;
 };
 
