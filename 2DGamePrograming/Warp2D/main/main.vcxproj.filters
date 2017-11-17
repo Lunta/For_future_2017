@@ -115,7 +115,7 @@
       <Filter>Object\Unit</Filter>
     </ClInclude>
     <ClInclude Include="Object\Unit\Player\Player.h">
-      <Filter>헤더 파일</Filter>
+      <Filter>Object\Unit\Player</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -159,7 +159,7 @@
       <Filter>Object\Unit</Filter>
     </ClCompile>
     <ClCompile Include="Object\Unit\Player\Player.cpp">
-      <Filter>소스 파일</Filter>
+      <Filter>Object\Unit\Player</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

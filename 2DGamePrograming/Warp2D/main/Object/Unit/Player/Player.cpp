@@ -55,7 +55,7 @@ void CPlayer::RegisterSpriteImage(
 		, filename.c_str()
 		, &m_bmpImage
 	);
-	if (IsRectInvaild(m_rcSize))
+	if (IsRectInvalid(m_rcSize))
 	{
 		auto sz = m_bmpImage->GetSize();
 		sz.width /= ptLength.x;

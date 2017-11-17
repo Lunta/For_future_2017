@@ -38,20 +38,20 @@ void CItem::RegisterImage(
 		, filename.c_str()
 		, &m_bmpImage
 	);
-	if (IsRectInvaild(m_rcSize))
+	if (IsRectInvalid(m_rcSize))
 		m_rcSize = SizeToRect(m_bmpImage->GetSize());
 }
 
 void CItem::RegisterImage(const ComPtr<ID2D1Bitmap1>& bmp)
 {
 	m_bmpImage = bmp;
-	if (IsRectInvaild(m_rcSize))
+	if (IsRectInvalid(m_rcSize))
 		m_rcSize = SizeToRect(m_bmpImage->GetSize());
 }
 
 void CItem::RegisterImage(ComPtr<ID2D1Bitmap1>&& bmp) noexcept
 {
 	m_bmpImage = move(bmp);
-	if (IsRectInvaild(m_rcSize))
+	if (IsRectInvalid(m_rcSize))
 		m_rcSize = SizeToRect(m_bmpImage->GetSize());
 }

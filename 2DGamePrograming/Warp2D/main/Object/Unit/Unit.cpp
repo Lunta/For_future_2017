@@ -29,20 +29,20 @@ void CUnit::RegisterImage(CIndRes * pIndRes, ID2D1HwndRenderTarget * pd2dRenderT
 		, filename.c_str()
 		, &m_bmpImage
 	);
-	if (IsRectInvaild(m_rcSize))
+	if (IsRectInvalid(m_rcSize))
 		m_rcSize = SizeToRect(m_bmpImage->GetSize());
 }
 
 void CUnit::RegisterImage(const ComPtr<ID2D1Bitmap1>& bmp)
 {
 	m_bmpImage = bmp;
-	if (IsRectInvaild(m_rcSize))
+	if (IsRectInvalid(m_rcSize))
 		m_rcSize = SizeToRect(m_bmpImage->GetSize());
 }
 
 void CUnit::RegisterImage(ComPtr<ID2D1Bitmap1>&& bmp) noexcept
 {
 	m_bmpImage = move(bmp);
-	if (IsRectInvaild(m_rcSize))
+	if (IsRectInvalid(m_rcSize))
 		m_rcSize = SizeToRect(m_bmpImage->GetSize());
 }
