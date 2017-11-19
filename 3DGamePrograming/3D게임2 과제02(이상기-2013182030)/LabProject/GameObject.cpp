@@ -3,11 +3,102 @@
 
 #include "Shader.h"
 
+
+CTexture::CTexture(int nTextures, UINT nTextureType, int nSamplers)
+{
+	m_nTextureType = nTextureType;
+	m_nTextures = nTextures;
+	if (m_nTextures > 0)
+	{
+		m_pRootArgumentInfos = new SRVROOTARGUMENTINFO[m_nTextures];
+		m_ppd3dTextureUploadBuffers = new ID3D12Resource*[m_nTextures];
+		m_ppd3dTextures = new ID3D12Resource*[m_nTextures];
+	}
+
+	m_nSamplers = nSamplers;
+	if (m_nSamplers > 0) 
+		m_pd3dSamplerGpuDescriptorHandles = 
+			new D3D12_GPU_DESCRIPTOR_HANDLE[m_nSamplers];
+}
+
+CTexture::~CTexture()
+{
+	if (m_ppd3dTextures)
+	{
+		for (int i = 0; i < m_nTextures; i++) if (m_ppd3dTextures[i]) m_ppd3dTextures[i]->Release();
+	}
+
+	if (m_pRootArgumentInfos)
+	{
+		delete[] m_pRootArgumentInfos;
+	}
+
+	if (m_pd3dSamplerGpuDescriptorHandles) delete[] m_pd3dSamplerGpuDescriptorHandles;
+}
+
+void CTexture::SetRootArgument(int nIndex, UINT nRootParameterIndex, D3D12_GPU_DESCRIPTOR_HANDLE d3dSrvGpuDescriptorHandle)
+{
+	m_pRootArgumentInfos[nIndex].m_nRootParameterIndex = nRootParameterIndex;
+	m_pRootArgumentInfos[nIndex].m_d3dSrvGpuDescriptorHandle = d3dSrvGpuDescriptorHandle;
+}
+
+void CTexture::SetSampler(int nIndex, D3D12_GPU_DESCRIPTOR_HANDLE d3dSamplerGpuDescriptorHandle)
+{
+	m_pd3dSamplerGpuDescriptorHandles[nIndex] = d3dSamplerGpuDescriptorHandle;
+}
+
+void CTexture::UpdateShaderVariables(ID3D12GraphicsCommandList *pd3dCommandList)
+{
+	if (m_nTextureType == RESOURCE_TEXTURE2D_ARRAY)
+	{
+		pd3dCommandList->SetGraphicsRootDescriptorTable(m_pRootArgumentInfos[0].m_nRootParameterIndex, m_pRootArgumentInfos[0].m_d3dSrvGpuDescriptorHandle);
+	}
+	else
+	{
+		for (int i = 0; i < m_nTextures; i++)
+		{
+			pd3dCommandList->SetGraphicsRootDescriptorTable(m_pRootArgumentInfos[i].m_nRootParameterIndex, m_pRootArgumentInfos[i].m_d3dSrvGpuDescriptorHandle);
+		}
+	}
+}
+
+void CTexture::UpdateShaderVariable(ID3D12GraphicsCommandList *pd3dCommandList, int nIndex)
+{
+	pd3dCommandList->SetGraphicsRootDescriptorTable(
+		m_pRootArgumentInfos[nIndex].m_nRootParameterIndex
+		, m_pRootArgumentInfos[nIndex].m_d3dSrvGpuDescriptorHandle);
+}
+
+void CTexture::ReleaseShaderVariables()
+{
+}
+
+void CTexture::ReleaseUploadBuffers()
+{
+	if (m_ppd3dTextureUploadBuffers)
+	{
+		for (int i = 0; i < m_nTextures; i++) 
+			if (m_ppd3dTextureUploadBuffers[i]) 
+				m_ppd3dTextureUploadBuffers[i]->Release();
+		delete[] m_ppd3dTextureUploadBuffers;
+		m_ppd3dTextureUploadBuffers = NULL;
+	}
+}
+
+void CTexture::LoadTextureFromFile(CD3DDeviceIndRes *pd3dDeviceIndRes, ID3D12GraphicsCommandList *pd3dCommandList, wchar_t *pszFileName, UINT nIndex)
+{
+	m_ppd3dTextures[nIndex] = 
+		pd3dDeviceIndRes->CreateTextureResourceFromFile(
+			pd3dCommandList
+			, pszFileName
+			, &m_ppd3dTextureUploadBuffers[nIndex]
+			, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+}
+/////////////////////////////////////////////////////////////////////////////
 CMaterial::CMaterial()
 {
 	m_xmf4Albedo = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
 }
-
 CMaterial::~CMaterial()
 {
 	if (m_pShader)
@@ -17,6 +108,12 @@ CMaterial::~CMaterial()
 	}
 }
 
+void CMaterial::SetTexture(CTexture *pTexture)
+{
+	if (m_pTexture) m_pTexture->Release();
+	m_pTexture = pTexture;
+	if (m_pTexture) m_pTexture->AddRef();
+}
 void CMaterial::SetShader(CShader *pShader)
 {
 	if (m_pShader) m_pShader->Release();
@@ -24,6 +121,21 @@ void CMaterial::SetShader(CShader *pShader)
 	if (m_pShader) m_pShader->AddRef();
 }
 
+void CMaterial::UpdateShaderVariables(ID3D12GraphicsCommandList *pd3dCommandList)
+{
+	if (m_pTexture) 
+		m_pTexture->UpdateShaderVariables(pd3dCommandList);
+}
+void CMaterial::ReleaseShaderVariables()
+{
+	if (m_pShader) m_pShader->ReleaseShaderVariables();
+	if (m_pTexture) m_pTexture->ReleaseShaderVariables();
+}
+void CMaterial::ReleaseUploadBuffers()
+{
+	if (m_pTexture) m_pTexture->ReleaseUploadBuffers();
+}
+//////////////////////////////////////////////////////////////////////////
 CGameObject::CGameObject(int nMeshes)
 {
 	m_xmf4x4World = Matrix4x4::Identity();
@@ -111,10 +223,18 @@ void CGameObject::Render(ID3D12GraphicsCommandList *pd3dCommandList, CCamera *pC
 			}
 		}
 		//pd3dCommandList->SetGraphicsRootDescriptorTable(2, m_d3dCbvGPUDescriptorHandle);
-
-		if (m_ppMeshes) 
+		if (m_pMaterial)
+		{
+			if (m_pMaterial->m_pShader)
+			{
+				if (dynamic_cast<CInstancingShader*>(m_pMaterial->m_pShader))
+					return;
+			}
+		}
+		if (m_ppMeshes)
 			for (int i = 0; i < m_nMeshes; i++)
-				if (m_ppMeshes[i]) m_ppMeshes[i]->Render(pd3dCommandList);
+				if (m_ppMeshes[i])
+					m_ppMeshes[i]->Render(pd3dCommandList);
 	}
 }
 void CGameObject::Render(ID3D12GraphicsCommandList * pd3dCommandList, CCamera * pCamera, UINT nInstances)
@@ -410,48 +530,161 @@ CHeightMapTerrain::CHeightMapTerrain(
 	: CGameObject(0)
 {
 	m_Tag = ObjectType::Background;
-	//지형에 사용할 높이 맵의 가로, 세로의 크기이다.
 	m_nWidth = nWidth;
 	m_nLength = nLength;
-	/*지형 객체는 격자 메쉬들의 배열로 만들 것이다. nBlockWidth, nBlockLength는 격자 메쉬 하나의 가로, 세로 크
-	기이다. cxQuadsPerBlock, czQuadsPerBlock은 격자 메쉬의 가로 방향과 세로 방향 사각형의 개수이다.*/
+
 	int cxQuadsPerBlock = nBlockWidth - 1;
 	int czQuadsPerBlock = nBlockLength - 1;
-	//xmf3Scale는 지형을 실제로 몇 배 확대할 것인가를 나타낸다.
+
 	m_xmf3Scale = xmf3Scale;
-	//지형에 사용할 높이 맵을 생성한다.
-	m_pHeightMapImage = new CHeightMapImage(pFileName, nWidth, nLength, xmf3Scale);
-	//지형에서 가로 방향, 세로 방향으로 격자 메쉬가 몇 개가 있는 가를 나타낸다.
+	m_pHeightMapImage = new CHeightMapImage(
+		pFileName, nWidth, nLength, xmf3Scale);
+
 	long cxBlocks = (m_nWidth - 1) / cxQuadsPerBlock;
 	long czBlocks = (m_nLength - 1) / czQuadsPerBlock;
-	//지형 전체를 표현하기 위한 격자 메쉬의 개수이다.
+
 	m_nMeshes = cxBlocks * czBlocks;
-	//지형 전체를 표현하기 위한 격자 메쉬에 대한 포인터 배열을 생성한다.
 	m_ppMeshes = new CMesh*[m_nMeshes];
-	for (int i = 0; i < m_nMeshes; i++) m_ppMeshes[i] = NULL;
-	CHeightMapGridMeshIlluminated *pHeightMapGridMesh = NULL;
+
+	for (int i = 0; i < m_nMeshes; i++) 
+		m_ppMeshes[i] = NULL;
+
+	CHeightMapGridMeshTextured *pHeightMapGridMesh = NULL;
 	for (int z = 0, zStart = 0; z < czBlocks; z++)
 	{
 		for (int x = 0, xStart = 0; x < cxBlocks; x++)
 		{
-			//지형의 일부분을 나타내는 격자 메쉬의 시작 위치(좌표)이다.
 			xStart = x * (nBlockWidth - 1);
 			zStart = z * (nBlockLength - 1);
-			//지형의 일부분을 나타내는 격자 메쉬를 생성하여 지형 메쉬에 저장한다.
-			pHeightMapGridMesh = new CHeightMapGridMeshIlluminated(pd3dDeviceIndRes, pd3dCommandList, xStart,
-				zStart, nBlockWidth, nBlockLength, xmf3Scale, xmf4Color, m_pHeightMapImage);
+			pHeightMapGridMesh = new CHeightMapGridMeshTextured(
+				pd3dDeviceIndRes
+				, pd3dCommandList
+				, xStart, zStart
+				, nBlockWidth, nBlockLength
+				, xmf3Scale, xmf4Color
+				, m_pHeightMapImage);
 			SetMesh(x + (z*cxBlocks), pHeightMapGridMesh);
 		}
 	}
-	//지형을 렌더링하기 위한 셰이더를 생성한다.
-	SetMaterial((UINT)7);
-	CTerrainShader *pShader = new CTerrainShader();
+	CTexture *pTerrainTexture = new CTexture(2, RESOURCE_TEXTURE2D, 0);
+
+	pTerrainTexture->LoadTextureFromFile(pd3dDeviceIndRes, pd3dCommandList, L"Assets/Image/Terrain/Base_Texture.dds", 0);
+	pTerrainTexture->LoadTextureFromFile(pd3dDeviceIndRes, pd3dCommandList, L"Assets/Image/Terrain/Detail_Texture_7.dds", 1);
+
+	CMaterial *pTerrainMaterial = new CMaterial();
+	pTerrainMaterial->SetTexture(pTerrainTexture);
+	SetMaterial(pTerrainMaterial);
+
+	CTexturedTerrainShader *pShader = new CTexturedTerrainShader();
 	pShader->CreateShader(pd3dDeviceIndRes, pd3dGraphicsRootSignature);
 	pShader->SetTerrain(this);
 	pShader->CreateShaderVariables(pd3dDeviceIndRes, pd3dCommandList);
-	m_pMaterial->SetShader(pShader);
+	pShader->CreateCbvAndSrvDescriptorHeaps(pd3dDeviceIndRes, pd3dCommandList, 0, 2);
+	pShader->CreateShaderResourceViews(pd3dDeviceIndRes, pd3dCommandList, pTerrainTexture, 5, false);
+	pTerrainMaterial->SetShader(pShader);
 }
 CHeightMapTerrain::~CHeightMapTerrain(void)
 {
 	if (m_pHeightMapImage) delete m_pHeightMapImage;
+}
+
+void CHeightMapTerrain::Render(ID3D12GraphicsCommandList * pd3dCommandList, CCamera * pCamera)
+{
+	OnPrepareRender();
+
+	if (m_pMaterial)
+	{
+		if (m_pMaterial->m_pShader)
+		{
+			m_pMaterial->m_pShader->Render(pd3dCommandList, pCamera);
+			m_pMaterial->m_pShader->UpdateShaderVariable(pd3dCommandList, &m_xmf4x4World);
+		}
+	}
+
+	if (m_ppMeshes)
+	{
+		for (int i = 0; i < m_nMeshes; i++)
+		{
+			if (m_pMaterial)
+			{
+				if (m_pMaterial->m_pTexture)
+					m_pMaterial->m_pTexture->UpdateShaderVariable(pd3dCommandList, i);
+			}
+			if (m_ppMeshes[i]) m_ppMeshes[i]->Render(pd3dCommandList);
+		}
+	}
+}
+
+CSkyBox::CSkyBox(
+	CD3DDeviceIndRes *pd3dDeviceIndRes
+	, ID3D12GraphicsCommandList *pd3dCommandList
+	, ID3D12RootSignature *pd3dGraphicsRootSignature) 
+	: CGameObject(6)
+{
+	CRectMeshTextured *pSkyBoxMesh = new CRectMeshTextured(pd3dDeviceIndRes, pd3dCommandList, 20.0f, 20.0f, 0.0f, 0.0f, 0.0f, +10.0f);
+	SetMesh(0, pSkyBoxMesh);
+	pSkyBoxMesh = new CRectMeshTextured(pd3dDeviceIndRes, pd3dCommandList, 20.0f, 20.0f, 0.0f, 0.0f, 0.0f, -10.0f);
+	SetMesh(1, pSkyBoxMesh);
+	pSkyBoxMesh = new CRectMeshTextured(pd3dDeviceIndRes, pd3dCommandList, 0.0f, 20.0f, 20.0f, -10.0f, 0.0f, 0.0f);
+	SetMesh(2, pSkyBoxMesh);
+	pSkyBoxMesh = new CRectMeshTextured(pd3dDeviceIndRes, pd3dCommandList, 0.0f, 20.0f, 20.0f, +10.0f, 0.0f, 0.0f);
+	SetMesh(3, pSkyBoxMesh);
+	pSkyBoxMesh = new CRectMeshTextured(pd3dDeviceIndRes, pd3dCommandList, 20.0f, 0.0f, 20.0f, 0.0f, +10.0f, 0.0f);
+	SetMesh(4, pSkyBoxMesh);
+	pSkyBoxMesh = new CRectMeshTextured(pd3dDeviceIndRes, pd3dCommandList, 20.0f, 0.0f, 20.0f, 0.0f, -10.0f, 0.0f);
+	SetMesh(5, pSkyBoxMesh);
+
+	CTexture *pSkyBoxTexture = new CTexture(6, RESOURCE_TEXTURE2D, 0);
+	pSkyBoxTexture->LoadTextureFromFile(pd3dDeviceIndRes, pd3dCommandList, L"Assets/Image/SkyBox/SkyBox_Front_0.dds", 0);
+	pSkyBoxTexture->LoadTextureFromFile(pd3dDeviceIndRes, pd3dCommandList, L"Assets/Image/SkyBox/SkyBox_Back_0.dds", 1);
+	pSkyBoxTexture->LoadTextureFromFile(pd3dDeviceIndRes, pd3dCommandList, L"Assets/Image/SkyBox/SkyBox_Left_0.dds", 2);
+	pSkyBoxTexture->LoadTextureFromFile(pd3dDeviceIndRes, pd3dCommandList, L"Assets/Image/SkyBox/SkyBox_Right_0.dds", 3);
+	pSkyBoxTexture->LoadTextureFromFile(pd3dDeviceIndRes, pd3dCommandList, L"Assets/Image/SkyBox/SkyBox_Top_0.dds", 4);
+	pSkyBoxTexture->LoadTextureFromFile(pd3dDeviceIndRes, pd3dCommandList, L"Assets/Image/SkyBox/SkyBox_Bottom_0.dds", 5);
+
+	CMaterial *pSkyBoxMaterial = new CMaterial();
+	pSkyBoxMaterial->SetTexture(pSkyBoxTexture);
+
+	SetMaterial(pSkyBoxMaterial);
+	CSkyBoxShader *pSkyBoxShader = new CSkyBoxShader();
+	pSkyBoxShader->CreateShader(pd3dDeviceIndRes, pd3dGraphicsRootSignature);
+	pSkyBoxShader->SetSkyBox(this);
+	pSkyBoxShader->CreateShaderVariables(pd3dDeviceIndRes, pd3dCommandList);
+	pSkyBoxShader->CreateCbvAndSrvDescriptorHeaps(pd3dDeviceIndRes, pd3dCommandList, 0, 6);
+	pSkyBoxShader->CreateShaderResourceViews(pd3dDeviceIndRes, pd3dCommandList, pSkyBoxTexture, 5, false);
+	pSkyBoxMaterial->SetShader(pSkyBoxShader);
+}
+
+CSkyBox::~CSkyBox()
+{
+}
+
+void CSkyBox::Render(ID3D12GraphicsCommandList *pd3dCommandList, CCamera *pCamera)
+{
+	XMFLOAT3 xmf3CameraPos = pCamera->GetPosition();
+	SetPosition(xmf3CameraPos.x, xmf3CameraPos.y, xmf3CameraPos.z);
+
+	OnPrepareRender();
+
+	if (m_pMaterial)
+	{
+		if (m_pMaterial->m_pShader)
+		{
+			m_pMaterial->m_pShader->Render(pd3dCommandList, pCamera);
+			m_pMaterial->m_pShader->UpdateShaderVariable(pd3dCommandList, &m_xmf4x4World);
+		}
+	}
+
+	if (m_ppMeshes)
+	{
+		for (int i = 0; i < m_nMeshes; i++)
+		{
+			if (m_pMaterial)
+			{
+				if (m_pMaterial->m_pTexture)
+					m_pMaterial->m_pTexture->UpdateShaderVariable(pd3dCommandList, i);
+			}
+			if (m_ppMeshes[i]) m_ppMeshes[i]->Render(pd3dCommandList);
+		}
+	}
 }

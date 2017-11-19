@@ -5,6 +5,50 @@
 class CShader;
 
 
+struct SRVROOTARGUMENTINFO
+{
+	UINT							m_nRootParameterIndex = 0;
+	D3D12_GPU_DESCRIPTOR_HANDLE		m_d3dSrvGpuDescriptorHandle;
+};
+
+class CTexture
+{
+public:
+	CTexture(int nTextureResources = 1, UINT nResourceType = RESOURCE_TEXTURE2D, int nSamplers = 0);
+	virtual ~CTexture();
+
+private:
+	int								m_nReferences = 0;
+
+	UINT							m_nTextureType = RESOURCE_TEXTURE2D;
+	int								m_nTextures = 0;
+	ID3D12Resource					**m_ppd3dTextures = NULL;
+	ID3D12Resource					**m_ppd3dTextureUploadBuffers;
+	SRVROOTARGUMENTINFO				*m_pRootArgumentInfos = NULL;
+
+	int								m_nSamplers = 0;
+	D3D12_GPU_DESCRIPTOR_HANDLE		*m_pd3dSamplerGpuDescriptorHandles = NULL;
+
+public:
+	void AddRef() { m_nReferences++; }
+	void Release() { if (--m_nReferences <= 0) delete this; }
+
+	void SetRootArgument(int nIndex, UINT nRootParameterIndex, D3D12_GPU_DESCRIPTOR_HANDLE d3dsrvGpuDescriptorHandle);
+	void SetSampler(int nIndex, D3D12_GPU_DESCRIPTOR_HANDLE d3dSamplerGpuDescriptorHandle);
+
+	void UpdateShaderVariables(ID3D12GraphicsCommandList *pd3dCommandList);
+	void UpdateShaderVariable(ID3D12GraphicsCommandList *pd3dCommandList, int nIndex);
+	void ReleaseShaderVariables();
+
+	void LoadTextureFromFile(CD3DDeviceIndRes *pd3dDeviceIndRes, ID3D12GraphicsCommandList *pd3dCommandList, wchar_t *pszFileName, UINT nIndex);
+
+	int GetTextureCount() { return(m_nTextures); }
+	ID3D12Resource *GetTexture(int nIndex) { return(m_ppd3dTextures[nIndex]); }
+	UINT GetTextureType() { return(m_nTextureType); }
+
+	void ReleaseUploadBuffers();
+};
+
 struct MATERIAL
 {
 	XMFLOAT4						m_xmf4Ambient;
@@ -29,11 +73,19 @@ public:
 	XMFLOAT4						m_xmf4Albedo = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
 
 	UINT							m_nReflection = 0;
+	MATERIAL						*m_pReflection = NULL;
+	CTexture						*m_pTexture = NULL;
 	CShader							*m_pShader = NULL;
 
-	void SetAlbedo(XMFLOAT4& xmf4Albedo) { m_xmf4Albedo = xmf4Albedo; }
-	void SetReflection(UINT nReflection) { m_nReflection = nReflection; }
+	void SetAlbedo(XMFLOAT4 xmf4Albedo) { m_xmf4Albedo = xmf4Albedo; }
+	void SetReflection(MATERIAL *pReflection) { m_pReflection = pReflection; };
+	void SetTexture(CTexture *pTexture);
 	void SetShader(CShader *pShader);
+
+	void UpdateShaderVariables(ID3D12GraphicsCommandList *pd3dCommandList);
+	void ReleaseShaderVariables();
+
+	void ReleaseUploadBuffers();
 };
 
 class CGameObject
@@ -89,6 +141,7 @@ public:
 	void SetMaterial(CMaterial *pMaterial);
 	void SetMaterial(UINT nReflection);
 
+	void SetCbvGPUDescriptorHandle(D3D12_GPU_DESCRIPTOR_HANDLE d3dCbvGPUDescriptorHandle) { m_d3dCbvGPUDescriptorHandle = d3dCbvGPUDescriptorHandle; }
 	void SetCbvGPUDescriptorHandle(UINT64 nCbvGPUDescriptorHandlePtr) { m_d3dCbvGPUDescriptorHandle.ptr = nCbvGPUDescriptorHandlePtr; }
 	D3D12_GPU_DESCRIPTOR_HANDLE GetCbvGPUDescriptorHandle() { return(m_d3dCbvGPUDescriptorHandle); }
 
@@ -207,7 +260,6 @@ public:
 	virtual void Animate(float fTimeElapsed);
 };
 
-
 class CHeightMapTerrain : public CGameObject
 {
 public:
@@ -220,20 +272,17 @@ public:
 		, XMFLOAT3 xmf3Scale, XMFLOAT4 xmf4Color);
 	virtual ~CHeightMapTerrain();
 private:
-	//지형의 높이 맵으로 사용할 이미지이다.
-	CHeightMapImage *m_pHeightMapImage;
-	//높이 맵의 가로와 세로 크기이다.
-	int m_nWidth;
-	int m_nLength;
-	//지형을 실제로 몇 배 확대할 것인가를 나타내는 스케일 벡터이다.
-	XMFLOAT3 m_xmf3Scale;
+	CHeightMapImage				*m_pHeightMapImage;
+
+	int							m_nWidth;
+	int							m_nLength;
+
+	XMFLOAT3					m_xmf3Scale;
 
 public:
-	//지형의 높이를 계산하는 함수이다(월드 좌표계). 높이 맵의 높이에 스케일의 y를 곱한 값이다.
 	float GetHeight(float x, float z) {
 		return(m_pHeightMapImage->GetHeight(x / m_xmf3Scale.x, z / m_xmf3Scale.z) * m_xmf3Scale.y);
 	}
-	//지형의 법선 벡터를 계산하는 함수이다(월드 좌표계). 높이 맵의 법선 벡터를 사용한다.
 	XMFLOAT3 GetNormal(float x, float z) {
 		return(m_pHeightMapImage->GetHeightMapNormal(int(x / m_xmf3Scale.x), int(z /
 			m_xmf3Scale.z)));
@@ -241,7 +290,18 @@ public:
 	int GetHeightMapWidth() { return(m_pHeightMapImage->GetHeightMapWidth()); }
 	int GetHeightMapLength() { return(m_pHeightMapImage->GetHeightMapLength()); }
 	XMFLOAT3 GetScale() { return(m_xmf3Scale); }
-	//지형의 크기(가로/세로)를 반환한다. 높이 맵의 크기에 스케일을 곱한 값이다.
+
 	float GetWidth() { return(m_nWidth * m_xmf3Scale.x); }
 	float GetLength() { return(m_nLength * m_xmf3Scale.z); }
+
+	virtual void Render(ID3D12GraphicsCommandList *pd3dCommandList, CCamera *pCamera = NULL);
+};
+
+class CSkyBox : public CGameObject
+{
+public:
+	CSkyBox(CD3DDeviceIndRes *pd3dDeviceIndRes, ID3D12GraphicsCommandList *pd3dCommandList, ID3D12RootSignature *pd3dGraphicsRootSignature);
+	virtual ~CSkyBox();
+
+	virtual void Render(ID3D12GraphicsCommandList *pd3dCommandList, CCamera *pCamera = NULL);
 };

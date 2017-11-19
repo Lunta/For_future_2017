@@ -44,6 +44,9 @@ bool CD3DDeviceIndRes::Initialize()
 			, TEXT("Error!"), MB_OK);
 		return false;
 	}
+	nCbvSrvDescriptorIncrementSize = 
+		m_pd3dDevice->GetDescriptorHandleIncrementSize(
+			D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	return true;
 }
 
@@ -298,10 +301,10 @@ ID3D12Resource * CD3DDeviceIndRes::CreateTextureResourceFromFile(
 	, ID3D12Resource**			ppd3dUploadBuffer
 	, D3D12_RESOURCE_STATES		d3dResourceStates)
 {
-	ID3D12Resource *pd3dTexture = NULL;
-	std::unique_ptr<uint8_t[]> ddsData;
+	ID3D12Resource						*pd3dTexture = NULL;
+	std::unique_ptr<uint8_t[]>			ddsData;
 	std::vector<D3D12_SUBRESOURCE_DATA> vSubresources;
-	DDS_ALPHA_MODE ddsAlphaMode = DDS_ALPHA_MODE_UNKNOWN;
+	DDS_ALPHA_MODE						ddsAlphaMode = DDS_ALPHA_MODE_UNKNOWN;
 	bool bIsCubeMap = false;
 
 	if (FAILED(DirectX::LoadDDSTextureFromFileEx(
@@ -447,6 +450,13 @@ void CD3DDeviceIndRes::CreateConstantBufferView(
 {
 	m_pd3dDevice->CreateConstantBufferView(pDesc, DestDescriptor);
 }
+void CD3DDeviceIndRes::CreateShaderResourceView(
+	  ID3D12Resource*					pResource
+	, D3D12_SHADER_RESOURCE_VIEW_DESC*	pDesc
+	, D3D12_CPU_DESCRIPTOR_HANDLE		DestDescriptor)
+{
+	m_pd3dDevice->CreateShaderResourceView(pResource, pDesc, DestDescriptor);
+}
 bool CD3DDeviceIndRes::CreateDescriptorHeap(
 	  D3D12_DESCRIPTOR_HEAP_TYPE	Type
 	, UINT							NumDescriptors
@@ -464,11 +474,6 @@ bool CD3DDeviceIndRes::CreateDescriptorHeap(
 		m_pd3dDevice->CreateDescriptorHeap(
 			  &d3dDescriptorHeapDesc
 			, IID_PPV_ARGS(ppd3dDescriptorHeap)));
-}
-
-UINT CD3DDeviceIndRes::GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE DescriptorHeapType)
-{
-	return m_pd3dDevice->GetDescriptorHandleIncrementSize(DescriptorHeapType);
 }
 
 bool CD3DDeviceIndRes::CreateRootSignature(
@@ -529,4 +534,51 @@ bool CD3DDeviceIndRes::CheckFeatureSupport(
 bool CD3DDeviceIndRes::MakeWindowAssociation(HWND hWnd, UINT flags)
 {
 	return SUCCEEDED(m_pdxgiFactory->MakeWindowAssociation(hWnd, flags));
+}
+
+D3D12_SHADER_RESOURCE_VIEW_DESC CD3DDeviceIndRes::GetShaderResourceViewDesc(
+	  D3D12_RESOURCE_DESC	d3dResourceDesc
+	, UINT					nTextureType)
+{
+	D3D12_SHADER_RESOURCE_VIEW_DESC d3dShaderResourceViewDesc;
+	d3dShaderResourceViewDesc.Format = d3dResourceDesc.Format;
+	d3dShaderResourceViewDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+	switch (nTextureType)
+	{
+	case RESOURCE_TEXTURE2D: //(d3dResourceDesc.Dimension == D3D12_RESOURCE_DIMENSION_TEXTURE2D)(d3dResourceDesc.DepthOrArraySize == 1)
+	case RESOURCE_TEXTURE2D_ARRAY:
+		d3dShaderResourceViewDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+		d3dShaderResourceViewDesc.Texture2D.MipLevels = -1;
+		d3dShaderResourceViewDesc.Texture2D.MostDetailedMip = 0;
+		d3dShaderResourceViewDesc.Texture2D.PlaneSlice = 0;
+		d3dShaderResourceViewDesc.Texture2D.ResourceMinLODClamp = 0.0f;
+		break;
+	case RESOURCE_TEXTURE2DARRAY: //(d3dResourceDesc.Dimension == D3D12_RESOURCE_DIMENSION_TEXTURE2D)(d3dResourceDesc.DepthOrArraySize != 1)
+		d3dShaderResourceViewDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2DARRAY;
+		d3dShaderResourceViewDesc.Texture2DArray.MipLevels = -1;
+		d3dShaderResourceViewDesc.Texture2DArray.MostDetailedMip = 0;
+		d3dShaderResourceViewDesc.Texture2DArray.PlaneSlice = 0;
+		d3dShaderResourceViewDesc.Texture2DArray.ResourceMinLODClamp = 0.0f;
+		d3dShaderResourceViewDesc.Texture2DArray.FirstArraySlice = 0;
+		d3dShaderResourceViewDesc.Texture2DArray.ArraySize = d3dResourceDesc.DepthOrArraySize;
+		break;
+	case RESOURCE_TEXTURE_CUBE: //(d3dResourceDesc.Dimension == D3D12_RESOURCE_DIMENSION_TEXTURE2D)(d3dResourceDesc.DepthOrArraySize == 6)
+		d3dShaderResourceViewDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
+		d3dShaderResourceViewDesc.TextureCube.MipLevels = -1;
+		d3dShaderResourceViewDesc.TextureCube.MostDetailedMip = 0;
+		d3dShaderResourceViewDesc.TextureCube.ResourceMinLODClamp = 0.0f;
+		break;
+	case RESOURCE_BUFFER: //(d3dResourceDesc.Dimension == D3D12_RESOURCE_DIMENSION_BUFFER)
+		d3dShaderResourceViewDesc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
+		d3dShaderResourceViewDesc.Buffer.FirstElement = 0;
+		d3dShaderResourceViewDesc.Buffer.NumElements = 0;
+		d3dShaderResourceViewDesc.Buffer.StructureByteStride = 0;
+		d3dShaderResourceViewDesc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_NONE;
+		break;
+	}
+	return(d3dShaderResourceViewDesc);
+}
+UINT CD3DDeviceIndRes::GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE DescriptorHeapType)
+{
+	return m_pd3dDevice->GetDescriptorHandleIncrementSize(DescriptorHeapType);
 }

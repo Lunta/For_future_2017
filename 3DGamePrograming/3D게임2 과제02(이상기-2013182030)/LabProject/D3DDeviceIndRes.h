@@ -1,20 +1,16 @@
 #pragma once
+
+#define RESOURCE_TEXTURE2D			0x01
+#define RESOURCE_TEXTURE2D_ARRAY	0x02	//[]
+#define RESOURCE_TEXTURE2DARRAY		0x03
+#define RESOURCE_TEXTURE_CUBE		0x04
+#define RESOURCE_BUFFER				0x05
+
 class CD3DDeviceIndRes
 {
-private:
-#if defined(_DEBUG)
-	// 디버그 컨트롤러
-	ComPtr<ID3D12Debug>					m_pd3dDebugController;
-#endif
-
-	// DXGI 팩토리 인터페이스에 대한 포인터이다.
-	ComPtr<IDXGIFactory4>				m_pdxgiFactory;
-	// Direct3D 디바이스 인터페이스에 대한 포인터이다. 주로 리소스를 생성하기 위하여 필요하다.
-	ComPtr<ID3D12Device>				m_pd3dDevice;
-
-	// MSAA 다중 샘플링을 활성화하고 다중 샘플링 레벨을 설정한다.
-	bool								m_bMsaa4xEnable;
-	UINT								m_nMsaa4xQualityLevels;
+public:
+	UINT				nCbvSrvDescriptorIncrementSize;
+							
 public:
 	CD3DDeviceIndRes();
 	~CD3DDeviceIndRes();
@@ -22,7 +18,7 @@ public:
 	bool Initialize();
 	bool CreateDirect3DDevice();
 	bool CreateSwapChain(
-		HWND							hWnd
+		  HWND							hWnd
 		, UINT							BufferCount
 		, UINT							BufferWidth
 		, UINT							BufferHeight
@@ -84,6 +80,10 @@ public:
 	void CreateConstantBufferView(
 		  D3D12_CONSTANT_BUFFER_VIEW_DESC*pDesc
 		, D3D12_CPU_DESCRIPTOR_HANDLE	DestDescriptor);
+	void CreateShaderResourceView(
+		  ID3D12Resource*				pResource
+		, D3D12_SHADER_RESOURCE_VIEW_DESC*pDesc
+		, D3D12_CPU_DESCRIPTOR_HANDLE	DestDescriptor);
 
 	bool CreateDescriptorHeap(
 		  D3D12_DESCRIPTOR_HEAP_TYPE	Type
@@ -91,7 +91,6 @@ public:
 		, D3D12_DESCRIPTOR_HEAP_FLAGS	Flags
 		, UINT							NodeMask
 		, ID3D12DescriptorHeap**		ppd3dDescriptorHeap);
-	UINT GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE DescriptorHeapType);
 
 	bool CreateRootSignature(
 		  UINT							nodeMask
@@ -108,4 +107,24 @@ public:
 		, void*							pFeatureSupportData
 		, UINT							FeatureSupportDataSize);
 	bool MakeWindowAssociation(HWND hWnd, UINT flags);
+
+	D3D12_SHADER_RESOURCE_VIEW_DESC GetShaderResourceViewDesc(
+		  D3D12_RESOURCE_DESC			d3dResourceDesc
+		, UINT							nTextureType);
+	UINT GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE DescriptorHeapType);
+
+private:
+#if defined(_DEBUG)
+	// 디버그 컨트롤러
+	ComPtr<ID3D12Debug>					m_pd3dDebugController;
+#endif
+
+	// DXGI 팩토리 인터페이스에 대한 포인터이다.
+	ComPtr<IDXGIFactory4>				m_pdxgiFactory;
+	// Direct3D 디바이스 인터페이스에 대한 포인터이다. 주로 리소스를 생성하기 위하여 필요하다.
+	ComPtr<ID3D12Device>				m_pd3dDevice;
+
+	// MSAA 다중 샘플링을 활성화하고 다중 샘플링 레벨을 설정한다.
+	bool								m_bMsaa4xEnable;
+	UINT								m_nMsaa4xQualityLevels;
 };

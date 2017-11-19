@@ -3,8 +3,10 @@
 #include "Shader.h"
 #include "Camera.h"
 
-#define BulletDelay 0.1f
-#define REPULSIVE_FORCE 50.0f
+#define BulletDelay				0.1f
+#define REPULSIVE_FORCE			50.0f
+#define NUM_TREES				2000
+#define NUM_GRASSES				10000
 
 struct LIGHT
 {
@@ -39,11 +41,11 @@ class CScene
 {
 public:
 	typedef enum {
-		Background,
-		Objects,
-		Bullet,
-		Particle,
-		Count
+		  MazeObject
+		, Objects
+		, Bullet
+		, Particle
+		, Count
 	} ObjectTag;
 
 public:
@@ -100,14 +102,15 @@ protected:
 	int							m_nShaders = ObjectTag::Count;
 	CInstancingShader			*m_pShaders = NULL;
 	CHeightMapTerrain			*m_pTerrain = NULL;
+	CSkyBox						*m_pSkyBox = NULL;
+	CBillBoardShader			*m_pTrees = NULL;
+	CBillBoardShader			*m_pGrasses = NULL;
 
 	LIGHTS						*m_pLights = NULL;
-
 	ComPtr<ID3D12Resource>		m_pd3dcbLights = NULL;
 	LIGHTS						*m_pcbMappedLights = NULL;
 
 	MATERIALS					*m_pMaterials = NULL;
-
 	ComPtr<ID3D12Resource>		m_pd3dcbMaterials = NULL;
 	MATERIAL					*m_pcbMappedMaterials = NULL;
 

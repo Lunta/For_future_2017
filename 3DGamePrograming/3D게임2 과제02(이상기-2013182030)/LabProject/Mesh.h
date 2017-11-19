@@ -78,6 +78,18 @@ public:
 	~CIlluminatedVertex() { }
 };
 
+class CBillBoardVertex
+{
+public:
+	XMFLOAT3						m_xmf4Pos;
+	XMFLOAT2						m_xmf2Size;
+
+public:
+	CBillBoardVertex():m_xmf4Pos(XMFLOAT3(0.0f, 0.0f, 0.0f)), m_xmf2Size(XMFLOAT2(0.0f, 0.0f)){}
+	CBillBoardVertex(const XMFLOAT3& xmf3Pos, const XMFLOAT2& xmf2Size): m_xmf4Pos(xmf3Pos), m_xmf2Size(xmf2Size) {}
+	~CBillBoardVertex() {}
+};
+
 class CMesh
 {
 public:
@@ -252,7 +264,13 @@ public:
 	virtual ~CMeshTextured();
 };
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+class CRectMeshTextured : public CMeshTextured
+{
+public:
+	CRectMeshTextured(CD3DDeviceIndRes *pd3dDeviceIndRes, ID3D12GraphicsCommandList *pd3dCommandList, float fWidth = 20.0f, float fHeight = 20.0f, float fDepth = 20.0f, float fxPosition = 0.0f, float fyPosition = 0.0f, float fzPosition = 0.0f);
+	virtual ~CRectMeshTextured();
+};
+
 class CCubeMeshTextured : public CMeshTextured
 {
 public:
@@ -260,6 +278,26 @@ public:
 	virtual ~CCubeMeshTextured();
 };
 
+class CHeightMapGridMeshTextured : public CMeshTextured
+{
+protected:
+	int							m_nWidth;
+	int							m_nLength;
+	XMFLOAT3					m_xmf3Scale;
+
+public:
+	CHeightMapGridMeshTextured(CD3DDeviceIndRes *pd3dDeviceIndRes, ID3D12GraphicsCommandList *pd3dCommandList, int xStart, int zStart, int nWidth, int nLength, XMFLOAT3 xmf3Scale = XMFLOAT3(1.0f, 1.0f, 1.0f), XMFLOAT4 xmf4Color = XMFLOAT4(1.0f, 1.0f, 0.0f, 0.0f), void *pContext = NULL);
+	virtual ~CHeightMapGridMeshTextured();
+
+	XMFLOAT3 GetScale() { return(m_xmf3Scale); }
+	int GetWidth() { return(m_nWidth); }
+	int GetLength() { return(m_nLength); }
+
+	virtual float OnGetHeight(int x, int z, void *pContext);
+	virtual XMFLOAT4 OnGetColor(int x, int z, void *pContext);
+};
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 class CMeshIlluminated : public CMesh
 {
 public:

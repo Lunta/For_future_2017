@@ -28,7 +28,33 @@ ID3D12RootSignature* CScene::GetGraphicsRootSignature()
 ID3D12RootSignature* CScene::CreateGraphicsRootSignature(CD3DDeviceIndRes *pd3dDeviceIndRes)
 {
 	ID3D12RootSignature* pd3dGraphicsRootSignature = NULL;
-	D3D12_ROOT_PARAMETER pd3dRootParameters[5];
+	D3D12_DESCRIPTOR_RANGE pd3dDescriptorRanges[4];
+
+	pd3dDescriptorRanges[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+	pd3dDescriptorRanges[0].NumDescriptors = 6;
+	pd3dDescriptorRanges[0].BaseShaderRegister = 1; //t1: gtxtTextures[6]
+	pd3dDescriptorRanges[0].RegisterSpace = 0;
+	pd3dDescriptorRanges[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+
+	pd3dDescriptorRanges[1].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+	pd3dDescriptorRanges[1].NumDescriptors = 1;
+	pd3dDescriptorRanges[1].BaseShaderRegister = 7; //t7: gtxtTerrainBaseTexture
+	pd3dDescriptorRanges[1].RegisterSpace = 0;
+	pd3dDescriptorRanges[1].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+
+	pd3dDescriptorRanges[2].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+	pd3dDescriptorRanges[2].NumDescriptors = 1;
+	pd3dDescriptorRanges[2].BaseShaderRegister = 8; //t8: gtxtTerrainDetailTexture
+	pd3dDescriptorRanges[2].RegisterSpace = 0;
+	pd3dDescriptorRanges[2].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+
+	pd3dDescriptorRanges[3].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+	pd3dDescriptorRanges[3].NumDescriptors = 1;
+	pd3dDescriptorRanges[3].BaseShaderRegister = 9; //t9: gtxtSkyBoxTexture
+	pd3dDescriptorRanges[3].RegisterSpace = 0;
+	pd3dDescriptorRanges[3].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+
+	D3D12_ROOT_PARAMETER pd3dRootParameters[6];
 	pd3dRootParameters[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
 	pd3dRootParameters[0].Descriptor.ShaderRegister = 0; //Player
 	pd3dRootParameters[0].Descriptor.RegisterSpace = 0;
@@ -54,19 +80,51 @@ ID3D12RootSignature* CScene::CreateGraphicsRootSignature(CD3DDeviceIndRes *pd3dD
 	pd3dRootParameters[4].Descriptor.RegisterSpace = 0;
 	pd3dRootParameters[4].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 
+	pd3dRootParameters[5].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+	pd3dRootParameters[5].DescriptorTable.NumDescriptorRanges = 4;
+	pd3dRootParameters[5].DescriptorTable.pDescriptorRanges = pd3dDescriptorRanges;
+	pd3dRootParameters[5].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+
 	D3D12_ROOT_SIGNATURE_FLAGS d3dRootSignatureFlags =
 		D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT |
 		D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS |
-		D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS |
-		D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS;
+		D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS;
+		//| D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS;
 		//| D3D12_ROOT_SIGNATURE_FLAG_DENY_PIXEL_SHADER_ROOT_ACCESS;
+
+	D3D12_STATIC_SAMPLER_DESC pd3dSamplerDescs[2];
+	pd3dSamplerDescs[0].Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
+	pd3dSamplerDescs[0].AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+	pd3dSamplerDescs[0].AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+	pd3dSamplerDescs[0].AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+	pd3dSamplerDescs[0].MipLODBias = 0;
+	pd3dSamplerDescs[0].MaxAnisotropy = 1;
+	pd3dSamplerDescs[0].ComparisonFunc = D3D12_COMPARISON_FUNC_ALWAYS;
+	pd3dSamplerDescs[0].MinLOD = 0;
+	pd3dSamplerDescs[0].MaxLOD = D3D12_FLOAT32_MAX;
+	pd3dSamplerDescs[0].ShaderRegister = 0;
+	pd3dSamplerDescs[0].RegisterSpace = 0;
+	pd3dSamplerDescs[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+
+	pd3dSamplerDescs[1].Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
+	pd3dSamplerDescs[1].AddressU = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+	pd3dSamplerDescs[1].AddressV = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+	pd3dSamplerDescs[1].AddressW = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+	pd3dSamplerDescs[1].MipLODBias = 0;
+	pd3dSamplerDescs[1].MaxAnisotropy = 1;
+	pd3dSamplerDescs[1].ComparisonFunc = D3D12_COMPARISON_FUNC_ALWAYS;
+	pd3dSamplerDescs[1].MinLOD = 0;
+	pd3dSamplerDescs[1].MaxLOD = D3D12_FLOAT32_MAX;
+	pd3dSamplerDescs[1].ShaderRegister = 1;
+	pd3dSamplerDescs[1].RegisterSpace = 0;
+	pd3dSamplerDescs[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
 
 	D3D12_ROOT_SIGNATURE_DESC d3dRootSignatureDesc;
 	::ZeroMemory(&d3dRootSignatureDesc, sizeof(D3D12_ROOT_SIGNATURE_DESC));
 	d3dRootSignatureDesc.NumParameters = _countof(pd3dRootParameters);
 	d3dRootSignatureDesc.pParameters = pd3dRootParameters;
-	d3dRootSignatureDesc.NumStaticSamplers = 0;
-	d3dRootSignatureDesc.pStaticSamplers = NULL;
+	d3dRootSignatureDesc.NumStaticSamplers = _countof(pd3dSamplerDescs);
+	d3dRootSignatureDesc.pStaticSamplers = pd3dSamplerDescs;
 	d3dRootSignatureDesc.Flags = d3dRootSignatureFlags;
 
 	ComPtr<ID3DBlob> pd3dSignatureBlob = NULL;
@@ -134,7 +192,7 @@ void CScene::BuildLightsAndMaterials()
 	m_pLights = new LIGHTS;
 	::ZeroMemory(m_pLights, sizeof(LIGHTS));
 
-	m_pLights->m_xmf4GlobalAmbient = XMFLOAT4(0.001f, 0.001f, 0.001f, 1.0f);
+	m_pLights->m_xmf4GlobalAmbient = XMFLOAT4(0.005f, 0.005f, 0.005f, 1.0f);
 
 	// 플레이어 손전등
 	m_pLights->m_pLights[0].m_bEnable = true;
@@ -209,226 +267,328 @@ void CScene::BuildObjects(
 	, ID3D12GraphicsCommandList *pd3dCommandList)
 {
 	m_pd3dGraphicsRootSignature = CreateGraphicsRootSignature(pd3dDeviceIndRes);
-	//지형을 확대할 스케일 벡터이다. x-축과 z-축은 8배, y-축은 2배 확대한다.
-	XMFLOAT3 xmf3Scale(6.5f, 2.0f, 6.5f);
-	XMFLOAT4 xmf4Color(0.0f, 0.2f, 0.0f, 0.0f);
-	//지형을 높이 맵 이미지 파일(HeightMap.raw)을 사용하여 생성한다. 높이 맵의 크기는 가로x세로(257x257)이다.
-#ifdef _WITH_TERRAIN_PARTITION
-	/*하나의 격자 메쉬의 크기는 가로x세로(17x17)이다. 지형 전체는 가로 방향으로 16개, 세로 방향으로 16의 격자 메
-	쉬를 가진다. 지형을 구성하는 격자 메쉬의 개수는 총 256(16x16)개가 된다.*/
-	m_pTerrain = new CHeightMapTerrain(pd3dDeviceIndRes, pd3dCommandList,
-		m_pd3dGraphicsRootSignature, _T("Assets/Image/Terrain/HeightMap.raw"), 257, 257, 17,
-		17, xmf3Scale, xmf4Color);
-#else
-	//지형을 하나의 격자 메쉬(257x257)로 생성한다.
-	m_pTerrain = new CHeightMapTerrain(pd3dDeviceIndRes, pd3dCommandList,
-		m_pd3dGraphicsRootSignature.Get(), _T("Assets/Image/Terrain/HeightMap.raw"), 257, 257, 257,
-		257, xmf3Scale, xmf4Color);
-#endif
-	CCubeMeshIlluminated *pRoofMesh = new CCubeMeshIlluminated(
-		pd3dDeviceIndRes, pd3dCommandList
-		, 800.0f, 40.0f, 800.0f);
-	m_pRoofObject = new CGameObject(1);
-	m_pRoofObject->SetObjectType(CGameObject::ObjectType::Wall);
-	m_pRoofObject->SetMaterial(rand() % MAX_MATERIALS);
-	m_pRoofObject->SetMesh(0, pRoofMesh);
-	m_pRoofObject->SetOOBB(pRoofMesh->GetBoundingBox());
-	m_pRoofObject->SetPosition(375, m_pTerrain->GetHeight(375, 450) + 60.0f, 450);
-	CObjectsShader* pRoofShader = new CObjectsShader();
-	pRoofShader->CreateShader(pd3dDeviceIndRes, m_pd3dGraphicsRootSignature.Get());
-	CGameObject** container = new CGameObject*[1];
-	container[0] = m_pRoofObject;
-	pRoofShader->BuildObjects(pd3dDeviceIndRes, pd3dCommandList, container, 1);
-	m_pRoofObject->GetMaterial()->SetShader(pRoofShader);
 
-	CSphereMeshIlluminated *pHeavenlyBody = new CSphereMeshIlluminated(
-		pd3dDeviceIndRes
-		, pd3dCommandList, 50.0f);
-	m_ppHeavenlyBody = new CRevolvingObject*[2];
-	m_ppHeavenlyBody[0] = new CRevolvingObject();
-	m_ppHeavenlyBody[0]->SetObjectType(CGameObject::ObjectType::Background);
-	m_ppHeavenlyBody[0]->SetMaterial(5);
-	m_ppHeavenlyBody[0]->SetMesh(0, pHeavenlyBody);
-	m_ppHeavenlyBody[1] = new CRevolvingObject();
-	m_ppHeavenlyBody[1]->SetObjectType(CGameObject::ObjectType::Background);
-	m_ppHeavenlyBody[1]->SetMaterial(6);
-	m_ppHeavenlyBody[1]->SetMesh(0, pHeavenlyBody);
-	CObjectsShader* pHeavenlyBodyShader = new CObjectsShader();
-	pHeavenlyBodyShader->CreateShader(pd3dDeviceIndRes, m_pd3dGraphicsRootSignature.Get());
-	pHeavenlyBodyShader->BuildObjects(pd3dDeviceIndRes, pd3dCommandList
-		, reinterpret_cast<CGameObject**>(m_ppHeavenlyBody), 2);
-	m_ppHeavenlyBody[0]->GetMaterial()->SetShader(pHeavenlyBodyShader);
-	m_ppHeavenlyBody[1]->GetMaterial()->SetShader(pHeavenlyBodyShader);
+	// Terrain
+	{
+		XMFLOAT3 xmf3Scale(6.5f, 2.0f, 6.5f);
+		XMFLOAT4 xmf4Color(0.0f, 0.2f, 0.0f, 0.0f);
+#ifdef _WITH_TERRAIN_PARTITION
+		m_pTerrain = new CHeightMapTerrain(
+			pd3dDeviceIndRes
+			, pd3dCommandList
+			, m_pd3dGraphicsRootSignature.Get()
+			, _T("Assets/Image/Terrain/HeightMap.raw")
+			, 257, 257, 17, 17, xmf3Scale, xmf4Color);
+#else
+		m_pTerrain = new CHeightMapTerrain(
+			pd3dDeviceIndRes
+			, pd3dCommandList
+			, m_pd3dGraphicsRootSignature.Get()
+			, _T("Assets/Image/Terrain/HeightMap.raw")
+			, 257, 257, 257, 257, xmf3Scale, xmf4Color);
+#endif
+	}
+
+	// SkyBox
+	{
+		m_pSkyBox = new CSkyBox(
+			pd3dDeviceIndRes
+			, pd3dCommandList
+			, m_pd3dGraphicsRootSignature.Get());
+	}
+
+	// Roof
+	{ 
+		CCubeMeshIlluminated *pRoofMesh = new CCubeMeshIlluminated(
+			pd3dDeviceIndRes, pd3dCommandList
+			, 800.0f, 40.0f, 800.0f);
+		m_pRoofObject = new CGameObject(1);
+		m_pRoofObject->SetObjectType(CGameObject::ObjectType::Wall);
+		m_pRoofObject->SetMaterial(rand() % MAX_MATERIALS);
+		m_pRoofObject->SetMesh(0, pRoofMesh);
+		m_pRoofObject->SetOOBB(pRoofMesh->GetBoundingBox());
+		m_pRoofObject->SetPosition(375, m_pTerrain->GetHeight(375, 450) + 60.0f, 450);
+		CObjectsShader* pRoofShader = new CObjectsShader();
+		pRoofShader->CreateShader(pd3dDeviceIndRes, m_pd3dGraphicsRootSignature.Get());
+		CGameObject** container = new CGameObject*[1];
+		container[0] = m_pRoofObject;
+		pRoofShader->BuildObjects(pd3dDeviceIndRes, pd3dCommandList, container, 1);
+		m_pRoofObject->GetMaterial()->SetShader(pRoofShader);
+	}
+	
+	// HeavenlyBody
+	{
+		CSphereMeshIlluminated *pHeavenlyBody = new CSphereMeshIlluminated(
+			pd3dDeviceIndRes
+			, pd3dCommandList, 50.0f);
+		m_ppHeavenlyBody = new CRevolvingObject*[2];
+		m_ppHeavenlyBody[0] = new CRevolvingObject();
+		m_ppHeavenlyBody[0]->SetObjectType(CGameObject::ObjectType::Background);
+		m_ppHeavenlyBody[0]->SetMaterial(5);
+		m_ppHeavenlyBody[0]->SetMesh(0, pHeavenlyBody);
+		m_ppHeavenlyBody[1] = new CRevolvingObject();
+		m_ppHeavenlyBody[1]->SetObjectType(CGameObject::ObjectType::Background);
+		m_ppHeavenlyBody[1]->SetMaterial(6);
+		m_ppHeavenlyBody[1]->SetMesh(0, pHeavenlyBody);
+		CObjectsShader* pHeavenlyBodyShader = new CObjectsShader();
+		pHeavenlyBodyShader->CreateShader(pd3dDeviceIndRes, m_pd3dGraphicsRootSignature.Get());
+		pHeavenlyBodyShader->BuildObjects(pd3dDeviceIndRes, pd3dCommandList
+			, reinterpret_cast<CGameObject**>(m_ppHeavenlyBody), 2);
+		m_ppHeavenlyBody[0]->GetMaterial()->SetShader(pHeavenlyBodyShader);
+		m_ppHeavenlyBody[1]->GetMaterial()->SetShader(pHeavenlyBodyShader);
+	}
 
 	m_nShaders = ObjectTag::Count;
 	m_pShaders = new CInstancingShader[m_nShaders];
-
-	m_pShaders[ObjectTag::Background].CreateShader(pd3dDeviceIndRes, m_pd3dGraphicsRootSignature.Get());
 	m_pppObjects = new CGameObject**[ObjectTag::Count];
-
-	m_pnObjects[ObjectTag::Background] = 0;
-	m_Maze.m_nPathesPos = 0;
-	for (int z = 0; z < m_Maze.m_Length; z++)
+	// Tree
 	{
-		for (int x = 0; x < m_Maze.m_Width; x++)
+		m_pTrees = new CBillBoardShader();
+		m_pTrees->CreateShader(pd3dDeviceIndRes, m_pd3dGraphicsRootSignature.Get());
+		int nTrees = NUM_TREES;
+		CBillBoardVertex* pvtxTrees = new CBillBoardVertex[nTrees];
+		XMFLOAT3 xmf3Pos;
+		XMFLOAT2 xmfSize = XMFLOAT2(20, 50);
+		for (int i = 0; i < nTrees; ++i)
 		{
-			switch (m_Maze.m_ppMap[z][x])
+			xmf3Pos.x = (float)RANDOM_NUM(800, 1500);
+			xmf3Pos.z = (float)RANDOM_NUM(800, 1500);
+			xmf3Pos.y = m_pTerrain->GetHeight(
+				xmf3Pos.x, xmf3Pos.z) + xmfSize.y / 2.f;
+			pvtxTrees[i].m_xmf4Pos = xmf3Pos;
+			pvtxTrees[i].m_xmf2Size = xmfSize;
+		}
+		m_pTrees->BuildObjects(
+			pd3dDeviceIndRes
+			, pd3dCommandList
+			, pvtxTrees
+			, nTrees);
+
+		CTexture *pTexture = new CTexture(6, RESOURCE_TEXTURE2D, 0);
+		pTexture->LoadTextureFromFile(pd3dDeviceIndRes, pd3dCommandList, L"Assets/Image/Trees/Tree01.dds", 0);
+		pTexture->LoadTextureFromFile(pd3dDeviceIndRes, pd3dCommandList, L"Assets/Image/Trees/Tree02.dds", 1);
+		pTexture->LoadTextureFromFile(pd3dDeviceIndRes, pd3dCommandList, L"Assets/Image/Trees/Tree03.dds", 2);
+		pTexture->LoadTextureFromFile(pd3dDeviceIndRes, pd3dCommandList, L"Assets/Image/Trees/Tree04.dds", 3);
+		pTexture->LoadTextureFromFile(pd3dDeviceIndRes, pd3dCommandList, L"Assets/Image/Trees/Tree06.dds", 4);
+		pTexture->LoadTextureFromFile(pd3dDeviceIndRes, pd3dCommandList, L"Assets/Image/Trees/Tree08.dds", 5);
+
+		m_pTrees->SetTexture(pTexture);
+		m_pTrees->CreateShaderVariables(pd3dDeviceIndRes, pd3dCommandList);
+		m_pTrees->CreateCbvAndSrvDescriptorHeaps(pd3dDeviceIndRes, pd3dCommandList, 0, 6);
+		m_pTrees->CreateShaderResourceViews(pd3dDeviceIndRes, pd3dCommandList, pTexture, 5, false);
+	}
+
+	// Grass
+	{
+		m_pGrasses = new CBillBoardShader();
+		m_pGrasses->CreateShader(pd3dDeviceIndRes, m_pd3dGraphicsRootSignature.Get());
+		int nGrasses = NUM_GRASSES;
+		CBillBoardVertex* pvtxGrasses = new CBillBoardVertex[nGrasses];
+		XMFLOAT3 xmf3Pos;
+		XMFLOAT2 xmfSize = XMFLOAT2(20, 10);
+		for (int i = 0; i < nGrasses; ++i)
+		{
+			xmf3Pos.x = (float)RANDOM_NUM(800, 1500);
+			xmf3Pos.z = (float)RANDOM_NUM(0, 800);
+			xmf3Pos.y = m_pTerrain->GetHeight(
+				xmf3Pos.x, xmf3Pos.z) + xmfSize.y / 2.f;
+			pvtxGrasses[i].m_xmf4Pos = xmf3Pos;
+			pvtxGrasses[i].m_xmf2Size = xmfSize;
+		}
+		m_pGrasses->BuildObjects(
+			pd3dDeviceIndRes
+			, pd3dCommandList
+			, pvtxGrasses
+			, nGrasses);
+
+		CTexture *pTexture = new CTexture(6, RESOURCE_TEXTURE2D, 0);
+		pTexture->LoadTextureFromFile(pd3dDeviceIndRes, pd3dCommandList, L"Assets/Image/Grasses/Grass01.DDS", 0);
+		pTexture->LoadTextureFromFile(pd3dDeviceIndRes, pd3dCommandList, L"Assets/Image/Grasses/Grass02.DDS", 1);
+		pTexture->LoadTextureFromFile(pd3dDeviceIndRes, pd3dCommandList, L"Assets/Image/Grasses/Grass08.DDS", 2);
+		pTexture->LoadTextureFromFile(pd3dDeviceIndRes, pd3dCommandList, L"Assets/Image/Grasses/Grass12.DDS", 3);
+		pTexture->LoadTextureFromFile(pd3dDeviceIndRes, pd3dCommandList, L"Assets/Image/Flowers/Flower07.DDS", 4);
+		pTexture->LoadTextureFromFile(pd3dDeviceIndRes, pd3dCommandList, L"Assets/Image/Flowers/Flower06.DDS", 5);
+
+		m_pGrasses->SetTexture(pTexture);
+		m_pGrasses->CreateShaderVariables(pd3dDeviceIndRes, pd3dCommandList);
+		m_pGrasses->CreateCbvAndSrvDescriptorHeaps(pd3dDeviceIndRes, pd3dCommandList, 0, 6);
+		m_pGrasses->CreateShaderResourceViews(pd3dDeviceIndRes, pd3dCommandList, pTexture, 5, false);
+	}
+
+	// Maze
+	{
+		m_pShaders[ObjectTag::MazeObject].CreateShader(pd3dDeviceIndRes, m_pd3dGraphicsRootSignature.Get());
+		m_pnObjects[ObjectTag::MazeObject] = 0;
+		m_Maze.m_nPathesPos = 0;
+		for (int z = 0; z < m_Maze.m_Length; z++)
+		{
+			for (int x = 0; x < m_Maze.m_Width; x++)
 			{
-			case Maze::Structure::Wall:
-				m_pnObjects[ObjectTag::Background]++;
-				break;
-			case Maze::Structure::Path:
-			case Maze::Structure::Entrance:
-			case Maze::Structure::Exit:
-				m_Maze.m_nPathesPos++;
-				break;
+				switch (m_Maze.m_ppMap[z][x])
+				{
+				case Maze::Structure::Wall:
+					m_pnObjects[ObjectTag::MazeObject]++;
+					break;
+				case Maze::Structure::Path:
+				case Maze::Structure::Entrance:
+				case Maze::Structure::Exit:
+					m_Maze.m_nPathesPos++;
+					break;
+				}
 			}
 		}
-	}
-	m_pppObjects[ObjectTag::Background] =
-		new CGameObject*[m_pnObjects[ObjectTag::Background]];
-	m_Maze.m_pxmf3PathesPos = new XMFLOAT3[m_Maze.m_nPathesPos];
+		m_pppObjects[ObjectTag::MazeObject] =
+			new CGameObject*[m_pnObjects[ObjectTag::MazeObject]];
+		m_Maze.m_pxmf3PathesPos = new XMFLOAT3[m_Maze.m_nPathesPos];
 
-	CCubeMeshIlluminated *pCubeMesh = new CCubeMeshIlluminated(
-		pd3dDeviceIndRes, pd3dCommandList, 50.0f, 50.0f, 50.0f);
-	float fxPitch = 50.0f, fyPitch = 50.0f, fzPitch = 50.0f;
-	int i = 0, nPathIdx = 0;
-	//XMFLOAT3 xmf3RotateAxis, xmf3SurfaceNormal;
-	CRotatingObject *pRotatingObject = NULL;
-	i = 0;
-	for (int z = 0; z < m_Maze.m_Length; z++)
-	{
-		for (int x = 0; x < m_Maze.m_Width; x++)
+		CCubeMeshIlluminated *pCubeMesh = new CCubeMeshIlluminated(
+			pd3dDeviceIndRes, pd3dCommandList, 50.0f, 50.0f, 50.0f);
+		float fxPitch = 50.0f, fzPitch = 50.0f;
+		int i = 0, nPathIdx = 0;
+		//XMFLOAT3 xmf3RotateAxis, xmf3SurfaceNormal;
+		CRotatingObject *pRotatingObject = NULL;
+		for (int z = 0; z < m_Maze.m_Length; z++)
 		{
-			float xPosition = x * fxPitch + 25.0f;
-			float zPosition = z * fzPitch + 100.0f;
-			float fHeight = m_pTerrain->GetHeight(xPosition, zPosition);
-			switch (m_Maze.m_ppMap[z][x])
+			for (int x = 0; x < m_Maze.m_Width; x++)
 			{
-			case Maze::Structure::Path:
-				m_Maze.m_pxmf3PathesPos[nPathIdx++] = 
-					XMFLOAT3(xPosition, fHeight + 25.0f, zPosition);
-				break;
-			case Maze::Structure::Entrance:
-				m_Maze.m_xmf3EntrancePos = 
-					XMFLOAT3(xPosition, fHeight + 25.0f, zPosition);
-				break;
-			case Maze::Structure::Exit:
-				m_Maze.m_xmf3ExitPos =
-					XMFLOAT3(xPosition, fHeight + 25.0f, zPosition);
-				break;
-			case Maze::Structure::Wall:
-			{
-				pRotatingObject = new CRotatingObject(1);
-				pRotatingObject->SetObjectType(CGameObject::ObjectType::Wall);
-				pRotatingObject->SetMaterial(i % MAX_MATERIALS);
-				pRotatingObject->SetMesh(0, pCubeMesh);
-				pRotatingObject->SetOOBB(pCubeMesh->GetBoundingBox());
-				pRotatingObject->SetPosition(xPosition, fHeight + 25.0f, zPosition);
-				pRotatingObject->SetMovingDirection(XMFLOAT3(0, 0, 0));
-				pRotatingObject->SetMovingSpeed(0.0f);
-				pRotatingObject->SetRotationAxis(XMFLOAT3(0.0f, 1.0f, 0.0f));
-				pRotatingObject->SetRotationSpeed(0.0f);
-				m_pppObjects[ObjectTag::Background][i++] = pRotatingObject;
-				break;
-			}
+				float xPosition = x * fxPitch + 25.0f;
+				float zPosition = z * fzPitch + 100.0f;
+				float fHeight = m_pTerrain->GetHeight(xPosition, zPosition);
+				switch (m_Maze.m_ppMap[z][x])
+				{
+				case Maze::Structure::Path:
+					m_Maze.m_pxmf3PathesPos[nPathIdx++] =
+						XMFLOAT3(xPosition, fHeight + 25.0f, zPosition);
+					break;
+				case Maze::Structure::Entrance:
+					m_Maze.m_xmf3EntrancePos =
+						XMFLOAT3(xPosition, fHeight + 25.0f, zPosition);
+					break;
+				case Maze::Structure::Exit:
+					m_Maze.m_xmf3ExitPos =
+						XMFLOAT3(xPosition, fHeight + 25.0f, zPosition);
+					break;
+				case Maze::Structure::Wall:
+				{
+					pRotatingObject = new CRotatingObject(1);
+					pRotatingObject->SetObjectType(CGameObject::ObjectType::Wall);
+					pRotatingObject->SetMaterial(i % MAX_MATERIALS);
+					pRotatingObject->SetMesh(0, pCubeMesh);
+					pRotatingObject->SetOOBB(pCubeMesh->GetBoundingBox());
+					pRotatingObject->SetPosition(xPosition, fHeight + 25.0f, zPosition);
+					pRotatingObject->SetMovingDirection(XMFLOAT3(0, 0, 0));
+					pRotatingObject->SetMovingSpeed(0.0f);
+					pRotatingObject->SetRotationAxis(XMFLOAT3(0.0f, 1.0f, 0.0f));
+					pRotatingObject->SetRotationSpeed(0.0f);
+					m_pppObjects[ObjectTag::MazeObject][i++] = pRotatingObject;
+					break;
+				}
+				}
 			}
 		}
-	}
-	
-	m_pShaders[ObjectTag::Background].BuildObjects(
-		pd3dDeviceIndRes, pd3dCommandList,
-		m_pppObjects[ObjectTag::Background], m_pnObjects[ObjectTag::Background]);
 
-	m_pShaders[ObjectTag::Objects].CreateShader(pd3dDeviceIndRes, m_pd3dGraphicsRootSignature.Get());
-	m_pnObjects[ObjectTag::Objects] = 50;
-	m_pppObjects[ObjectTag::Objects] =
-		new CGameObject*[m_pnObjects[ObjectTag::Objects]];
-	CSphereMeshIlluminated *pSphereMeshs =
-		new CSphereMeshIlluminated(pd3dDeviceIndRes, pd3dCommandList, 6.0f, 20, 20);
+		m_pShaders[ObjectTag::MazeObject].BuildObjects(
+			pd3dDeviceIndRes, pd3dCommandList,
+			m_pppObjects[ObjectTag::MazeObject], m_pnObjects[ObjectTag::MazeObject]);
+	}
 
-	XMFLOAT3 mazePos = m_pRoofObject->GetPosition();
-	for (i = 0; i < m_pnObjects[ObjectTag::Objects]; ++i)
+	// Spheres
 	{
-		CRotatingObject* Sphere = new CRotatingObject();
-		int idx = rand() % m_Maze.m_nPathesPos;
-		Sphere->SetMaterial(i % MAX_MATERIALS);
-		Sphere->SetMesh(0, pSphereMeshs);
-		Sphere->SetObjectType(CGameObject::ObjectType::Enemy);
-		Sphere->SetMovingDirection(Vector3::Normalize(XMFLOAT3(
-			(float)RANDOM_NUM(-1000, 1000),
-			(float)RANDOM_NUM(-1000, 1000),
-			(float)RANDOM_NUM(-1000, 1000))));
-		Sphere->SetPosition(XMFLOAT3(
-			(float)RANDOM_NUM((int)mazePos.x + 450, 1500), 100,
-			(float)RANDOM_NUM((int)mazePos.z + 450, 1500)));
-		Sphere->SetOOBB(pSphereMeshs->GetBoundingBox());
-		Sphere->SetRotationAxis(XMFLOAT3(
-			(float)RANDOM_NUM(-1000, 1000),
-			(float)RANDOM_NUM(-1000, 1000),
-			(float)RANDOM_NUM(-1000, 1000)));
-		Sphere->SetRotationSpeed((float)RANDOM_NUM(50, 100));
-		Sphere->SetMovingSpeed((float)RANDOM_NUM(50, 100));
-		m_pppObjects[ObjectTag::Objects][i] = Sphere;
-	}
-	m_pShaders[ObjectTag::Objects].BuildObjects(
-		pd3dDeviceIndRes, pd3dCommandList,
-		m_pppObjects[ObjectTag::Objects], m_pnObjects[ObjectTag::Objects]);
-	
-	m_pShaders[ObjectTag::Bullet].CreateShader(pd3dDeviceIndRes, m_pd3dGraphicsRootSignature.Get());
-	m_pnObjects[ObjectTag::Bullet] = 50;
-	m_pppObjects[ObjectTag::Bullet] =
-		new CGameObject*[m_pnObjects[ObjectTag::Bullet]];
-	CCubeMeshIlluminated *pBulleteMeshs =
-		new CCubeMeshIlluminated(pd3dDeviceIndRes, pd3dCommandList, 2.0f, 2.0f, 2.0f);
-	for (i = 0; i < m_pnObjects[ObjectTag::Bullet]; ++i)
-	{
-		CRotatingObject* Cube = new CRotatingObject();
-		Cube->SetObjectType(CGameObject::ObjectType::Bullet);
-		Cube->SetMaterial(i % MAX_MATERIALS);
-		Cube->SetPosition(0.0f, 100.0f, 0.0f);
-		Cube->SetOOBB(pBulleteMeshs->GetBoundingBox());
-		Cube->SetRotationAxis(XMFLOAT3(
-			(float)RANDOM_NUM(-1000, 1000),
-			(float)RANDOM_NUM(-1000, 1000),
-			(float)RANDOM_NUM(-1000, 1000)));
-		Cube->SetRotationSpeed((float)RANDOM_NUM(50, 100));
-		Cube->SetMovingSpeed(100.0f);
-		Cube->Sleep();
-		m_pppObjects[ObjectTag::Bullet][i] = Cube;
-	}
-	m_pppObjects[ObjectTag::Bullet][0]->SetMesh(0, pBulleteMeshs);
-	m_pShaders[ObjectTag::Bullet].BuildObjects(
-		pd3dDeviceIndRes, pd3dCommandList,
-		m_pppObjects[ObjectTag::Bullet], m_pnObjects[ObjectTag::Bullet]);
-	
-	m_pShaders[ObjectTag::Particle].CreateShader(pd3dDeviceIndRes, m_pd3dGraphicsRootSignature.Get());
-	m_pnObjects[ObjectTag::Particle] = 500;
-	m_pppObjects[ObjectTag::Particle] =
-		new CGameObject*[m_pnObjects[ObjectTag::Particle]];
-	CCubeMeshIlluminated *pParticleMeshs =
-		new CCubeMeshIlluminated(pd3dDeviceIndRes, pd3dCommandList, 1.0f, 1.0f, 1.0f);
-	for (i = 0; i < m_pnObjects[ObjectTag::Particle]; ++i)
-	{
-		CRotatingObject* Cube = new CRotatingObject();
-		Cube->SetObjectType(CGameObject::ObjectType::Particle);
-		Cube->SetMaterial(i % MAX_MATERIALS);
-		Cube->SetPosition(0.0f, 100.0f, 0.0f);
-		Cube->SetOOBB(pParticleMeshs->GetBoundingBox());
-		Cube->SetRotationAxis(XMFLOAT3(
-			(float)RANDOM_NUM(-1000, 1000),
-			(float)RANDOM_NUM(-1000, 1000),
-			(float)RANDOM_NUM(-1000, 1000)));
-		Cube->SetRotationSpeed((float)RANDOM_NUM(50, 100));
-		Cube->SetMovingSpeed(100.0f);
-		Cube->Sleep();
-		m_pppObjects[ObjectTag::Particle][i] = Cube;
-	}
-	m_pppObjects[ObjectTag::Particle][0]->SetMesh(0, pParticleMeshs);
-	m_pShaders[ObjectTag::Particle].BuildObjects(
-		pd3dDeviceIndRes, pd3dCommandList,
-		m_pppObjects[ObjectTag::Particle], m_pnObjects[ObjectTag::Particle]);
+		m_pShaders[ObjectTag::Objects].CreateShader(pd3dDeviceIndRes, m_pd3dGraphicsRootSignature.Get());
+		m_pnObjects[ObjectTag::Objects] = 50;
+		m_pppObjects[ObjectTag::Objects] =
+			new CGameObject*[m_pnObjects[ObjectTag::Objects]];
+		CSphereMeshIlluminated *pSphereMeshs =
+			new CSphereMeshIlluminated(pd3dDeviceIndRes, pd3dCommandList, 6.0f, 20, 20);
 
+		XMFLOAT3 mazePos = m_pRoofObject->GetPosition();
+		for (int i = 0; i < m_pnObjects[ObjectTag::Objects]; ++i)
+		{
+			CRotatingObject* Sphere = new CRotatingObject();
+			int idx = rand() % m_Maze.m_nPathesPos;
+			Sphere->SetMaterial(i % MAX_MATERIALS);
+			Sphere->SetMesh(0, pSphereMeshs);
+			Sphere->SetObjectType(CGameObject::ObjectType::Enemy);
+			Sphere->SetMovingDirection(Vector3::Normalize(XMFLOAT3(
+				(float)RANDOM_NUM(-1000, 1000),
+				(float)RANDOM_NUM(-1000, 1000),
+				(float)RANDOM_NUM(-1000, 1000))));
+			Sphere->SetPosition(XMFLOAT3(
+				(float)RANDOM_NUM((int)mazePos.x + 450, 1500), 100,
+				(float)RANDOM_NUM((int)mazePos.z + 450, 1500)));
+			Sphere->SetOOBB(pSphereMeshs->GetBoundingBox());
+			Sphere->SetRotationAxis(XMFLOAT3(
+				(float)RANDOM_NUM(-1000, 1000),
+				(float)RANDOM_NUM(-1000, 1000),
+				(float)RANDOM_NUM(-1000, 1000)));
+			Sphere->SetRotationSpeed((float)RANDOM_NUM(50, 100));
+			Sphere->SetMovingSpeed((float)RANDOM_NUM(50, 100));
+			m_pppObjects[ObjectTag::Objects][i] = Sphere;
+		}
+		m_pShaders[ObjectTag::Objects].BuildObjects(
+			pd3dDeviceIndRes, pd3dCommandList,
+			m_pppObjects[ObjectTag::Objects], m_pnObjects[ObjectTag::Objects]);
+	}
+
+	// Bullet
+	{
+		m_pShaders[ObjectTag::Bullet].CreateShader(pd3dDeviceIndRes, m_pd3dGraphicsRootSignature.Get());
+		m_pnObjects[ObjectTag::Bullet] = 50;
+		m_pppObjects[ObjectTag::Bullet] =
+			new CGameObject*[m_pnObjects[ObjectTag::Bullet]];
+		CCubeMeshIlluminated *pBulleteMeshs =
+			new CCubeMeshIlluminated(pd3dDeviceIndRes, pd3dCommandList, 2.0f, 2.0f, 2.0f);
+		for (int i = 0; i < m_pnObjects[ObjectTag::Bullet]; ++i)
+		{
+			CRotatingObject* Cube = new CRotatingObject();
+			Cube->SetObjectType(CGameObject::ObjectType::Bullet);
+			Cube->SetMaterial(i % MAX_MATERIALS);
+			Cube->SetPosition(0.0f, 100.0f, 0.0f);
+			Cube->SetOOBB(pBulleteMeshs->GetBoundingBox());
+			Cube->SetRotationAxis(XMFLOAT3(
+				(float)RANDOM_NUM(-1000, 1000),
+				(float)RANDOM_NUM(-1000, 1000),
+				(float)RANDOM_NUM(-1000, 1000)));
+			Cube->SetRotationSpeed((float)RANDOM_NUM(50, 100));
+			Cube->SetMovingSpeed(100.0f);
+			Cube->Sleep();
+			m_pppObjects[ObjectTag::Bullet][i] = Cube;
+		}
+		m_pppObjects[ObjectTag::Bullet][0]->SetMesh(0, pBulleteMeshs);
+		m_pShaders[ObjectTag::Bullet].BuildObjects(
+			pd3dDeviceIndRes, pd3dCommandList,
+			m_pppObjects[ObjectTag::Bullet], m_pnObjects[ObjectTag::Bullet]);
+	}
+
+	// Particle
+	{
+		m_pShaders[ObjectTag::Particle].CreateShader(pd3dDeviceIndRes, m_pd3dGraphicsRootSignature.Get());
+		m_pnObjects[ObjectTag::Particle] = 500;
+		m_pppObjects[ObjectTag::Particle] =
+			new CGameObject*[m_pnObjects[ObjectTag::Particle]];
+		CCubeMeshIlluminated *pParticleMeshs =
+			new CCubeMeshIlluminated(pd3dDeviceIndRes, pd3dCommandList, 1.0f, 1.0f, 1.0f);
+		for (int i = 0; i < m_pnObjects[ObjectTag::Particle]; ++i)
+		{
+			CRotatingObject* Cube = new CRotatingObject();
+			Cube->SetObjectType(CGameObject::ObjectType::Particle);
+			Cube->SetMaterial(i % MAX_MATERIALS);
+			Cube->SetPosition(0.0f, 100.0f, 0.0f);
+			Cube->SetOOBB(pParticleMeshs->GetBoundingBox());
+			Cube->SetRotationAxis(XMFLOAT3(
+				(float)RANDOM_NUM(-1000, 1000),
+				(float)RANDOM_NUM(-1000, 1000),
+				(float)RANDOM_NUM(-1000, 1000)));
+			Cube->SetRotationSpeed((float)RANDOM_NUM(50, 100));
+			Cube->SetMovingSpeed(100.0f);
+			Cube->Sleep();
+			m_pppObjects[ObjectTag::Particle][i] = Cube;
+		}
+		m_pppObjects[ObjectTag::Particle][0]->SetMesh(0, pParticleMeshs);
+		m_pShaders[ObjectTag::Particle].BuildObjects(
+			pd3dDeviceIndRes, pd3dCommandList,
+			m_pppObjects[ObjectTag::Particle], m_pnObjects[ObjectTag::Particle]);
+	}
 	BuildLightsAndMaterials();
 
 	CreateShaderVariables(pd3dDeviceIndRes, pd3dCommandList);
@@ -448,6 +608,10 @@ void CScene::ReleaseObjects()
 
 	if (m_pLights) delete m_pLights;
 	if (m_pMaterials) delete m_pMaterials;
+	if (m_pSkyBox) delete m_pSkyBox;
+
+	if (m_pTrees) delete m_pTrees;
+	if (m_pGrasses) delete m_pGrasses;
 }
 
 void CScene::Render(ID3D12GraphicsCommandList *pd3dCommandList, CCamera *pCamera)
@@ -464,7 +628,10 @@ void CScene::Render(ID3D12GraphicsCommandList *pd3dCommandList, CCamera *pCamera
 	D3D12_GPU_VIRTUAL_ADDRESS d3dcbMaterialsGpuVirtualAddress = m_pd3dcbMaterials->GetGPUVirtualAddress();
 	pd3dCommandList->SetGraphicsRootConstantBufferView(3, d3dcbMaterialsGpuVirtualAddress);
 
+	if (m_pSkyBox) m_pSkyBox->Render(pd3dCommandList, pCamera);
 	if (m_pTerrain) m_pTerrain->Render(pd3dCommandList, pCamera);
+	if (m_pGrasses) m_pGrasses->Render(pd3dCommandList, pCamera);
+	if (m_pTrees) m_pTrees->Render(pd3dCommandList, pCamera);
 	m_ppHeavenlyBody[0]->Render(pd3dCommandList, pCamera);
 	m_ppHeavenlyBody[1]->Render(pd3dCommandList, pCamera);
 	for (int i = 0; i < m_nShaders; i++)
@@ -549,7 +716,7 @@ void CScene::AnimateObjects(float fTimeElapsed)
 			m_bGameOver = false;
 			m_pPlayer->Awake();
 			m_pPlayer->Reset();
-			m_pPlayer->SetPosition(m_Maze.m_xmf3EntrancePos);
+			m_pPlayer->SetPosition(XMFLOAT3(800, 300, 800));
 		}
 	}
 	m_fBulletTimer += fTimeElapsed;
@@ -641,10 +808,10 @@ void CScene::AnimateObjects(float fTimeElapsed)
 void CScene::PhysicsProcessing(float fTimeElapsed)
 {
 	// Collision check between walls and all objects
-	for (int i = 0; i < m_pnObjects[ObjectTag::Background]; ++i)
+	for (int i = 0; i < m_pnObjects[ObjectTag::MazeObject]; ++i)
 	{
 		CRotatingObject* Wall = dynamic_cast<CRotatingObject*>(
-			m_pppObjects[ObjectTag::Background][i]);
+			m_pppObjects[ObjectTag::MazeObject][i]);
 		BoundingOrientedBox wmWallOOBB = Wall->GetOOBB();
 		XMFLOAT3 corners[8];
 		wmWallOOBB.GetCorners(corners);
@@ -878,12 +1045,13 @@ void CScene::PhysicsProcessing(float fTimeElapsed)
 
 void CScene::ReleaseUploadBuffers()
 {
-	for (int i = 0; i < m_nShaders; i++) m_pShaders[i].ReleaseUploadBuffers();
+	for (int i = 0; i < m_nShaders; i++) 
+		m_pShaders[i].ReleaseUploadBuffers();
 	if (m_pTerrain) m_pTerrain->ReleaseUploadBuffers();
 }
 
-bool CScene::OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM
-	lParam)
+bool CScene::OnProcessingMouseMessage(
+	HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam)
 {
 	switch (nMessageID)
 	{
@@ -916,8 +1084,8 @@ bool CScene::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wPar
 	return(false);
 }
 
-CGameObject *CScene::PickObjectPointedByCursor(int xClient, int yClient, CCamera
-	*pCamera)
+CGameObject *CScene::PickObjectPointedByCursor(
+	int xClient, int yClient, CCamera *pCamera)
 {
 	if (!pCamera) return(NULL);
 	XMFLOAT4X4 xmf4x4View = pCamera->GetViewMatrix();
@@ -1016,4 +1184,3 @@ void CScene::PopParticles(XMFLOAT3& pos, int nParticles)
 		particle->SetMovingSpeed(40.0f);
 	}
 }
-
