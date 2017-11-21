@@ -22,7 +22,7 @@ void CWarp2DFramework::OnCreate(HWND hWnd, HINSTANCE hInst, shared_ptr<CIndRes> 
 
 	m_hWnd = hWnd;
 	m_hInst = hInst;
-	::GetClientRect(m_hWnd, &m_rcClient);
+	::GetClientRect(hWnd, &m_rcClient);
 
 	// 클래스와 윈도우 프로시저 연결
 	::SetUserDataPtr(m_hWnd, this);
@@ -58,6 +58,8 @@ void CWarp2DFramework::Update(float fTimeElapsed)
 {
 	if (m_pCurrentScene) m_pCurrentScene->Update(fTimeElapsed);
 }
+
+
 
 bool CWarp2DFramework::OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam)
 {
@@ -178,6 +180,7 @@ void CWarp2DFramework::ChangeScene(wstring Tag, bool bDestroyPostScene)
 		{ return s->FindByTag(DestroyTag); }
 		);
 	}
+
 	m_pCurrentScene = pChangeScene;
 }
 
@@ -189,6 +192,8 @@ CScene * CWarp2DFramework::FindScene(std::wstring Tag)
 	);
 	return ChangeScene == end(m_lstScenes) ? nullptr : ChangeScene->get();
 }
+
+
 
 LRESULT CALLBACK CWarp2DFramework::WndProc(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam)
 {

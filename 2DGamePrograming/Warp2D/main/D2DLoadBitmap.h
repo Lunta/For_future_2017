@@ -5,7 +5,8 @@ namespace D2DBitmap
 {
 	template<typename Rect = D2D_RECT_U>
 	bool LoadImageFromFile(	  IWICImagingFactory		*pwicFactory
-							, ID2D1RenderTarget			*pd2dpd2dRenderTarget
+							, ID2D1RenderTarget			*pd2dRenderTarget
+
 							, LPCTSTR					pszstrFileName
 							, ID2D1Bitmap1				**ppd2dBitmap
 							, Rect						*pd2drcImage  = nullptr
@@ -88,7 +89,7 @@ namespace D2DBitmap
 		))) return false;
 		
 		ID2D1Bitmap* bmp;
-		if (FAILED(pd2dpd2dRenderTarget->CreateBitmapFromWicBitmap(	  pwicFormatConverter.Get()
+		if (FAILED(pd2dRenderTarget->CreateBitmapFromWicBitmap(	  pwicFormatConverter.Get()
 																, NULL
 																, &bmp
 		))) return false;

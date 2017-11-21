@@ -8,7 +8,9 @@ constexpr LONG CLIENT_HEIGHT = 600;
 constexpr LONG CLIENT_MINIMUM_WIDTH = 600;
 constexpr LONG CLIENT_MINIMUM_HEIGHT = 480;
 
-
+constexpr float g_fTileWidth = 20.f;
+constexpr float g_fTileHeight = 20.f;
+constexpr D2D_RECT_F g_rcItemRect{ -g_fTileWidth * 0.5f, -g_fTileHeight * 0.5f, g_fTileWidth * 0.5f, g_fTileHeight * 0.5f };
 
 // 캡션 FPS 출력 여부 -------------------
 // 항상 캡션에 FPS를 출력		(0 : 비활성 | 1 : 활성)

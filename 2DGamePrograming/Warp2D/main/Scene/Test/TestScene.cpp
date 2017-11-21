@@ -7,21 +7,13 @@
 
 
 CTestScene::CTestScene()
-	: m_nItems(0)
-	, m_ppItems(nullptr)
+	: m_Player { SizeU(25, 25) }
 {
 }
+
+
 CTestScene::~CTestScene()
 {
-	if (m_ppItems)
-	{
-		for (int i = 0; i < m_nItems; ++i)
-		{
-			if(m_ppItems[i])
-				delete m_ppItems[i];
-		}
-		delete[] m_ppItems;
-	}
 }
 
 bool CTestScene::OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam)
@@ -49,11 +41,12 @@ bool CTestScene::OnProcessingWindowMessage(HWND hWnd, UINT nMessageID, WPARAM wP
 	switch (nMessageID)
 	{
 	case WM_SIZE:
-	{
-		auto rcClient = m_pFramework->GetClientSize();
-		m_Camera.SetClientSize(Point2F(rcClient.right, rcClient.bottom));
+		{
+			auto rcClient = m_pFramework->GetClientSize();
+			m_Camera.SetClientSize(Point2F(rcClient.right, rcClient.bottom));
+		}
 		break;
-	}
+
 	case WM_LBUTTONDOWN:
 	case WM_MBUTTONDOWN:
 	case WM_RBUTTONDOWN:
@@ -80,21 +73,24 @@ bool CTestScene::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM 
 {
 	switch (nMessageID)
 	{
-		
 	case WM_KEYDOWN:
 		switch (wParam)
 		{
-		case 'A': m_Player.Move(-10.f, 0);
-			break;				 
-		case 'W': m_Player.Move(0, -10.f);
-			break;				 
-		case 'D': m_Player.Move(10.f, 0);
-			break;				 
-		case 'S': m_Player.Move(0, 10.f);
+		case 'A':		m_Player.Move(CPlayer::Dir::left);
 			break;
-		case 'Z': m_Camera.Scale(m_Camera.GetScale() * 2.f);
+		case 'W':		m_Player.Move(CPlayer::Dir::top);
 			break;
-		case 'X': m_Camera.Scale(m_Camera.GetScale() * 0.5f);
+		case 'D':		m_Player.Move(CPlayer::Dir::right);
+			break;
+		case 'S':		m_Player.Move(CPlayer::Dir::bottom);
+			break;
+		case 'Z':		m_Camera.Scale(m_Camera.GetScale() * 2.f);
+			break;
+		case 'X':		m_Camera.Scale(m_Camera.GetScale() * 0.5f);
+			break;
+		case 'H':		m_uiInventory.PutItem();
+			break;
+		case 'I':		m_uiInventory.SwitchView();
 			break;
 		default:
 			return false;
@@ -110,142 +106,110 @@ bool CTestScene::OnCreate(wstring && tag, CWarp2DFramework * pFramework)
 {
 	if (!Base::OnCreate(std::move(tag), pFramework)) return false;
 
-	auto rcClient = pFramework->GetClientSize();
+	auto rcClient = m_pFramework->GetClientSize();
 	m_Camera.SetClientSize(Point2F(rcClient.right, rcClient.bottom));
-	auto rendertarget = pFramework->GetRenderTarget();
+
+	auto rendertarget = m_pFramework->GetRenderTarget();
 
 	rendertarget->CreateSolidColorBrush(ColorF{ ColorF::Crimson }, &m_pd2dsbrDefault);
-	rendertarget->CreateSolidColorBrush(ColorF{ ColorF::Green }, &m_pd2dsbrGrid1);
-	rendertarget->CreateSolidColorBrush(ColorF{ ColorF::GreenYellow }, &m_pd2dsbrGrid2);
+	rendertarget->CreateSolidColorBrush(ColorF{ ColorF::MistyRose }, &m_pd2dsbrTileA);
+	rendertarget->CreateSolidColorBrush(ColorF{ ColorF::LightPink }, &m_pd2dsbrTileB);
 
-	m_Camera.SetPosition(m_Player.GetPos());
-	m_Camera.SetAnchor(Point2F(0.0f, 0.0f));
+	m_Camera.SetPosition(m_Player.GetPosition());
+	m_Camera.SetAnchor(Point2F(0.f, 0.f));
 
-	m_nItems = 5;
-	m_ppItems = new CItem*[m_nItems];
-	for (int i = 0; i < m_nItems; ++i)
-		m_ppItems[i] = new CItem(
-			  Point2F(-250 + 100*i, 100)
-			, RectF(-10, -10, 10, 10));
-	m_ppItems[0]->RegisterImage(
-		m_pIndRes.get()
-		, rendertarget.Get()
-		, "Assets/Icon/Buckler.png");
-	m_ppItems[1]->RegisterImage(
-		m_pIndRes.get()
-		, rendertarget.Get()
-		, "Assets/Icon/Bastard Sword.png");
-	m_ppItems[2]->RegisterImage(
-		m_pIndRes.get()
-		, rendertarget.Get()
-		, "Assets/Icon/Gramr.png");
-	m_ppItems[3]->RegisterImage(
-		m_pIndRes.get()
-		, rendertarget.Get()
-		, "Assets/Icon/Round Shield.png");
-	m_ppItems[4]->RegisterImage(
-		m_pIndRes.get()
-		, rendertarget.Get()
-		, "Assets/Icon/Kite Shield.png");
+	m_Player.RegisterImage(m_pIndRes.get(), rendertarget.Get(), "Graphics/player.png", SizeU(4,4));
+
+	uniform_int_distribution<> pos_random{ 0,49 };
+	uniform_int_distribution<> img_random{ 0,5 };
+	default_random_engine reng(random_device{}());
+
+	for (int i = 0; i < 10; ++i)
+	{
+		retryItem:
+		auto item = make_unique<CItem>(SizeU(pos_random(reng), pos_random(reng)));
+		for (const auto& p : m_lstItem) if (p->IsCollision(item->GetCoord())) goto retryItem;
+
+		path imgPath;
+		switch (img_random(reng))
+		{
+		case 0:	imgPath = "Graphics/Icon/Bastard Sword.png";
+			break;
+		case 1:	imgPath = "Graphics/Icon/Gramr.png";
+			break;
+		case 2:	imgPath = "Graphics/Icon/string.png";
+			break;	
+		case 3:	imgPath = "Graphics/Icon/Round Shield.png";
+			break;
+		case 4:	imgPath = "Graphics/Icon/Healing Potion.png";
+			break;
+		case 5:	imgPath = "Graphics/Icon/Mana Potion.png";
+			break;
+
+		}
+
+		item->RegisterImage(m_pIndRes.get(), rendertarget.Get(), imgPath);
+		m_lstItem.push_back(move(item));
+	}
+
+	for (int i = 0; i < 10; ++i)
+	{
+	retryTrap:
+		auto item = make_unique<CItem>(SizeU(pos_random(reng), pos_random(reng)));
+		for (const auto& p : m_lstItem) if (p->IsCollision(item->GetCoord())) goto retryTrap;
+		for (const auto& p : m_lstTrap) if (p->IsCollision(item->GetCoord())) goto retryTrap;
+
+		item->RegisterImage(m_pIndRes.get(), rendertarget.Get()
+			, "Graphics/Icon/Wonder stone.png");
+		m_lstTrap.push_back(move(item));
+	}
 
 	m_uiInventory.BuildObject(this);
-	m_uiInventory.ConnectItemList(m_Player.GetpItemList());
-	m_Player.RegisterSpriteImage(
-		m_pIndRes.get()
-		, rendertarget.Get()
-		, "Assets/player.png"
-		, Point2F(4, 4));
-	//auto dwFactoy = m_pIndRes->dwFactory();
-	//
-	//dwFactoy->CreateTextFormat(
-	//  L"Arial"
-	//, nullptr
-	//, DWRITE_FONT_WEIGHT_NORMAL
-	//, DWRITE_FONT_STYLE_NORMAL
-	//, DWRITE_FONT_STRETCH_NORMAL
-	//, 30
-	//, L"ko-kr"
-	//, &m_pdwTextFormat);
-	//
-	//m_pdwTextFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
-	//m_pdwTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
-	//
-	//dwFactoy->CreateTextLayout(
-	//	  L"Hello, World!"
-	//	, 13
-	//	, m_pdwTextFormat.Get()
-	//	, 300
-	//	, 100
-	//	, &m_pdwTextLayout);
 
 	return true;
 }
 
 void CTestScene::Update(float fTimeElapsed)
 {
-	m_Camera.SetPosition(m_Player.GetPos());
-	if (m_ppItems)
-	{
-		for(int i =0 ; i < m_nItems; ++i)
-			if(m_ppItems[i])
-				m_ppItems[i]->Update(fTimeElapsed);
-	}
+	m_Camera.SetPosition(m_Player.GetPosition());
 	m_uiInventory.Update(fTimeElapsed);
+
 	m_Player.Update(fTimeElapsed);
 
-	if (m_ppItems)
-	{
-		D2D1_POINT_2F player_pos = m_Player.GetPos();
-		for (int i = 0; i < m_nItems; ++i)
-			if (m_ppItems[i])
-			{
-				if (PtInRect(&(m_ppItems[i]->GetPos() +
-					m_ppItems[i]->GetSize()), player_pos))
-				{
-					if (m_Player.PickUpItem(*m_ppItems[i]))
-					{
-						delete m_ppItems[i];
-						m_ppItems[i] = nullptr;
-					}
-				}
-			}
-	}
+	for (auto p = begin(m_lstItem); p != end(m_lstItem); ++p)
+		if ((*p)->IsCollision(m_Player.GetCoord()))
+		{
+			m_uiInventory.GetItem(move(*p));
+			m_lstItem.erase(p);
+			break;
+		}
+	for (auto p = begin(m_lstTrap); p != end(m_lstTrap); ++p)
+		if ((*p)->IsCollision(m_Player.GetCoord()))
+		{
+			m_Player.GetDamage(rand() % 10 + 10);
+			m_lstTrap.erase(p);
+			break;
+		}
 }
 
 void CTestScene::Draw(ID2D1HwndRenderTarget * pd2dRenderTarget)
 {
 	auto cameramtx = m_Camera.RegenerateViewMatrix();
 	pd2dRenderTarget->SetTransform(cameramtx);
-
-	for (int i = -50; i < 50; ++i)
-		for (int j = -50; j < 50; ++j)
-		{
-			if ((i + j) % 2)
-				pd2dRenderTarget->FillRectangle(
-					RectF(-10, -10, 10, 10) + 
-					Point2F(20.f*j, 20.f*i)
-					, m_pd2dsbrGrid1.Get());
-			else
-				pd2dRenderTarget->FillRectangle(
-					RectF(-10, -10, 10, 10) + 
-					Point2F(20.f*j, 20.f*i)
-					, m_pd2dsbrGrid2.Get());
-		}
+	
+	for (int x = 0; x < 50; ++x)
+		for (int y = 0; y < 50; ++y)
+			pd2dRenderTarget->FillRectangle(
+				  GetPositionByCoord(SizeU(x,y)) + g_rcItemRect
+				, (x + y) % 2 ? m_pd2dsbrTileA.Get() : m_pd2dsbrTileB.Get());
 
 	m_Player.Draw(pd2dRenderTarget);
-	pd2dRenderTarget->FillRectangle(
-		RectF(-10, -10, 10, 10)
-		, m_pd2dsbrDefault.Get());
 
-	if(m_ppItems) for (int i = 0; i < m_nItems; ++i)
-		if(m_ppItems[i])
-			m_ppItems[i]->Draw(pd2dRenderTarget);
+	for (const auto& p : m_lstItem)
+		p->Draw(pd2dRenderTarget); 
+	for (const auto& p : m_lstTrap)
+		p->Draw(pd2dRenderTarget);
 
+	m_Player.DrawUI(pd2dRenderTarget);
 	m_uiInventory.Draw(pd2dRenderTarget);
-
-	//pd2dRenderTarget->DrawTextLayout(
-	//	  Point2F(0, 0)
-	//	, m_pdwTextLayout.Get()
-	//	, m_pd2dsbrDefault.Get()
-	//);
 }

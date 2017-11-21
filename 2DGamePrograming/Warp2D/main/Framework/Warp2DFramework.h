@@ -42,8 +42,12 @@ private:
 public:
 
 	void FrameAdvance();
+
 	void Draw();
+
 	void Update(float fTimeElapsed);
+
+
 
 	// 후 처리가 없을 경우 true 반환
 	bool OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam);
@@ -61,9 +65,9 @@ public:
 	// Getter
 public:
 	HWND GethWnd()									const { return m_hWnd; }
+	D2D_RECT_L GetClientSize()						const { return m_rcClient; }
 	shared_ptr<CIndRes> GetIndRes()					const { return m_pIndRes; }
 	ComPtr<ID2D1HwndRenderTarget> GetRenderTarget()	const { return m_pd2dRenderTarget; }
-	D2D_RECT_L GetClientSize()						const { return m_rcClient; }
 
 	// Framework에 필요한 것들.
 private:

@@ -1,11 +1,10 @@
 #pragma once
 
 #include "Scene/Scene.h"
-#include "Camera\Camera.h"
-#include "Object\Item\Item.h"
-#include "UI\Invectory\Inventory.h"
-#include "Object\Unit\Player\Player.h"
-
+#include "Camera/Camera.h"
+#include "Object/Player/Player.h"
+#include "Object/Item/Item.h"
+#include "UI/Inventory/Inventory.h"
 class CTestScene :
 	public CScene
 {
@@ -25,16 +24,16 @@ public:
 
 private:
 
-	ComPtr<ID2D1SolidColorBrush>	m_pd2dsbrDefault	{ nullptr };
-	ComPtr<ID2D1SolidColorBrush>	m_pd2dsbrGrid1		{ nullptr };
-	ComPtr<ID2D1SolidColorBrush>	m_pd2dsbrGrid2		{ nullptr }	;
-	//ComPtr<IDWriteTextLayout>		m_pdwTextLayout		{ nullptr }	;
+	ComPtr<ID2D1SolidColorBrush>	m_pd2dsbrDefault	{ nullptr }	;
+	ComPtr<ID2D1SolidColorBrush>	m_pd2dsbrTileA		{ nullptr }	;
+	ComPtr<ID2D1SolidColorBrush>	m_pd2dsbrTileB		{ nullptr }	;
+
 
 	CPlayer							m_Player;
 	CCamera							m_Camera;
 
-	UINT							m_nItems;
-	CItem**							m_ppItems;
+	list<unique_ptr<CItem>>			m_lstItem;
+	list<unique_ptr<CItem>>			m_lstTrap;
+	
 	CUIInventory					m_uiInventory;
 };
-
