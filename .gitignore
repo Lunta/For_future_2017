@@ -2,8 +2,8 @@
 *.pch
 *.obj
 *.log
-*.exe
 *.pdb
+*.exe
 .vs/
 
 *.tlog
