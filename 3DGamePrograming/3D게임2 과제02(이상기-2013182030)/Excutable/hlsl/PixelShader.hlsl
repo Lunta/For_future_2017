@@ -57,16 +57,13 @@ float4 PSSkyBox(VS_TEXTURED_OUTPUT input) : SV_TARGET
 
 float4 PSBillBoard(PS_BILLBOARD_INPUT input) : SV_Target
 {
+	if (input.uv.y < 0.05f) discard; // 텍스쳐 윗부분 검은 실선 제거
     float4 cTexture = gtxtBillBoard[NonUniformResourceIndex(input.primID % 6)].Sample(gWrapSamplerState, input.uv);
-    if (cTexture.a < 0.01f) discard;
+    if (cTexture.a < 0.1f) discard; // 90%보다 더 투명하면 픽셀을 버림.
 
     float4 cIlumination = Lighting(input.posW, input.normalW);
-    //float3 uvw = float3(input.uv, (input.primID % 6));
-    //float4 cTexture = gtxtBillBoard.Sample(gWrapSamplerState, uvw);
-    //float4 cColor = cIlumination * cTexture;
     float4 cColor = cTexture;
     cColor.a = cTexture.a;
 
     return (cColor);
-   // return float4(1, 1, 1, 1);
 }
