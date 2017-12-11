@@ -59,8 +59,6 @@ void CWarp2DFramework::Update(float fTimeElapsed)
 	if (m_pCurrentScene) m_pCurrentScene->Update(fTimeElapsed);
 }
 
-
-
 bool CWarp2DFramework::OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam)
 {
 	switch (nMessageID)

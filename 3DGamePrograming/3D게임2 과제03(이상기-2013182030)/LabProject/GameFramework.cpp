@@ -154,10 +154,7 @@ void CGameFramework::OnProcessingKeyboardMessage(
 		case VK_F2:
 		case VK_F3:
 			if (m_pPlayer) 
-				m_pPlayer->ChangeCamera(
-					  m_pd3dDeviceIndRes
-					, (wParam - VK_F1 + 1)
-					, m_GameTimer.GetTimeElapsed());
+				m_pPlayer->ChangeCamera((wParam - VK_F1 + 1), m_GameTimer.GetTimeElapsed());
 			m_pCamera = m_pPlayer->GetCamera();
 			break;
 		case VK_ESCAPE:
@@ -418,7 +415,7 @@ void CGameFramework::BuildObjects()
 			m_pScene->BuildObjects(m_pd3dDeviceIndRes, m_pd3dCommandList.Get());
 		}
 
-		m_pPlayer = new CTerrainPlayer(
+		m_pPlayer = new CAirplanePlayer(
 			m_pd3dDeviceIndRes
 			, m_pd3dCommandList.Get()
 			, m_pScene->GetGraphicsRootSignature()

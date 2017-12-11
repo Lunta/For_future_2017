@@ -28,6 +28,7 @@ bool CTestScene::OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wPa
 	case WM_MBUTTONUP:		
 	case WM_RBUTTONUP:		
 	case WM_MOUSEWHEEL:		
+		m_uiInventory.ProcessingMouseInput(hWnd, nMessageID, wParam, lParam);
 		break;
 	default:
 		return false;

@@ -1,12 +1,9 @@
 #pragma once
 #include "Object/Object.h"
 
-
-
 class CIndRes;
 
-class CItem 
-	: public CObject
+class CItem : public CObject
 {
 public:
 	CItem(D2D_SIZE_U coord);

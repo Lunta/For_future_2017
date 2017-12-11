@@ -3,6 +3,8 @@
 
 CShader::CShader()
 {
+	m_d3dSrvCPUDescriptorStartHandle.ptr = NULL;
+	m_d3dSrvGPUDescriptorStartHandle.ptr = NULL;
 }
 CShader::~CShader()
 {
@@ -13,10 +15,10 @@ CShader::~CShader()
 }
 
 D3D12_SHADER_BYTECODE CShader::CompileShaderFromFile(
-	  WCHAR *pszFileName
-	, LPCSTR pszShaderName
-	, LPCSTR pszShaderProfile
-	, ID3DBlob **ppd3dShaderBlob)
+	  WCHAR*				pszFileName
+	, LPCSTR				pszShaderName
+	, LPCSTR				pszShaderProfile
+	, ID3DBlob**			ppd3dShaderBlob)
 {
 	UINT nCompileFlags = 0;
 #if defined(_DEBUG)
@@ -175,29 +177,28 @@ D3D12_BLEND_DESC CShader::CreateBlendState()
 	return(d3dBlendDesc);
 }
 
-D3D12_SHADER_BYTECODE CShader::CreateVertexShader(ID3DBlob **ppd3dShaderBlob)
+D3D12_SHADER_BYTECODE CShader::CreateVertexShader(ID3DBlob** ppd3dShaderBlob)
 {
 	D3D12_SHADER_BYTECODE d3dShaderByteCode;
 	d3dShaderByteCode.BytecodeLength = 0;
 	d3dShaderByteCode.pShaderBytecode = NULL;
 	return(d3dShaderByteCode);
 }
-D3D12_SHADER_BYTECODE CShader::CreatePixelShader(ID3DBlob **ppd3dShaderBlob)
+D3D12_SHADER_BYTECODE CShader::CreatePixelShader(ID3DBlob** ppd3dShaderBlob)
 {
 	D3D12_SHADER_BYTECODE d3dShaderByteCode;
 	d3dShaderByteCode.BytecodeLength = 0;
 	d3dShaderByteCode.pShaderBytecode = NULL;
 	return(d3dShaderByteCode);
 }
-
-D3D12_SHADER_BYTECODE CShader::CreateGeometryShader(ID3DBlob ** ppd3dShaderBlob)
+D3D12_SHADER_BYTECODE CShader::CreateGeometryShader(ID3DBlob** ppd3dShaderBlob)
 {
 	return D3D12_SHADER_BYTECODE();
 }
 
 //그래픽스 파이프라인 상태 객체를 생성한다.
 void CShader::CreateShader(
-	  CD3DDeviceIndRes *pd3dDeviceIndRes
+	  CD3DDeviceIndRes* pd3dDeviceIndRes
 	, ID3D12RootSignature *pd3dGraphicsRootSignature)
 {
 	ComPtr<ID3DBlob> pd3dVertexShaderBlob = NULL;
@@ -273,8 +274,7 @@ void CShader::CreateShaderResourceViews(CD3DDeviceIndRes * pd3dDeviceIndRes, ID3
 	}
 }
 
-void CShader::CreateShaderVariables(
-	CD3DDeviceIndRes *pd3dDeviceIndRes, ID3D12GraphicsCommandList *pd3dCommandList)
+void CShader::CreateShaderVariables(CD3DDeviceIndRes* pd3dDeviceIndRes, ID3D12GraphicsCommandList *pd3dCommandList)
 {
 }
 void CShader::ReleaseShaderVariables()
@@ -283,8 +283,7 @@ void CShader::ReleaseShaderVariables()
 void CShader::UpdateShaderVariables(ID3D12GraphicsCommandList *pd3dCommandList)
 {
 }
-void CShader::UpdateShaderVariable(
-	ID3D12GraphicsCommandList *pd3dCommandList, XMFLOAT4X4 *pxmf4x4World)
+void CShader::UpdateShaderVariable(ID3D12GraphicsCommandList *pd3dCommandList, XMFLOAT4X4 *pxmf4x4World)
 {
 }
 
@@ -295,63 +294,18 @@ void CShader::ReleaseUploadBuffers()
 void CShader::OnPrepareRender(ID3D12GraphicsCommandList *pd3dCommandList)
 {
 	pd3dCommandList->SetPipelineState(m_ppd3dPipelineStates[0].Get());
-	if (m_pd3dCbvSrvDescriptorHeap != NULL)
-	{
-		ID3D12DescriptorHeap* ptr = m_pd3dCbvSrvDescriptorHeap.Get();
-		pd3dCommandList->SetDescriptorHeaps(1, &ptr);
-	}
-	
-	
+	pd3dCommandList->SetDescriptorHeaps(1, &m_pd3dCbvSrvDescriptorHeap);
+
+	UpdateShaderVariables(pd3dCommandList);
 }
 void CShader::Render(ID3D12GraphicsCommandList *pd3dCommandList, CCamera *pCamera)
 {
 	OnPrepareRender(pd3dCommandList);
 }
-
-////////////////////////////////////////////////////////////////////////
-CDiffusedShader::CDiffusedShader()
-{
-}
-CDiffusedShader::~CDiffusedShader()
-{
-}
-
-D3D12_INPUT_LAYOUT_DESC CDiffusedShader::CreateInputLayout()
-{
-	UINT nInputElementDescs = 2;
-	D3D12_INPUT_ELEMENT_DESC *pd3dInputElementDescs = new
-		D3D12_INPUT_ELEMENT_DESC[nInputElementDescs];
-	pd3dInputElementDescs[0] = { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0,
-		D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
-	pd3dInputElementDescs[1] = { "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12,
-		D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
-	D3D12_INPUT_LAYOUT_DESC d3dInputLayoutDesc;
-	d3dInputLayoutDesc.pInputElementDescs = pd3dInputElementDescs;
-	d3dInputLayoutDesc.NumElements = nInputElementDescs;
-	return(d3dInputLayoutDesc);
-}
-D3D12_SHADER_BYTECODE CDiffusedShader::CreateVertexShader(ID3DBlob **ppd3dShaderBlob)
-{
-	return(CShader::CompileShaderFromFile(L"hlsl/VertexShader.hlsl", "VSDiffused", "vs_5_1",
-		ppd3dShaderBlob));
-}
-D3D12_SHADER_BYTECODE CDiffusedShader::CreatePixelShader(ID3DBlob **ppd3dShaderBlob)
-{
-	return(CShader::CompileShaderFromFile(L"hlsl/PixelShader.hlsl", "PSDiffused", "ps_5_1",
-		ppd3dShaderBlob));
-}
-
-void CDiffusedShader::CreateShader(
-	CD3DDeviceIndRes *pd3dDeviceIndRes, ID3D12RootSignature *pd3dGraphicsRootSignature)
-{
-	m_nPipelineStates = 1;
-	m_ppd3dPipelineStates = new ComPtr<ID3D12PipelineState>[m_nPipelineStates];
-	CShader::CreateShader(pd3dDeviceIndRes, pd3dGraphicsRootSignature);
-}
-////////////////////////////////////////////////////////////////////////
 CPlayerShader::CPlayerShader()
 {
 }
+
 CPlayerShader::~CPlayerShader()
 {
 }
@@ -362,7 +316,7 @@ D3D12_INPUT_LAYOUT_DESC CPlayerShader::CreateInputLayout()
 	D3D12_INPUT_ELEMENT_DESC *pd3dInputElementDescs = new D3D12_INPUT_ELEMENT_DESC[nInputElementDescs];
 
 	pd3dInputElementDescs[0] = { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
-	pd3dInputElementDescs[1] = { "COLOR", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
+	pd3dInputElementDescs[1] = { "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
 
 	D3D12_INPUT_LAYOUT_DESC d3dInputLayoutDesc;
 	d3dInputLayoutDesc.pInputElementDescs = pd3dInputElementDescs;
@@ -373,15 +327,15 @@ D3D12_INPUT_LAYOUT_DESC CPlayerShader::CreateInputLayout()
 
 D3D12_SHADER_BYTECODE CPlayerShader::CreateVertexShader(ID3DBlob **ppd3dShaderBlob)
 {
-	return(CShader::CompileShaderFromFile(L"hlsl/VertexShader.hlsl", "VSPlayer", "vs_5_1", ppd3dShaderBlob));
+	return(CShader::CompileShaderFromFile(L"Shaders.hlsl", "VSPlayer", "vs_5_1", ppd3dShaderBlob));
 }
 
 D3D12_SHADER_BYTECODE CPlayerShader::CreatePixelShader(ID3DBlob **ppd3dShaderBlob)
 {
-	return(CShader::CompileShaderFromFile(L"hlsl/PixelShader.hlsl", "PSPlayer", "ps_5_1", ppd3dShaderBlob));
+	return(CShader::CompileShaderFromFile(L"Shaders.hlsl", "PSPlayer", "ps_5_1", ppd3dShaderBlob));
 }
 
-void CPlayerShader::CreateShader(CD3DDeviceIndRes *pd3dDeviceIndRes, ID3D12RootSignature *pd3dGraphicsRootSignature)
+void CPlayerShader::CreateShader(CD3DDeviceIndRes* pd3dDeviceIndRes, ID3D12RootSignature *pd3dGraphicsRootSignature)
 {
 	m_nPipelineStates = 1;
 	m_ppd3dPipelineStates = new ComPtr<ID3D12PipelineState>[m_nPipelineStates];
@@ -389,335 +343,12 @@ void CPlayerShader::CreateShader(CD3DDeviceIndRes *pd3dDeviceIndRes, ID3D12RootS
 	CShader::CreateShader(pd3dDeviceIndRes, pd3dGraphicsRootSignature);
 }
 
-void CPlayerShader::CreateShaderVariables(CD3DDeviceIndRes *pd3dDeviceIndRes, ID3D12GraphicsCommandList *pd3dCommandList)
-{
-	UINT ncbElementBytes = ((sizeof(CB_PLAYER_INFO) + 255) & ~255); //256의 배수
-	m_pd3dcbPlayer = pd3dDeviceIndRes->CreateBufferResource(
-		pd3dCommandList
-		, NULL
-		, ncbElementBytes
-		, D3D12_HEAP_TYPE_UPLOAD
-		, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER
-		, NULL);
-
-	m_pd3dcbPlayer->Map(0, NULL, (void **)&m_pcbMappedPlayer);
-}
-
-void CPlayerShader::UpdateShaderVariables(ID3D12GraphicsCommandList *pd3dCommandList)
-{
-}
-
-void CPlayerShader::UpdateShaderVariable(ID3D12GraphicsCommandList *pd3dCommandList, XMFLOAT4X4 *pxmf4x4World)
-{
-	XMFLOAT4X4 xmf4x4World;
-	XMStoreFloat4x4(&xmf4x4World, XMMatrixTranspose(XMLoadFloat4x4(pxmf4x4World)));
-	::memcpy(&m_pcbMappedPlayer->m_xmf4x4World, &xmf4x4World, sizeof(XMFLOAT4X4));
-}
-
-void CPlayerShader::ReleaseShaderVariables()
-{
-	if (m_pd3dcbPlayer)
-	{
-		m_pd3dcbPlayer->Unmap(0, NULL);
-		m_pd3dcbPlayer->Release();
-	}
-}
-
-void CPlayerShader::Render(ID3D12GraphicsCommandList *pd3dCommandList, CCamera *pCamera)
-{
-	CShader::Render(pd3dCommandList, pCamera);
-
-	D3D12_GPU_VIRTUAL_ADDRESS d3dGpuVirtualAddress = m_pd3dcbPlayer->GetGPUVirtualAddress();
-	pd3dCommandList->SetGraphicsRootConstantBufferView(0, d3dGpuVirtualAddress);
-}
-
-/////////////////////////////////////////////////////////////////////////////////
-CObjectsShader::CObjectsShader()
-{
-}
-CObjectsShader::~CObjectsShader()
-{
-}
-
-D3D12_INPUT_LAYOUT_DESC CObjectsShader::CreateInputLayout()
-{
-	UINT nInputElementDescs = 2;
-	D3D12_INPUT_ELEMENT_DESC *pd3dInputElementDescs = 
-		new D3D12_INPUT_ELEMENT_DESC[nInputElementDescs];
-	pd3dInputElementDescs[0] = { 
-		"POSITION", 0
-		, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0
-		, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
-	pd3dInputElementDescs[1] = { "NORMAL", 0
-		, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12
-		, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
-	D3D12_INPUT_LAYOUT_DESC d3dInputLayoutDesc;
-	d3dInputLayoutDesc.pInputElementDescs = pd3dInputElementDescs;
-	d3dInputLayoutDesc.NumElements = nInputElementDescs;
-	return(d3dInputLayoutDesc);
-}
-D3D12_SHADER_BYTECODE CObjectsShader::CreateVertexShader(ID3DBlob **ppd3dShaderBlob)
-{
-	return(CShader::CompileShaderFromFile(L"hlsl/VertexShader.hlsl", "VSLighting", "vs_5_1",
-		ppd3dShaderBlob));
-}
-D3D12_SHADER_BYTECODE CObjectsShader::CreatePixelShader(ID3DBlob **ppd3dShaderBlob)
-{
-	return(CShader::CompileShaderFromFile(L"hlsl/PixelShader.hlsl", "PSLighting", "ps_5_1",
-		ppd3dShaderBlob));
-}
-
-void CObjectsShader::CreateShader(
-	CD3DDeviceIndRes *pd3dDeviceIndRes, ID3D12RootSignature *pd3dGraphicsRootSignature)
-{
-	m_nPipelineStates = 1;
-	m_ppd3dPipelineStates = new ComPtr<ID3D12PipelineState>[m_nPipelineStates];
-	CShader::CreateShader(pd3dDeviceIndRes, pd3dGraphicsRootSignature);
-}
-void CObjectsShader::CreateShaderVariables(CD3DDeviceIndRes *pd3dDeviceIndRes, ID3D12GraphicsCommandList *pd3dCommandList)
-{
-	UINT ncbGameObjectBytes = ((sizeof(CB_GAMEOBJECT_INFO) + 255) & ~255); //256의 배수
-	m_pd3dcbGameObjects = pd3dDeviceIndRes->CreateBufferResource(
-		pd3dCommandList
-		, NULL
-		, ncbGameObjectBytes * m_nObjects
-		, D3D12_HEAP_TYPE_UPLOAD
-		, D3D12_RESOURCE_STATE_GENERIC_READ
-		, NULL);
-	m_pd3dcbGameObjects->Map(0, NULL, (void **)&m_pcbMappedGameObjects);
-}
-
-void CObjectsShader::UpdateShaderVariables(ID3D12GraphicsCommandList *pd3dCommandList)
-{
-	for (int j = 0; j < m_nObjects; j++)
-	{
-		XMStoreFloat4x4(
-			&m_pcbMappedGameObjects[j].m_xmf4x4World,
-			XMMatrixTranspose(
-				XMLoadFloat4x4(&m_ppObjects[j]->GetWorldMtx())));
-		m_pcbMappedGameObjects[j].m_nMaterial = m_ppObjects[j]->GetMaterial()->m_nReflection;;
-	}
-	pd3dCommandList->SetGraphicsRootShaderResourceView(
-		2, m_pd3dcbGameObjects->GetGPUVirtualAddress());
-}
-
-void CObjectsShader::ReleaseShaderVariables()
-{
-	if (m_pd3dcbGameObjects)
-	{
-		m_pd3dcbGameObjects->Unmap(0, NULL);
-	}
-}
-
-void CObjectsShader::BuildObjects(CD3DDeviceIndRes *pd3dDeviceIndRes, ID3D12GraphicsCommandList
-	*pd3dCommandList, CGameObject **ppObjects, int nObjects)
-{
-	m_nObjects = nObjects;
-	m_ppObjects = ppObjects;
-
-	CreateShaderVariables(pd3dDeviceIndRes, pd3dCommandList);
-}
-
-void CObjectsShader::ReleaseObjects()
-{
-	if (m_ppObjects)
-	{
-		for (int j = 0; j < m_nObjects; j++)
-			if (m_ppObjects[j])
-				m_ppObjects[j]->ReleaseUploadBuffers();
-	}
-}
-
-void CObjectsShader::Render(ID3D12GraphicsCommandList *pd3dCommandList, CCamera *pCamera)
-{
-	CShader::Render(pd3dCommandList, pCamera);
-	UpdateShaderVariables(pd3dCommandList);
-	m_ppObjects[0]->Render(pd3dCommandList, pCamera, m_nObjects);
-}
-
-void CObjectsShader::AnimateObjects(float fTimeElapsed)
-{
-	for (int j = 0; j < m_nObjects; j++)
-	{
-		m_ppObjects[j]->Animate(fTimeElapsed);
-	}
-}
-
-void CObjectsShader::ReleaseUploadBuffers()
-{
-	if (m_ppObjects)
-	{
-		for (int j = 0; j < m_nObjects; j++) 
-			m_ppObjects[j]->ReleaseUploadBuffers();
-	}
-}
-
-CGameObject *CObjectsShader::PickObjectByRayIntersection(XMFLOAT3& xmf3PickPosition,
-	XMFLOAT4X4& xmf4x4View, float *pfNearHitDistance)
-{
-	int nIntersected = 0;
-	*pfNearHitDistance = FLT_MAX;
-	float fHitDistance = FLT_MAX;
-	CGameObject *pSelectedObject = NULL;
-	for (int j = 0; j < m_nObjects; j++)
-	{
-		nIntersected = m_ppObjects[j]->PickObjectByRayIntersection(xmf3PickPosition,
-			xmf4x4View, &fHitDistance);
-		if ((nIntersected > 0) && (fHitDistance < *pfNearHitDistance))
-		{
-			*pfNearHitDistance = fHitDistance;
-			pSelectedObject = m_ppObjects[j];
-		}
-	}
-	return(pSelectedObject);
-}
-/////////////////////////////////////////////////////////////////////////////////
-CInstancingShader::CInstancingShader()
-{
-}
-CInstancingShader::~CInstancingShader()
-{
-}
-
-D3D12_INPUT_LAYOUT_DESC CInstancingShader::CreateInputLayout()
-{
-	UINT nInputElementDescs = 2;
-	D3D12_INPUT_ELEMENT_DESC *pd3dInputElementDescs = 
-		new D3D12_INPUT_ELEMENT_DESC[nInputElementDescs];
-	pd3dInputElementDescs[0] = {
-		"POSITION", 0
-		, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0
-		, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
-	pd3dInputElementDescs[1] = { "NORMAL", 0
-		, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12
-		, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
-
-	D3D12_INPUT_LAYOUT_DESC d3dInputLayoutDesc;
-	d3dInputLayoutDesc.pInputElementDescs = pd3dInputElementDescs;
-	d3dInputLayoutDesc.NumElements = nInputElementDescs;
-
-	return(d3dInputLayoutDesc);
-}
-D3D12_SHADER_BYTECODE CInstancingShader::CreateVertexShader(ID3DBlob **ppd3dShaderBlob)
-{
-	return(CShader::CompileShaderFromFile(L"hlsl/VertexShader.hlsl", "VSLighting", "vs_5_1",
-		ppd3dShaderBlob));
-}
-D3D12_SHADER_BYTECODE CInstancingShader::CreatePixelShader(ID3DBlob **ppd3dShaderBlob)
-{
-	return(CShader::CompileShaderFromFile(L"hlsl/PixelShader.hlsl", "PSLighting", "ps_5_1",
-		ppd3dShaderBlob));
-}
-void CInstancingShader::CreateShader(
-	CD3DDeviceIndRes *pd3dDeviceIndRes, ID3D12RootSignature *pd3dGraphicsRootSignature)
-{
-	m_nPipelineStates = 1;
-	m_ppd3dPipelineStates = new ComPtr<ID3D12PipelineState>[m_nPipelineStates];
-	CShader::CreateShader(pd3dDeviceIndRes, pd3dGraphicsRootSignature);
-}
-
-void CInstancingShader::CreateShaderVariables(CD3DDeviceIndRes *pd3dDeviceIndRes,
-	ID3D12GraphicsCommandList *pd3dCommandList)
-{
-	m_pd3dcbGameObjects = pd3dDeviceIndRes->CreateBufferResource(
-		pd3dCommandList
-		, NULL
-		, sizeof(CB_GAMEOBJECT_INFO) * m_nObjects
-		, D3D12_HEAP_TYPE_UPLOAD
-		, D3D12_RESOURCE_STATE_GENERIC_READ
-		, NULL);
-	m_pd3dcbGameObjects->Map(0, NULL, (void **)&m_pcbMappedGameObjects);
-}
-void CInstancingShader::ReleaseShaderVariables()
-{
-	if (m_pd3dcbGameObjects) m_pd3dcbGameObjects->Unmap(0, NULL);
-}
-//인스턴싱 정보(객체의 월드 변환 행렬과 색상)를 정점 버퍼에 복사한다.
-void CInstancingShader::UpdateShaderVariables(ID3D12GraphicsCommandList *pd3dCommandList)
-{
-	for (int j = 0; j < m_nObjects; j++)
-	{
-		XMStoreFloat4x4(
-			&m_pcbMappedGameObjects[j].m_xmf4x4World,
-			XMMatrixTranspose(
-				XMLoadFloat4x4(&m_ppObjects[j]->GetWorldMtx())));
-		m_pcbMappedGameObjects[j].m_nMaterial = m_ppObjects[j]->GetMaterial()->m_nReflection;;
-	}
-	pd3dCommandList->SetGraphicsRootShaderResourceView(
-		2, m_pd3dcbGameObjects->GetGPUVirtualAddress());
-}
-
-void CInstancingShader::BuildObjects(
-	CD3DDeviceIndRes *pd3dDeviceIndRes, ID3D12GraphicsCommandList *pd3dCommandList,
-	CGameObject **ppObjects, int nObjects)
-{
-	m_nObjects = nObjects;
-	m_ppObjects = ppObjects;
-	//인스턴싱을 위한 정점 버퍼와 뷰를 생성한다.
-	CreateShaderVariables(pd3dDeviceIndRes, pd3dCommandList);
-}
-
-void CInstancingShader::ReleaseObjects()
-{
-}
-
-void CInstancingShader::Render(
-	ID3D12GraphicsCommandList *pd3dCommandList, CCamera *pCamera)
-{
-	CShader::Render(pd3dCommandList, pCamera);
-	//모든 게임 객체의 인스턴싱 데이터를 버퍼에 저장한다.
-	UpdateShaderVariables(pd3dCommandList);
-	//하나의 정점 데이터를 사용하여 모든 게임 객체(인스턴스)들을 렌더링한다.
-	m_ppObjects[0]->Render(pd3dCommandList, pCamera, m_nObjects);
-}
-/////////////////////////////////////////////////////////////////////////////////
-CTerrainShader::CTerrainShader()
-{
-}
-CTerrainShader::~CTerrainShader()
-{
-}
-
-D3D12_INPUT_LAYOUT_DESC CTerrainShader::CreateInputLayout()
-{
-	UINT nInputElementDescs = 2;
-	D3D12_INPUT_ELEMENT_DESC *pd3dInputElementDescs = new
-		D3D12_INPUT_ELEMENT_DESC[nInputElementDescs];
-	pd3dInputElementDescs[0] = {
-		"POSITION", 0
-		, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0
-		, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
-	pd3dInputElementDescs[1] = { 
-		"NORMAL", 0
-		, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12
-		, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
-	D3D12_INPUT_LAYOUT_DESC d3dInputLayoutDesc;
-	d3dInputLayoutDesc.pInputElementDescs = pd3dInputElementDescs;
-	d3dInputLayoutDesc.NumElements = nInputElementDescs;
-	return(d3dInputLayoutDesc);
-}
-
-D3D12_SHADER_BYTECODE CTerrainShader::CreateVertexShader(ID3DBlob **ppd3dShaderBlob)
-{
-	return(CShader::CompileShaderFromFile(L"hlsl/VertexShader.hlsl", "VSLighting", "vs_5_1",
-		ppd3dShaderBlob));
-}
-
-D3D12_SHADER_BYTECODE CTerrainShader::CreatePixelShader(ID3DBlob **ppd3dShaderBlob)
-{
-	return(CShader::CompileShaderFromFile(L"hlsl/PixelShader.hlsl", "PSLighting", "ps_5_1",
-		ppd3dShaderBlob));
-}
-void CTerrainShader::SetTerrain(CGameObject * terrain)
-{
-	m_nObjects = 1;
-	m_ppObjects = new CGameObject*[1];
-	m_ppObjects[0] = terrain;
-}
-////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
 CTexturedShader::CTexturedShader()
 {
 }
+
 CTexturedShader::~CTexturedShader()
 {
 }
@@ -739,38 +370,40 @@ D3D12_INPUT_LAYOUT_DESC CTexturedShader::CreateInputLayout()
 
 D3D12_SHADER_BYTECODE CTexturedShader::CreateVertexShader(ID3DBlob **ppd3dShaderBlob)
 {
-	return(CShader::CompileShaderFromFile(L"hlsl/VertexShader.hlsl", "VSTextured", "vs_5_1", ppd3dShaderBlob));
+	return(CShader::CompileShaderFromFile(L"Shaders.hlsl", "VSTextured", "vs_5_1", ppd3dShaderBlob));
 }
 
 D3D12_SHADER_BYTECODE CTexturedShader::CreatePixelShader(ID3DBlob **ppd3dShaderBlob)
 {
-	return(CShader::CompileShaderFromFile(L"hlsl/PixelShader.hlsl", "PSTextured", "ps_5_1", ppd3dShaderBlob));
+	return(CShader::CompileShaderFromFile(L"Shaders.hlsl", "PSTextured", "ps_5_1", ppd3dShaderBlob));
 }
 
-void CTexturedShader::Render(ID3D12GraphicsCommandList * pd3dCommandList, CCamera * pCamera)
+void CTexturedShader::CreateShader(CD3DDeviceIndRes* pd3dDeviceIndRes, ID3D12RootSignature *pd3dGraphicsRootSignature)
 {
-	CShader::Render(pd3dCommandList, pCamera);
-	UpdateShaderVariables(pd3dCommandList);
+	m_nPipelineStates = 1;
+	m_ppd3dPipelineStates = new ComPtr<ID3D12PipelineState>[m_nPipelineStates];
+
+	CShader::CreateShader(pd3dDeviceIndRes, pd3dGraphicsRootSignature);
 }
 
-///////////////////////////////////////////////////////////////////
-
-CTexturedTerrainShader::CTexturedTerrainShader()
-{
-}
-CTexturedTerrainShader::~CTexturedTerrainShader()
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+CIlluminatedTexturedShader::CIlluminatedTexturedShader()
 {
 }
 
-D3D12_INPUT_LAYOUT_DESC CTexturedTerrainShader::CreateInputLayout()
+CIlluminatedTexturedShader::~CIlluminatedTexturedShader()
 {
-	UINT nInputElementDescs = 4;
+}
+
+D3D12_INPUT_LAYOUT_DESC CIlluminatedTexturedShader::CreateInputLayout()
+{
+	UINT nInputElementDescs = 3;
 	D3D12_INPUT_ELEMENT_DESC *pd3dInputElementDescs = new D3D12_INPUT_ELEMENT_DESC[nInputElementDescs];
 
 	pd3dInputElementDescs[0] = { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
-	pd3dInputElementDescs[1] = { "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
-	pd3dInputElementDescs[2] = { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 28, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
-	pd3dInputElementDescs[3] = { "TEXCOORD", 1, DXGI_FORMAT_R32G32_FLOAT, 0, 36, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
+	pd3dInputElementDescs[1] = { "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
+	pd3dInputElementDescs[2] = { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 24, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
 
 	D3D12_INPUT_LAYOUT_DESC d3dInputLayoutDesc;
 	d3dInputLayoutDesc.pInputElementDescs = pd3dInputElementDescs;
@@ -779,37 +412,287 @@ D3D12_INPUT_LAYOUT_DESC CTexturedTerrainShader::CreateInputLayout()
 	return(d3dInputLayoutDesc);
 }
 
-D3D12_SHADER_BYTECODE CTexturedTerrainShader::CreateVertexShader(ID3DBlob ** ppd3dShaderBlob)
+D3D12_SHADER_BYTECODE CIlluminatedTexturedShader::CreateVertexShader(ID3DBlob **ppd3dShaderBlob)
 {
-	return(CShader::CompileShaderFromFile(
-		  L"hlsl/VertexShader.hlsl"
-		, "VSTerrain"
-		, "vs_5_1"
-		, ppd3dShaderBlob));
+	return(CShader::CompileShaderFromFile(L"Shaders.hlsl", "VSTexturedLighting", "vs_5_1", ppd3dShaderBlob));
 }
 
-D3D12_SHADER_BYTECODE CTexturedTerrainShader::CreatePixelShader(ID3DBlob ** ppd3dShaderBlob)
+D3D12_SHADER_BYTECODE CIlluminatedTexturedShader::CreatePixelShader(ID3DBlob **ppd3dShaderBlob)
 {
-	return(CShader::CompileShaderFromFile(
-		  L"hlsl/PixelShader.hlsl"
-		, "PSTerrain"
-		, "ps_5_1"
-		, ppd3dShaderBlob));
+	return(CShader::CompileShaderFromFile(L"Shaders.hlsl", "PSTexturedLighting", "ps_5_1", ppd3dShaderBlob));
 }
 
-void CTexturedTerrainShader::SetTerrain(CGameObject * terrain)
+void CIlluminatedTexturedShader::CreateShader(CD3DDeviceIndRes* pd3dDeviceIndRes, ID3D12RootSignature *pd3dGraphicsRootSignature)
 {
-	m_nObjects = 1;
-	m_ppObjects = new CGameObject*[1];
-	m_ppObjects[0] = terrain;
+	m_nPipelineStates = 1;
+	m_ppd3dPipelineStates = new ComPtr<ID3D12PipelineState>[m_nPipelineStates];
+
+	CShader::CreateShader(pd3dDeviceIndRes, pd3dGraphicsRootSignature);
 }
 
-///////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+CIlluminatedShader::CIlluminatedShader()
+{
+}
+
+CIlluminatedShader::~CIlluminatedShader()
+{
+}
+
+D3D12_INPUT_LAYOUT_DESC CIlluminatedShader::CreateInputLayout()
+{
+	UINT nInputElementDescs = 2;
+	D3D12_INPUT_ELEMENT_DESC *pd3dInputElementDescs = new D3D12_INPUT_ELEMENT_DESC[nInputElementDescs];
+
+	pd3dInputElementDescs[0] = { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
+	pd3dInputElementDescs[1] = { "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
+
+	D3D12_INPUT_LAYOUT_DESC d3dInputLayoutDesc;
+	d3dInputLayoutDesc.pInputElementDescs = pd3dInputElementDescs;
+	d3dInputLayoutDesc.NumElements = nInputElementDescs;
+
+	return(d3dInputLayoutDesc);
+}
+
+D3D12_SHADER_BYTECODE CIlluminatedShader::CreateVertexShader(ID3DBlob **ppd3dShaderBlob)
+{
+	return(CShader::CompileShaderFromFile(L"Shaders.hlsl", "VSLighting", "vs_5_1", ppd3dShaderBlob));
+}
+
+D3D12_SHADER_BYTECODE CIlluminatedShader::CreatePixelShader(ID3DBlob **ppd3dShaderBlob)
+{
+	return(CShader::CompileShaderFromFile(L"Shaders.hlsl", "PSLighting", "ps_5_1", ppd3dShaderBlob));
+}
+
+void CIlluminatedShader::CreateShader(CD3DDeviceIndRes* pd3dDeviceIndRes, ID3D12RootSignature *pd3dGraphicsRootSignature)
+{
+	m_nPipelineStates = 1;
+	m_ppd3dPipelineStates = new ComPtr<ID3D12PipelineState>[m_nPipelineStates];
+
+	CShader::CreateShader(pd3dDeviceIndRes, pd3dGraphicsRootSignature);
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+CObjectsShader::CObjectsShader()
+{
+}
+
+CObjectsShader::~CObjectsShader()
+{
+}
+
+void CObjectsShader::CreateShaderVariables(CD3DDeviceIndRes* pd3dDeviceIndRes, ID3D12GraphicsCommandList *pd3dCommandList)
+{
+	UINT ncbElementBytes = ((sizeof(CB_GAMEOBJECT_INFO) + 255) & ~255); //256의 배수
+	m_pd3dcbGameObjects = pd3dDeviceIndRes->CreateBufferResource(
+		  pd3dCommandList
+		, NULL
+		, ncbElementBytes * m_nObjects
+		, D3D12_HEAP_TYPE_UPLOAD
+		, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER
+		, NULL);
+
+	m_pd3dcbGameObjects->Map(0, NULL, (void **)&m_pcbMappedGameObjects);
+}
+
+void CObjectsShader::UpdateShaderVariables(ID3D12GraphicsCommandList *pd3dCommandList)
+{
+	UINT ncbElementBytes = ((sizeof(CB_GAMEOBJECT_INFO) + 255) & ~255);
+	for (int j = 0; j < m_nObjects; j++)
+	{
+		CB_GAMEOBJECT_INFO *pbMappedcbGameObject = (CB_GAMEOBJECT_INFO *)((UINT8 *)m_pcbMappedGameObjects + (j * ncbElementBytes));
+		XMStoreFloat4x4(&pbMappedcbGameObject->m_xmf4x4World, XMMatrixTranspose(XMLoadFloat4x4(&m_ppObjects[j]->m_xmf4x4World)));
+#ifdef _WITH_BATCH_MATERIAL
+		if (m_pMaterial) pbMappedcbGameObject->m_nMaterial = m_pMaterial->m_nReflection;
+#endif
+	}
+}
+
+void CObjectsShader::ReleaseShaderVariables()
+{
+	if (m_pd3dcbGameObjects)
+	{
+		m_pd3dcbGameObjects->Unmap(0, NULL);
+		m_pd3dcbGameObjects->Release();
+	}
+
+	CIlluminatedTexturedShader::ReleaseShaderVariables();
+}
+
+//#define _WITH_TERRAIN_PARTITION
+
+void CObjectsShader::BuildObjects(CD3DDeviceIndRes* pd3dDeviceIndRes, ID3D12GraphicsCommandList *pd3dCommandList, void *pContext)
+{
+	int xObjects = 10, yObjects = 10, zObjects = 10, i = 0;
+
+	m_nObjects = (xObjects * 2 + 1) * (yObjects * 2 + 1) * (zObjects * 2 + 1);
+
+	CTexture *pTexture = new CTexture(1, RESOURCE_TEXTURE2DARRAY, 0);
+	pTexture->LoadTextureFromFile(pd3dDeviceIndRes, pd3dCommandList, L"../Assets/Image/Miscellaneous/StonesArray.dds", 0);
+
+	UINT ncbElementBytes = ((sizeof(CB_GAMEOBJECT_INFO) + 255) & ~255);
+
+	CreateCbvAndSrvDescriptorHeaps(pd3dDeviceIndRes, pd3dCommandList, m_nObjects, 1);
+	CreateShaderVariables(pd3dDeviceIndRes, pd3dCommandList);
+	CreateConstantBufferViews(pd3dDeviceIndRes, pd3dCommandList, m_nObjects, m_pd3dcbGameObjects, ncbElementBytes);
+	CreateShaderResourceViews(pd3dDeviceIndRes, pd3dCommandList, pTexture, 5, false);
+
+#ifdef _WITH_BATCH_MATERIAL
+	m_pMaterial = new CMaterial();
+	m_pMaterial->SetTexture(pTexture);
+	m_pMaterial->SetReflection(1);
+#else
+	CMaterial *pCubeMaterial = new CMaterial();
+	pCubeMaterial->SetTexture(pTexture);
+	pCubeMaterial->SetReflection(1);
+#endif
+	/*
+	CCubeMeshIlluminatedTextured *pCubeMesh = new CCubeMeshIlluminatedTextured(pd3dDeviceIndRes, pd3dCommandList, 12.0f, 12.0f, 12.0f);
+
+	m_ppObjects = new CGameObject*[m_nObjects];
+
+	float fxPitch = 12.0f * 2.5f, fyPitch = 12.0f * 2.5f, fzPitch = 12.0f * 2.5f;
+
+	CRotatingObject *pRotatingObject = NULL;
+	for (int x = -xObjects; x <= xObjects; x++)
+	{
+		for (int y = -yObjects; y <= yObjects; y++)
+		{
+			for (int z = -zObjects; z <= zObjects; z++)
+			{
+				pRotatingObject = new CRotatingObject(1);
+				pRotatingObject->SetMesh(0, pCubeMesh);
+#ifndef _WITH_BATCH_MATERIAL
+				pRotatingObject->SetMaterial(pCubeMaterial);
+#endif
+				pRotatingObject->SetPosition(fxPitch*x, fyPitch*y, fzPitch*z);
+				pRotatingObject->SetRotationAxis(XMFLOAT3(0.0f, 1.0f, 0.0f));
+				pRotatingObject->SetRotationSpeed(10.0f * (i % 10));
+				pRotatingObject->SetCbvGPUDescriptorHandlePtr(m_d3dCbvGPUDescriptorStartHandle.ptr + (::gnCbvSrvDescriptorIncrementSize * i));
+				m_ppObjects[i++] = pRotatingObject;
+			}
+		}
+	}
+	*/
+}
+
+void CObjectsShader::ReleaseObjects()
+{
+	if (m_ppObjects)
+	{
+		for (int j = 0; j < m_nObjects; j++) if (m_ppObjects[j]) delete m_ppObjects[j];
+		delete[] m_ppObjects;
+	}
+
+#ifdef _WITH_BATCH_MATERIAL
+	if (m_pMaterial) delete m_pMaterial;
+#endif
+}
+
+void CObjectsShader::AnimateObjects(float fTimeElapsed)
+{
+	for (int j = 0; j < m_nObjects; j++)
+	{
+		m_ppObjects[j]->Animate(fTimeElapsed);
+	}
+}
+
+void CObjectsShader::ReleaseUploadBuffers()
+{
+	if (m_ppObjects)
+	{
+		for (int j = 0; j < m_nObjects; j++) if (m_ppObjects[j]) m_ppObjects[j]->ReleaseUploadBuffers();
+	}
+
+#ifdef _WITH_BATCH_MATERIAL
+	if (m_pMaterial) m_pMaterial->ReleaseUploadBuffers();
+#endif
+}
+
+void CObjectsShader::Render(ID3D12GraphicsCommandList *pd3dCommandList, CCamera *pCamera)
+{
+	CIlluminatedTexturedShader::Render(pd3dCommandList, pCamera);
+
+#ifdef _WITH_BATCH_MATERIAL
+	if (m_pMaterial) m_pMaterial->UpdateShaderVariables(pd3dCommandList);
+#endif
+
+	for (int j = 0; j < m_nObjects; j++)
+	{
+		if (m_ppObjects[j]) m_ppObjects[j]->Render(pd3dCommandList, pCamera);
+	}
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+CTerrainShader::CTerrainShader()
+{
+}
+
+CTerrainShader::~CTerrainShader()
+{
+}
+
+D3D12_INPUT_LAYOUT_DESC CTerrainShader::CreateInputLayout()
+{
+	UINT nInputElementDescs = 5;
+	D3D12_INPUT_ELEMENT_DESC *pd3dInputElementDescs = new D3D12_INPUT_ELEMENT_DESC[nInputElementDescs];
+
+	pd3dInputElementDescs[0] = { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
+	pd3dInputElementDescs[1] = { "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
+	pd3dInputElementDescs[2] = { "TANGENT", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 24, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
+	pd3dInputElementDescs[3] = { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 36, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
+	pd3dInputElementDescs[4] = { "TEXCOORD", 1, DXGI_FORMAT_R32G32_FLOAT, 0, 44, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
+
+	D3D12_INPUT_LAYOUT_DESC d3dInputLayoutDesc;
+	d3dInputLayoutDesc.pInputElementDescs = pd3dInputElementDescs;
+	d3dInputLayoutDesc.NumElements = nInputElementDescs;
+
+	return(d3dInputLayoutDesc);
+}
+
+D3D12_SHADER_BYTECODE CTerrainShader::CreateVertexShader(ID3DBlob **ppd3dShaderBlob)
+{
+	return(CShader::CompileShaderFromFile(L"Shaders.hlsl", "VSTerrain", "vs_5_1", ppd3dShaderBlob));
+}
+
+D3D12_SHADER_BYTECODE CTerrainShader::CreatePixelShader(ID3DBlob **ppd3dShaderBlob)
+{
+	return(CShader::CompileShaderFromFile(L"Shaders.hlsl", "PSTerrain", "ps_5_1", ppd3dShaderBlob));
+}
+
+void CTerrainShader::CreateShader(CD3DDeviceIndRes* pd3dDeviceIndRes, ID3D12RootSignature *pd3dGraphicsRootSignature)
+{
+	m_nPipelineStates = 1;
+	m_ppd3dPipelineStates = new ComPtr<ID3D12PipelineState>[m_nPipelineStates];
+
+	CShader::CreateShader(pd3dDeviceIndRes, pd3dGraphicsRootSignature);
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
 CSkyBoxShader::CSkyBoxShader()
 {
 }
+
 CSkyBoxShader::~CSkyBoxShader()
 {
+}
+
+D3D12_INPUT_LAYOUT_DESC CSkyBoxShader::CreateInputLayout()
+{
+	UINT nInputElementDescs = 1;
+	D3D12_INPUT_ELEMENT_DESC *pd3dInputElementDescs = new D3D12_INPUT_ELEMENT_DESC[nInputElementDescs];
+
+	pd3dInputElementDescs[0] = { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
+
+	D3D12_INPUT_LAYOUT_DESC d3dInputLayoutDesc;
+	d3dInputLayoutDesc.pInputElementDescs = pd3dInputElementDescs;
+	d3dInputLayoutDesc.NumElements = nInputElementDescs;
+
+	return(d3dInputLayoutDesc);
 }
 
 D3D12_DEPTH_STENCIL_DESC CSkyBoxShader::CreateDepthStencilState()
@@ -833,16 +716,22 @@ D3D12_DEPTH_STENCIL_DESC CSkyBoxShader::CreateDepthStencilState()
 	return(d3dDepthStencilDesc);
 }
 
-D3D12_SHADER_BYTECODE CSkyBoxShader::CreatePixelShader(ID3DBlob **ppd3dShaderBlob)
+D3D12_SHADER_BYTECODE CSkyBoxShader::CreateVertexShader(ID3DBlob **ppd3dShaderBlob)
 {
-	return(CShader::CompileShaderFromFile(L"hlsl/PixelShader.hlsl", "PSSkyBox", "ps_5_1", ppd3dShaderBlob));
+	return(CShader::CompileShaderFromFile(L"Shaders.hlsl", "VSSkyBox", "vs_5_1", ppd3dShaderBlob));
 }
 
-void CSkyBoxShader::SetSkyBox(CGameObject* skybox)
+D3D12_SHADER_BYTECODE CSkyBoxShader::CreatePixelShader(ID3DBlob **ppd3dShaderBlob)
 {
-	m_nObjects = 1;
-	m_ppObjects = new CGameObject*[1];
-	m_ppObjects[0] = skybox;
+	return(CShader::CompileShaderFromFile(L"Shaders.hlsl", "PSSkyBox", "ps_5_1", ppd3dShaderBlob));
+}
+
+void CSkyBoxShader::CreateShader(CD3DDeviceIndRes* pd3dDeviceIndRes, ID3D12RootSignature *pd3dGraphicsRootSignature)
+{
+	m_nPipelineStates = 1;
+	m_ppd3dPipelineStates = new ComPtr<ID3D12PipelineState>[m_nPipelineStates];
+
+	CShader::CreateShader(pd3dDeviceIndRes, pd3dGraphicsRootSignature);
 }
 
 CBillBoardShader::CBillBoardShader()
@@ -900,7 +789,7 @@ D3D12_INPUT_LAYOUT_DESC CBillBoardShader::CreateInputLayout()
 	D3D12_INPUT_ELEMENT_DESC *pd3dInputElementDescs = new
 		D3D12_INPUT_ELEMENT_DESC[nInputElementDescs];
 	pd3dInputElementDescs[0] = { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
-	pd3dInputElementDescs[1] = { "SIZE", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
+	pd3dInputElementDescs[1] = { "SIZE", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
 	D3D12_INPUT_LAYOUT_DESC d3dInputLayoutDesc;
 	d3dInputLayoutDesc.pInputElementDescs = pd3dInputElementDescs;
 	d3dInputLayoutDesc.NumElements = nInputElementDescs;

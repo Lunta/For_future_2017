@@ -3,7 +3,6 @@
 class CObject
 {
 public:
-	
 	CObject(D2D_POINT_2F pt = Point2F(), D2D_RECT_F rc = RectF());
 
 	virtual ~CObject();
@@ -20,7 +19,6 @@ public:
 	D2D_RECT_F GetSize() const { return m_rcSize; }
 
 protected:
-
 	D2D_POINT_2F	m_ptPoisition;
 	D2D_RECT_F		m_rcSize;
 };

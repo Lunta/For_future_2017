@@ -1,7 +1,5 @@
 #pragma once
 
-
-
 constexpr LONG CLIENT_WIDTH = 800;
 constexpr LONG CLIENT_HEIGHT = 600;
 

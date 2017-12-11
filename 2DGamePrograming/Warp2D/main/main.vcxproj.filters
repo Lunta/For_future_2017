@@ -49,6 +49,12 @@
     <Filter Include="Object\Item">
       <UniqueIdentifier>{8dbb3ab9-c51e-4ae3-8f6b-cadd27799cb2}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Object\Item\EquipmentItem">
+      <UniqueIdentifier>{5ae974b2-cd43-428f-9ea6-d5a8108e9eed}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Object\Item\ConsumptionItem">
+      <UniqueIdentifier>{565c9934-0f28-4987-9ff7-61fb5e97313c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />

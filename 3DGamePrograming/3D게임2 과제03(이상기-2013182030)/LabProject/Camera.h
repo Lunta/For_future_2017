@@ -50,7 +50,7 @@ public:
 	CCamera(CCamera *pCamera);
 	virtual ~CCamera();
 
-	virtual void CreateShaderVariables(CD3DDeviceIndRes *pd3dDeviceIndRes, ID3D12GraphicsCommandList *pd3dCommandList);
+	virtual void CreateShaderVariables(CD3DDeviceIndRes* pd3dDeviceIndRes, ID3D12GraphicsCommandList *pd3dCommandList);
 	virtual void ReleaseShaderVariables();
 	virtual void UpdateShaderVariables(ID3D12GraphicsCommandList *pd3dCommandList);
 

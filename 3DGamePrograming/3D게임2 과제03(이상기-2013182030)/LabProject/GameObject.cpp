@@ -17,8 +17,7 @@ CTexture::CTexture(int nTextures, UINT nTextureType, int nSamplers)
 
 	m_nSamplers = nSamplers;
 	if (m_nSamplers > 0) 
-		m_pd3dSamplerGpuDescriptorHandles = 
-			new D3D12_GPU_DESCRIPTOR_HANDLE[m_nSamplers];
+		m_pd3dSamplerGpuDescriptorHandles = new D3D12_GPU_DESCRIPTOR_HANDLE[m_nSamplers];
 }
 
 CTexture::~CTexture()
@@ -65,7 +64,7 @@ void CTexture::UpdateShaderVariables(ID3D12GraphicsCommandList *pd3dCommandList)
 void CTexture::UpdateShaderVariable(ID3D12GraphicsCommandList *pd3dCommandList, int nIndex)
 {
 	pd3dCommandList->SetGraphicsRootDescriptorTable(
-		m_pRootArgumentInfos[nIndex].m_nRootParameterIndex
+		  m_pRootArgumentInfos[nIndex].m_nRootParameterIndex
 		, m_pRootArgumentInfos[nIndex].m_d3dSrvGpuDescriptorHandle);
 }
 
@@ -85,7 +84,7 @@ void CTexture::ReleaseUploadBuffers()
 	}
 }
 
-void CTexture::LoadTextureFromFile(CD3DDeviceIndRes *pd3dDeviceIndRes, ID3D12GraphicsCommandList *pd3dCommandList, wchar_t *pszFileName, UINT nIndex)
+void CTexture::LoadTextureFromFile(CD3DDeviceIndRes* pd3dDeviceIndRes, ID3D12GraphicsCommandList *pd3dCommandList, wchar_t *pszFileName, UINT nIndex)
 {
 	m_ppd3dTextures[nIndex] = 
 		pd3dDeviceIndRes->CreateTextureResourceFromFile(
@@ -97,7 +96,6 @@ void CTexture::LoadTextureFromFile(CD3DDeviceIndRes *pd3dDeviceIndRes, ID3D12Gra
 /////////////////////////////////////////////////////////////////////////////
 CMaterial::CMaterial()
 {
-	m_xmf4Albedo = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
 }
 CMaterial::~CMaterial()
 {
@@ -106,6 +104,7 @@ CMaterial::~CMaterial()
 		m_pShader->ReleaseShaderVariables();
 		m_pShader->Release();
 	}
+	if (m_pTexture) m_pTexture->Release();
 }
 
 void CMaterial::SetTexture(CTexture *pTexture)
@@ -123,8 +122,7 @@ void CMaterial::SetShader(CShader *pShader)
 
 void CMaterial::UpdateShaderVariables(ID3D12GraphicsCommandList *pd3dCommandList)
 {
-	if (m_pTexture) 
-		m_pTexture->UpdateShaderVariables(pd3dCommandList);
+	if (m_pTexture) m_pTexture->UpdateShaderVariables(pd3dCommandList);
 }
 void CMaterial::ReleaseShaderVariables()
 {
@@ -138,18 +136,22 @@ void CMaterial::ReleaseUploadBuffers()
 //////////////////////////////////////////////////////////////////////////
 CGameObject::CGameObject(int nMeshes)
 {
+	m_xmf4x4Transform = Matrix4x4::Identity();
 	m_xmf4x4World = Matrix4x4::Identity();
+
 	m_nMeshes = nMeshes;
 	m_ppMeshes = NULL;
-	m_bActive = true;
 	if (m_nMeshes > 0)
 	{
 		m_ppMeshes = new CMesh*[m_nMeshes];
-		for (int i = 0; i < m_nMeshes; i++) m_ppMeshes[i] = NULL;
+		for (int i = 0; i < m_nMeshes; i++)	m_ppMeshes[i] = NULL;
 	}
 }
+
 CGameObject::~CGameObject()
 {
+	ReleaseShaderVariables();
+
 	if (m_ppMeshes)
 	{
 		for (int i = 0; i < m_nMeshes; i++)
@@ -160,6 +162,45 @@ CGameObject::~CGameObject()
 		delete[] m_ppMeshes;
 	}
 	if (m_pMaterial) m_pMaterial->Release();
+
+	if (m_pSibling) delete m_pSibling;
+	if (m_pChild) delete m_pChild;
+}
+
+void CGameObject::ResizeMeshes(int nMeshes)
+{
+	if (m_ppMeshes)
+	{
+		for (int i = 0; i < m_nMeshes; i++)
+		{
+			if (m_ppMeshes[i]) m_ppMeshes[i]->Release();
+			m_ppMeshes[i] = NULL;
+		}
+		delete[] m_ppMeshes;
+		m_ppMeshes = NULL;
+	}
+
+	m_nMeshes = nMeshes;
+	m_ppMeshes = NULL;
+	if (m_nMeshes > 0)
+	{
+		m_ppMeshes = new CMesh*[m_nMeshes];
+		for (int i = 0; i < m_nMeshes; i++)	m_ppMeshes[i] = NULL;
+	}
+}
+
+void CGameObject::SetChild(CGameObject *pChild)
+{
+	if (m_pChild)
+	{
+		if (pChild) pChild->m_pSibling = m_pChild->m_pSibling;
+		m_pChild->m_pSibling = pChild;
+	}
+	else
+	{
+		m_pChild = pChild;
+	}
+	if (pChild) pChild->m_pParent = this;
 }
 
 void CGameObject::SetMesh(int nIndex, CMesh *pMesh)
@@ -171,12 +212,13 @@ void CGameObject::SetMesh(int nIndex, CMesh *pMesh)
 		if (pMesh) pMesh->AddRef();
 	}
 }
+
 void CGameObject::SetShader(CShader *pShader)
 {
 	if (!m_pMaterial)
 	{
-		m_pMaterial = new CMaterial();
-		m_pMaterial->AddRef();
+		CMaterial *pMaterial = new CMaterial();
+		SetMaterial(pMaterial);
 	}
 	if (m_pMaterial) m_pMaterial->SetShader(pShader);
 }
@@ -188,183 +230,75 @@ void CGameObject::SetMaterial(CMaterial *pMaterial)
 	if (m_pMaterial) m_pMaterial->AddRef();
 }
 
-void CGameObject::SetMaterial(UINT nReflection)
-{
-	if (!m_pMaterial) m_pMaterial = new CMaterial();
-	m_pMaterial->m_nReflection = nReflection;
-}
-
 void CGameObject::CreateShaderVariables(
-	  CD3DDeviceIndRes *pd3dDeviceIndRes
+	  CD3DDeviceIndRes* pd3dDeviceIndRes
 	, ID3D12GraphicsCommandList *pd3dCommandList)
 {
+	UINT ncbElementBytes = ((sizeof(CB_GAMEOBJECT_INFO) + 255) & ~255); //256의 배수
+	m_pd3dcbGameObject = pd3dDeviceIndRes->CreateBufferResource(
+		pd3dCommandList
+		, NULL
+		, ncbElementBytes
+		, D3D12_HEAP_TYPE_UPLOAD
+		, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER
+		, NULL);
+
+	m_pd3dcbGameObject->Map(0, NULL, (void **)&m_pcbMappedGameObject);
 }
 void CGameObject::ReleaseShaderVariables()
 {
+	if (m_pd3dcbGameObject) m_pd3dcbGameObject->Unmap(0, NULL);
+	if (m_pMaterial) m_pMaterial->ReleaseShaderVariables();
 }
 void CGameObject::UpdateShaderVariables(ID3D12GraphicsCommandList *pd3dCommandList)
 {
-}
-
-void CGameObject::Render(ID3D12GraphicsCommandList *pd3dCommandList, CCamera *pCamera)
-{
-	if (!m_bActive) return;
-	//게임 객체가 카메라에 보이면 렌더링한다.
-	//if (IsVisible(pCamera))
-	{
-		OnPrepareRender();
-
-		if (m_pMaterial)
-		{
-			if (m_pMaterial->m_pShader)
-			{
-				m_pMaterial->m_pShader->Render(pd3dCommandList, pCamera);
-				m_pMaterial->m_pShader->UpdateShaderVariable(pd3dCommandList, &m_xmf4x4World);
-			}
-		}
-		//pd3dCommandList->SetGraphicsRootDescriptorTable(2, m_d3dCbvGPUDescriptorHandle);
-		if (m_pMaterial)
-		{
-			if (m_pMaterial->m_pShader)
-			{
-				if (dynamic_cast<CInstancingShader*>(m_pMaterial->m_pShader))
-					return;
-			}
-		}
-		if (m_ppMeshes)
-			for (int i = 0; i < m_nMeshes; i++)
-				if (m_ppMeshes[i])
-					m_ppMeshes[i]->Render(pd3dCommandList);
-	}
-}
-void CGameObject::Render(ID3D12GraphicsCommandList * pd3dCommandList, CCamera * pCamera, UINT nInstances)
-{
-	//if (!m_bActive) return;
-	OnPrepareRender();
-	if (m_ppMeshes)
-	{
-		for (int i = 0; i < m_nMeshes; i++)
-			if (m_ppMeshes[i]) 
-				m_ppMeshes[i]->Render(pd3dCommandList, nInstances);
-	}
-}
-//인스턴싱 정점 버퍼 뷰를 사용하여 메쉬를 렌더링한다.
-void CGameObject::Render(ID3D12GraphicsCommandList *pd3dCommandList, CCamera *pCamera,
-	UINT nInstances, D3D12_VERTEX_BUFFER_VIEW d3dInstancingBufferView)
-{
-	if (!m_bActive) return;
-	OnPrepareRender();
-	if (m_ppMeshes)
-	{
-		for (int i = 0; i < m_nMeshes; i++)
-		{
-			if (m_ppMeshes[i])
-				m_ppMeshes[i]->Render(pd3dCommandList, nInstances, d3dInstancingBufferView);
-		}
-	}
+	XMStoreFloat4x4(&m_pcbMappedGameObject->m_xmf4x4World, XMMatrixTranspose(XMLoadFloat4x4(&m_xmf4x4World)));
+	if (m_pMaterial) m_pcbMappedGameObject->m_nMaterial = m_pMaterial->m_nReflection;
 }
 
 void CGameObject::Animate(float fTimeElapsed)
 {
-	if (!m_bActive) return;
-	if (!m_bUpdatedWorldMtx) return;
-	m_xmOOBBTransformed.Transform(m_xmOOBB, XMLoadFloat4x4(&m_xmf4x4World));
-	XMStoreFloat4(&m_xmOOBBTransformed.Orientation, XMQuaternionNormalize(XMLoadFloat4(&m_xmOOBBTransformed.Orientation)));
-	m_bUpdatedWorldMtx = false;
+	if (m_pSibling) m_pSibling->Animate(fTimeElapsed);
+	if (m_pChild) m_pChild->Animate(fTimeElapsed);
 }
 
-void CGameObject::Rotate(XMFLOAT3 *pxmf3Axis, float fAngle)
+void CGameObject::SetRootParameter(ID3D12GraphicsCommandList *pd3dCommandList)
 {
-	if (!m_bActive) return;
-	XMMATRIX mtxRotate = XMMatrixRotationAxis(XMLoadFloat3(pxmf3Axis),
-		XMConvertToRadians(fAngle));
-	m_xmf4x4World = Matrix4x4::Multiply(mtxRotate, m_xmf4x4World);
-	m_bUpdatedWorldMtx = true;
+	pd3dCommandList->SetGraphicsRootDescriptorTable(2, m_d3dCbvGPUDescriptorHandle);
 }
 
-XMFLOAT4X4 CGameObject::GetWorldMtx()
+void CGameObject::Render(ID3D12GraphicsCommandList *pd3dCommandList, CCamera *pCamera)
 {
-	return XMFLOAT4X4(m_xmf4x4World);
-}
-XMFLOAT3 CGameObject::GetPosition()
-{
-	return(XMFLOAT3(m_xmf4x4World._41, m_xmf4x4World._42, m_xmf4x4World._43));
-}
-//게임 객체의 로컬 z-축 벡터를 반환한다.
-XMFLOAT3 CGameObject::GetLook()
-{
-	return(Vector3::Normalize(
-		XMFLOAT3(m_xmf4x4World._31, m_xmf4x4World._32, m_xmf4x4World._33)));
-}
-//게임 객체의 로컬 y-축 벡터를 반환한다.
-XMFLOAT3 CGameObject::GetUp()
-{
-	return(Vector3::Normalize(
-		XMFLOAT3(m_xmf4x4World._21, m_xmf4x4World._22, m_xmf4x4World._23)));
-}
-//게임 객체의 로컬 x-축 벡터를 반환한다.
-XMFLOAT3 CGameObject::GetRight()
-{
-	return(Vector3::Normalize(
-		XMFLOAT3(m_xmf4x4World._11, m_xmf4x4World._12, m_xmf4x4World._13)));
-}
+	OnPrepareRender();
 
-void CGameObject::SetPosition(float x, float y, float z)
-{
-	if (!m_bActive) return;
-	m_xmf4x4World._41 = x;
-	m_xmf4x4World._42 = y;
-	m_xmf4x4World._43 = z;
-	m_bUpdatedWorldMtx = true;
-}
-void CGameObject::SetPosition(XMFLOAT3 xmf3Position)
-{
-	SetPosition(xmf3Position.x, xmf3Position.y, xmf3Position.z);
-}
+	if (m_pMaterial)
+	{
+		if (m_pMaterial->m_pShader)
+		{
+			m_pMaterial->m_pShader->Render(pd3dCommandList, pCamera);
+			m_pMaterial->m_pShader->UpdateShaderVariables(pd3dCommandList);
 
-//게임 객체를 로컬 x-축 방향으로 이동한다.
-void CGameObject::MoveStrafe(float fDistance)
-{
-	XMFLOAT3 xmf3Position = GetPosition();
-	XMFLOAT3 xmf3Right = GetRight();
-	xmf3Position = Vector3::Add(xmf3Position, xmf3Right, fDistance);
-	CGameObject::SetPosition(xmf3Position);
-}
-//게임 객체를 로컬 y-축 방향으로 이동한다.
-void CGameObject::MoveUp(float fDistance)
-{
-	XMFLOAT3 xmf3Position = GetPosition();
-	XMFLOAT3 xmf3Up = GetUp();
-	xmf3Position = Vector3::Add(xmf3Position, xmf3Up, fDistance);
-	CGameObject::SetPosition(xmf3Position);
-}
-//게임 객체를 로컬 z-축 방향으로 이동한다.
-void CGameObject::MoveForward(float fDistance)
-{
-	XMFLOAT3 xmf3Position = GetPosition();
-	XMFLOAT3 xmf3Look = GetLook();
-	xmf3Position = Vector3::Add(xmf3Position, xmf3Look, fDistance);
-	CGameObject::SetPosition(xmf3Position);
-}
-void CGameObject::Move(XMFLOAT3 & vDirection, float fSpeed)
-{
-	SetPosition(
-		m_xmf4x4World._41 + vDirection.x * fSpeed,
-		m_xmf4x4World._42 + vDirection.y * fSpeed,
-		m_xmf4x4World._43 + vDirection.z * fSpeed);
-}
-//게임 객체를 주어진 각도로 회전한다.
-void CGameObject::Rotate(float fPitch, float fYaw, float fRoll)
-{
-	if (!m_bActive) return;
-	XMMATRIX mtxRotate = XMMatrixRotationRollPitchYaw(
-		XMConvertToRadians(fPitch),
-		XMConvertToRadians(fYaw), 
-		XMConvertToRadians(fRoll));
-	m_xmf4x4World = Matrix4x4::Multiply(mtxRotate, m_xmf4x4World);
-	m_bUpdatedWorldMtx = true;
-}
+			UpdateShaderVariables(pd3dCommandList);
+		}
+		if (m_pMaterial->m_pTexture)
+		{
+			m_pMaterial->m_pTexture->UpdateShaderVariables(pd3dCommandList);
+		}
+	}
 
+	if (m_ppMeshes)
+	{
+		SetRootParameter(pd3dCommandList);
+
+		for (int i = 0; i < m_nMeshes; i++)
+		{
+			if (m_ppMeshes[i]) m_ppMeshes[i]->Render(pd3dCommandList);
+		}
+	}
+
+	if (m_pSibling) m_pSibling->Render(pd3dCommandList, pCamera);
+	if (m_pChild) m_pChild->Render(pd3dCommandList, pCamera);
+}
 void CGameObject::ReleaseUploadBuffers()
 {
 	if (m_ppMeshes)
@@ -374,154 +308,415 @@ void CGameObject::ReleaseUploadBuffers()
 			if (m_ppMeshes[i]) m_ppMeshes[i]->ReleaseUploadBuffers();
 		}
 	}
+
+	if (m_pMaterial) m_pMaterial->ReleaseUploadBuffers();
+
+	if (m_pSibling) m_pSibling->ReleaseUploadBuffers();
+	if (m_pChild) m_pChild->ReleaseUploadBuffers();
 }
 
-bool CGameObject::IsVisible(CCamera *pCamera)
+void CGameObject::UpdateTransform(XMFLOAT4X4 *pxmf4x4Parent)
 {
-	OnPrepareRender();
-	bool bIsVisible = false;
-	if (m_ppMeshes)
+	m_xmf4x4World = (pxmf4x4Parent) ? Matrix4x4::Multiply(m_xmf4x4Transform, *pxmf4x4Parent) : m_xmf4x4Transform;
+
+	if (m_pSibling) m_pSibling->UpdateTransform(pxmf4x4Parent);
+	if (m_pChild) m_pChild->UpdateTransform(&m_xmf4x4World);
+}
+
+CGameObject *CGameObject::FindFrame(_TCHAR *pstrFrameName)
+{
+	CGameObject *pFrameObject = NULL;
+	if (!_tcsncmp(m_pstrFrameName, pstrFrameName, _tcslen(pstrFrameName))) return(this);
+
+	if (m_pSibling) if (pFrameObject = m_pSibling->FindFrame(pstrFrameName)) return(pFrameObject);
+	if (m_pChild) if (pFrameObject = m_pChild->FindFrame(pstrFrameName)) return(pFrameObject);
+
+	return(NULL);
+}
+
+void CGameObject::SetPosition(float x, float y, float z)
+{
+	m_xmf4x4World._41 = x;
+	m_xmf4x4World._42 = y;
+	m_xmf4x4World._43 = z;
+
+	UpdateTransform(NULL);
+}
+
+void CGameObject::SetPosition(XMFLOAT3 xmf3Position)
+{
+	SetPosition(xmf3Position.x, xmf3Position.y, xmf3Position.z);
+}
+
+void CGameObject::SetLocalPosition(XMFLOAT3 xmf3Position)
+{
+	XMMATRIX mtxTranslation = XMMatrixTranslation(xmf3Position.x, xmf3Position.y, xmf3Position.z);
+	m_xmf4x4Transform = Matrix4x4::Multiply(m_xmf4x4Transform, mtxTranslation);
+
+	UpdateTransform(NULL);
+}
+
+void CGameObject::SetScale(float x, float y, float z)
+{
+	XMMATRIX mtxScale = XMMatrixScaling(x, y, z);
+	m_xmf4x4Transform = Matrix4x4::Multiply(mtxScale, m_xmf4x4Transform);
+
+	UpdateTransform(NULL);
+}
+
+void CGameObject::SetLocalScale(float x, float y, float z)
+{
+}
+
+XMFLOAT3 CGameObject::GetPosition()
+{
+	return(XMFLOAT3(m_xmf4x4World._41, m_xmf4x4World._42, m_xmf4x4World._43));
+}
+
+XMFLOAT3 CGameObject::GetLook()
+{
+	return(Vector3::Normalize(XMFLOAT3(m_xmf4x4World._31, m_xmf4x4World._32, m_xmf4x4World._33)));
+}
+
+XMFLOAT3 CGameObject::GetUp()
+{
+	return(Vector3::Normalize(XMFLOAT3(m_xmf4x4World._21, m_xmf4x4World._22, m_xmf4x4World._23)));
+}
+
+XMFLOAT3 CGameObject::GetRight()
+{
+	return(Vector3::Normalize(XMFLOAT3(m_xmf4x4World._11, m_xmf4x4World._12, m_xmf4x4World._13)));
+}
+
+void CGameObject::MoveStrafe(float fDistance)
+{
+	XMFLOAT3 xmf3Position = GetPosition();
+	XMFLOAT3 xmf3Right = GetRight();
+	xmf3Position = Vector3::Add(xmf3Position, xmf3Right, fDistance);
+	CGameObject::SetPosition(xmf3Position);
+}
+
+void CGameObject::MoveUp(float fDistance)
+{
+	XMFLOAT3 xmf3Position = GetPosition();
+	XMFLOAT3 xmf3Up = GetUp();
+	xmf3Position = Vector3::Add(xmf3Position, xmf3Up, fDistance);
+	CGameObject::SetPosition(xmf3Position);
+}
+
+void CGameObject::MoveForward(float fDistance)
+{
+	XMFLOAT3 xmf3Position = GetPosition();
+	XMFLOAT3 xmf3Look = GetLook();
+	xmf3Position = Vector3::Add(xmf3Position, xmf3Look, fDistance);
+	CGameObject::SetPosition(xmf3Position);
+}
+
+void CGameObject::Rotate(float fPitch, float fYaw, float fRoll)
+{
+	XMMATRIX mtxRotate = XMMatrixRotationRollPitchYaw(XMConvertToRadians(fPitch), XMConvertToRadians(fYaw), XMConvertToRadians(fRoll));
+	m_xmf4x4Transform = Matrix4x4::Multiply(mtxRotate, m_xmf4x4Transform);
+
+	UpdateTransform(NULL);
+}
+
+void CGameObject::Rotate(XMFLOAT3 *pxmf3Axis, float fAngle)
+{
+	XMMATRIX mtxRotate = XMMatrixRotationAxis(XMLoadFloat3(pxmf3Axis), XMConvertToRadians(fAngle));
+	m_xmf4x4Transform = Matrix4x4::Multiply(mtxRotate, m_xmf4x4Transform);
+
+	UpdateTransform(NULL);
+}
+
+void CGameObject::Rotate(XMFLOAT4 *pxmf4Quaternion)
+{
+	XMMATRIX mtxRotate = XMMatrixRotationQuaternion(XMLoadFloat4(pxmf4Quaternion));
+	m_xmf4x4Transform = Matrix4x4::Multiply(mtxRotate, m_xmf4x4Transform);
+
+	UpdateTransform(NULL);
+}
+
+#define _WITH_DEBUG_FRAME_HIERARCHY
+
+void CGameObject::LoadFrameHierarchyFromFile(
+	  CD3DDeviceIndRes*				pd3dDeviceIndRes
+	, ID3D12GraphicsCommandList*	pd3dCommandList
+	, ID3D12RootSignature*			pd3dGraphicsRootSignature
+	, wifstream&					InFile
+	, UINT							nFrame)
+{
+	static TCHAR pstrMeshName[256] = { 0 };
+	static TCHAR pstrToken[256] = { 0 };
+	static TCHAR pstrDebug[256] = { 0 };
+
+	static XMFLOAT3 xmf3FramePosition;
+	static XMFLOAT3 xmf3FrameRotation;
+	static XMFLOAT3 xmf3FrameScale;
+	static XMFLOAT4 xmf4FrameRotation;
+	static XMFLOAT4 xmf4MaterialAlbedo;
+
+	static XMFLOAT4X4 xmf4x4FrameTransform;
+	
+	XMFLOAT3*	pxmf3Positions = NULL;
+	XMFLOAT3*	pxmf3Normals = NULL;
+	XMFLOAT2*	pxmf3TextureCoords0 = NULL;
+	XMFLOAT2*	pxmf3TextureCoords1 = NULL;
+	UINT*		pIndices = NULL;
+
+	UINT		nVertices = 0;
+	UINT		nNormals = 0;
+	UINT		nTextureCoords = 0;
+	UINT		nIndices = 0;;
+
+	while (true)
 	{
-		for (int i = 0; i < m_nMeshes; i++)
+		InFile >> pstrToken;
+		if (!InFile) break;
+
+		if (!_tcscmp(pstrToken, _T("FrameName:")))
 		{
-			switch (m_Tag)
+			InFile >> m_pstrFrameName;
+
+			nVertices = nNormals = nTextureCoords = nIndices = 0;
+			xmf4MaterialAlbedo = XMFLOAT4(-1.0f, -1.0f, -1.0f, -1.0f);
+			pxmf3Positions = pxmf3Normals = NULL;
+			pxmf3TextureCoords0 = pxmf3TextureCoords1 = NULL;
+			pIndices = NULL;
+		}
+		else if (!_tcscmp(pstrToken, _T("Transform:")))
+		{
+			InFile >> xmf3FramePosition.x >> xmf3FramePosition.y >> xmf3FramePosition.z;
+			InFile >> xmf3FrameRotation.x >> xmf3FrameRotation.y >> xmf3FrameRotation.z;
+			InFile >> xmf4FrameRotation.x >> xmf4FrameRotation.y >> xmf4FrameRotation.z >> xmf4FrameRotation.w;
+			InFile >> xmf3FrameScale.x >> xmf3FrameScale.y >> xmf3FrameScale.z;
+		}
+		else if (!_tcscmp(pstrToken, _T("TransformMatrix:")))
+		{
+			InFile >> xmf4x4FrameTransform._11 >> xmf4x4FrameTransform._12 >> xmf4x4FrameTransform._13 >> xmf4x4FrameTransform._14;
+			InFile >> xmf4x4FrameTransform._21 >> xmf4x4FrameTransform._22 >> xmf4x4FrameTransform._23 >> xmf4x4FrameTransform._24;
+			InFile >> xmf4x4FrameTransform._31 >> xmf4x4FrameTransform._32 >> xmf4x4FrameTransform._33 >> xmf4x4FrameTransform._34;
+			InFile >> xmf4x4FrameTransform._41 >> xmf4x4FrameTransform._42 >> xmf4x4FrameTransform._43 >> xmf4x4FrameTransform._44;
+		}
+		else if (!_tcscmp(pstrToken, _T("MeshName:")))
+		{
+			InFile >> pstrMeshName;
+		}
+		else if (!_tcscmp(pstrToken, _T("Vertices:")))
+		{
+			InFile >> nVertices;
+			pxmf3Positions = new XMFLOAT3[nVertices];
+			for (int i = 0; i < nVertices; i++)
 			{
-			case ObjectType::Background:
-				return true;
-			case -1:
-			{
-				BoundingOrientedBox xmBoundingBox = m_ppMeshes[i]->GetBoundingBox();
-				//모델 좌표계의 바운딩 박스를 월드 좌표계로 변환한다.
-				xmBoundingBox.Transform(xmBoundingBox, XMLoadFloat4x4(&m_xmf4x4World));
-				if (pCamera)
-					return pCamera->IsInFrustum(xmBoundingBox);
-				break;
-				}
-			default:
-				if (pCamera)
-					return pCamera->IsInFrustum(m_xmOOBB);
-				break;
+				InFile >> pxmf3Positions[i].x >> pxmf3Positions[i].y >> pxmf3Positions[i].z;
 			}
-		
 		}
-	}
-	return(bIsVisible);
-}
-
-void CGameObject::GenerateRayForPicking(XMFLOAT3& xmf3PickPosition, XMFLOAT4X4&
-	xmf4x4View, XMFLOAT3 *pxmf3PickRayOrigin, XMFLOAT3 *pxmf3PickRayDirection)
-{
-	XMFLOAT4X4 xmf4x4WorldView = Matrix4x4::Multiply(m_xmf4x4World, xmf4x4View);
-	XMFLOAT4X4 xmf4x4Inverse = Matrix4x4::Inverse(xmf4x4WorldView);
-	XMFLOAT3 xmf3CameraOrigin(0.0f, 0.0f, 0.0f);
-	//카메라 좌표계의 원점을 모델 좌표계로 변환한다.
-	*pxmf3PickRayOrigin = Vector3::TransformCoord(xmf3CameraOrigin, xmf4x4Inverse);
-	//카메라 좌표계의 점(마우스 좌표를 역변환하여 구한 점)을 모델 좌표계로 변환한다.
-	*pxmf3PickRayDirection = Vector3::TransformCoord(xmf3PickPosition, xmf4x4Inverse);
-	//광선의 방향 벡터를 구한다.
-	*pxmf3PickRayDirection = Vector3::Normalize(Vector3::Subtract(*pxmf3PickRayDirection,
-		*pxmf3PickRayOrigin));
-}
-
-int CGameObject::PickObjectByRayIntersection(XMFLOAT3& xmf3PickPosition, XMFLOAT4X4&
-	xmf4x4View, float *pfHitDistance)
-{
-	int nIntersected = 0;
-	if (m_ppMeshes)
-	{
-		XMFLOAT3 xmf3PickRayOrigin, xmf3PickRayDirection;
-		//모델 좌표계의 광선을 생성한다.
-		GenerateRayForPicking(xmf3PickPosition, xmf4x4View, &xmf3PickRayOrigin,
-			&xmf3PickRayDirection);
-		for (int i = 0; i < m_nMeshes; i++)
+		else if (!_tcscmp(pstrToken, _T("Normals:")))
 		{
-			//모델 좌표계의 광선과 메쉬의 교차를 검사한다.
-			nIntersected = m_ppMeshes[i]->CheckRayIntersection(xmf3PickRayOrigin,
-				xmf3PickRayDirection, pfHitDistance);
-			return(nIntersected);
+			InFile >> nNormals;
+			pxmf3Normals = new XMFLOAT3[nNormals];
+			for (int i = 0; i < nNormals; i++)
+			{
+				InFile >> pxmf3Normals[i].x >> pxmf3Normals[i].y >> pxmf3Normals[i].z;
+			}
+		}
+		else if (!_tcscmp(pstrToken, _T("TextureCoordinates0:")))
+		{
+			InFile >> nTextureCoords;
+			pxmf3TextureCoords0 = new XMFLOAT2[nTextureCoords];
+			for (int i = 0; i < nTextureCoords; i++)
+			{
+				InFile >> pxmf3TextureCoords0[i].x >> pxmf3TextureCoords0[i].y;
+			}
+		}
+		else if (!_tcscmp(pstrToken, _T("TextureCoordinates1:")))
+		{
+			InFile >> nTextureCoords;
+			pxmf3TextureCoords1 = new XMFLOAT2[nTextureCoords];
+			for (int i = 0; i < nTextureCoords; i++)
+			{
+				InFile >> pxmf3TextureCoords1[i].x >> pxmf3TextureCoords1[i].y;
+			}
+		}
+		else if (!_tcscmp(pstrToken, _T("Indices:")))
+		{
+			InFile >> nIndices;
+			pIndices = new UINT[nIndices];
+			for (int i = 0; i < nIndices; i++)
+			{
+				InFile >> pIndices[i];
+			}
+		}
+		else if (!_tcscmp(pstrToken, _T("AlbedoColor:")))
+		{
+			InFile >> xmf4MaterialAlbedo.x >> xmf4MaterialAlbedo.y >> xmf4MaterialAlbedo.z >> xmf4MaterialAlbedo.w;
+		}
+		else if (!_tcscmp(pstrToken, _T("Children:")))
+		{
+			int nChilds = 0;
+			InFile >> nChilds;
+			if (nChilds > 0)
+			{
+				for (int i = 0; i < nChilds; i++)
+				{
+					CGameObject *pChild = new CGameObject(1);
+					pChild->LoadFrameHierarchyFromFile(pd3dDeviceIndRes, pd3dCommandList, pd3dGraphicsRootSignature, InFile, nFrame + 1);
+					SetChild(pChild);
+#ifdef _WITH_DEBUG_FRAME_HIERARCHY
+					_stprintf_s(pstrDebug, 256, _T("(Frame: %p) (Parent: %p)\n"), pChild, this);
+					OutputDebugString(pstrDebug);
+#endif
+				}
+			}
+		}
+		else if (!_tcscmp(pstrToken, _T("EndOfFrame")))
+		{
+			CMesh *pMesh = NULL;
+			CMaterial *pMaterial = NULL;
+			if (nVertices > 0)
+			{
+				CVertex* pVertices = new CVertex[nVertices];
+				for (int i = 0; i < nVertices; ++i)
+				{
+					pVertices[i].m_xmf3Position = pxmf3Positions[i];
+					if (nNormals > 0)
+						pVertices[i].m_xmf3Normal = pxmf3Normals[i];
+					if (nTextureCoords > 0)
+						pVertices[i].m_xmf2TexCoord0 = pxmf3TextureCoords0[i];
+				}
+				pMaterial = new CMaterial();
+				pMaterial->m_xmf4Albedo = xmf4MaterialAlbedo;
+
+				UINT ncbElementBytes = ((sizeof(CB_GAMEOBJECT_INFO) + 255) & ~255);
+
+				CreateShaderVariables(pd3dDeviceIndRes, pd3dCommandList);
+
+				CIlluminatedShader *pShader = new CIlluminatedShader();
+				pShader->CreateShader(pd3dDeviceIndRes, pd3dGraphicsRootSignature);
+				pShader->CreateShaderVariables(pd3dDeviceIndRes, pd3dCommandList);
+				pShader->CreateCbvAndSrvDescriptorHeaps(pd3dDeviceIndRes, pd3dCommandList, 1, 0);
+				pShader->CreateConstantBufferViews(pd3dDeviceIndRes, pd3dCommandList, 1, m_pd3dcbGameObject.Get(), ncbElementBytes);
+
+				SetCbvGPUDescriptorHandle(pShader->GetGPUCbvDescriptorStartHandle());
+
+				pMaterial->SetShader(pShader);
+
+				pMesh = new CMesh(pd3dDeviceIndRes, pd3dCommandList, nVertices, pVertices, nIndices, pIndices);
+				delete[] pVertices;
+			}
+
+			if (pMesh)
+				SetMesh(0, pMesh);
+			else
+				ResizeMeshes(0);
+			if (pMaterial) SetMaterial(pMaterial);
+
+			m_xmf4x4World = m_xmf4x4Transform = xmf4x4FrameTransform;
+
+			if (pxmf3Positions) delete[] pxmf3Positions;
+			if (pxmf3Normals) delete[] pxmf3Normals;
+			if (pxmf3TextureCoords0) delete[] pxmf3TextureCoords0;
+			if (pxmf3TextureCoords1) delete[] pxmf3TextureCoords1;
+			if (pIndices) delete[] pIndices;
+
+			break;
 		}
 	}
-	return(nIntersected);
 }
 
-CRotatingObject::CRotatingObject(int nMeshes) : CGameObject(nMeshes)
+void CGameObject::LoadGeometryFromFile(
+	  CD3DDeviceIndRes*				pd3dDeviceIndRes
+	, ID3D12GraphicsCommandList*	pd3dCommandList
+	, ID3D12RootSignature*			pd3dGraphicsRootSignature
+	, TCHAR*						pstrFileName)
 {
-	m_xmf3RotationAxis = XMFLOAT3(0.0f, 1.0f, 0.0f);
-	m_fRotationSpeed = 15.0f;
+	wifstream InFile(pstrFileName);
+	LoadFrameHierarchyFromFile(
+		  pd3dDeviceIndRes
+		, pd3dCommandList
+		, pd3dGraphicsRootSignature
+		, InFile
+		, 0);
+
+#ifdef _WITH_DEBUG_FRAME_HIERARCHY
+	TCHAR pstrDebug[256] = { 0 };
+	_stprintf_s(pstrDebug, 256, _T("Frame Hierarchy\n"));
+	OutputDebugString(pstrDebug);
+
+	PrintFrameInfo(this, NULL);
+#endif
 }
-CRotatingObject::~CRotatingObject()
+
+void CGameObject::PrintFrameInfo(CGameObject* pGameObject, CGameObject * pParent)
+{
+	TCHAR pstrDebug[256] = { 0 };
+
+	_stprintf_s(pstrDebug, 256, _T("(Frame: %p) (Parent: %p)\n"), pGameObject, pParent);
+	OutputDebugString(pstrDebug);
+
+	if (pGameObject->m_pSibling) PrintFrameInfo(pGameObject->m_pSibling, pParent);
+	if (pGameObject->m_pChild) PrintFrameInfo(pGameObject->m_pChild, pGameObject);
+}
+
+CApacheHellicopter::CApacheHellicopter(
+	  CD3DDeviceIndRes*				pd3dDeviceIndRes
+	, ID3D12GraphicsCommandList*	pd3dCommandList
+	, ID3D12RootSignature*			pd3dGraphicsRootSignature)
+{
+	LoadGeometryFromFile(
+		  pd3dDeviceIndRes
+		, pd3dCommandList
+		, pd3dGraphicsRootSignature
+		, L"../Assets/Model/Apache.txt");
+	m_pRotorFrame = FindFrame(_T("rotor"));
+}
+
+CApacheHellicopter::~CApacheHellicopter()
 {
 }
 
-void CRotatingObject::Animate(float fTimeElapsed)
+void CApacheHellicopter::Animate(float fTimeElapsed)
 {
-	if (!CGameObject::IsActive()) return;
-
-	if (m_fRotationSpeed != 0.0f)
-		CGameObject::Rotate(&m_xmf3RotationAxis, m_fRotationSpeed * fTimeElapsed);
-	if (m_fMovingSpeed != 0.0f)
-		CGameObject::Move(m_xmf3MovingDirection, m_fMovingSpeed * fTimeElapsed);
-
-	if (!m_bUpdatedWorldMtx) return;
-	m_xmOOBBTransformed.Transform(m_xmOOBB, XMLoadFloat4x4(&m_xmf4x4World));
-	XMStoreFloat4(&m_xmOOBBTransformed.Orientation, 
-		XMQuaternionNormalize(XMLoadFloat4(
-			&m_xmOOBBTransformed.Orientation)));
-	m_bUpdatedWorldMtx = false;
+	if (m_pRotorFrame)
+	{
+		XMFLOAT3 xmf3RotationAxis = Vector3::Normalize(XMFLOAT3(m_pRotorFrame->m_xmf4x4Transform._21, m_pRotorFrame->m_xmf4x4Transform._22, m_pRotorFrame->m_xmf4x4Transform._23));
+		XMMATRIX xmmtxRotate = XMMatrixRotationAxis(XMLoadFloat3(&xmf3RotationAxis), XMConvertToRadians(360.0f * 3.0f) * fTimeElapsed);
+		m_pRotorFrame->m_xmf4x4World = Matrix4x4::Multiply(xmmtxRotate, m_pRotorFrame->m_xmf4x4World);
+	}
 }
 
-void CRotatingObject::SetMovingDirection(XMFLOAT3 & xmf3MovingDirection)
+CFlyerShip::CFlyerShip(
+	  CD3DDeviceIndRes*				pd3dDeviceIndRes
+	, ID3D12GraphicsCommandList*	pd3dCommandList
+	, ID3D12RootSignature*			pd3dGraphicsRootSignature)
 {
-	m_xmf3MovingDirection = Vector3::Normalize(xmf3MovingDirection);
-	m_xmf3RotationAxis = Vector3::CrossProduct(m_xmf3MovingDirection, XMFLOAT3(0, 1, 0));
+	LoadGeometryFromFile(
+		  pd3dDeviceIndRes
+		, pd3dCommandList
+		, pd3dGraphicsRootSignature
+		, L"../Assets/Model/Flyer.txt");
+
+	UINT ncbElementBytes = ((sizeof(CB_GAMEOBJECT_INFO) + 255) & ~255);
+
+	CreateShaderVariables(pd3dDeviceIndRes, pd3dCommandList);
+
+	CIlluminatedShader *pShader = new CIlluminatedShader();
+	pShader->CreateShader(pd3dDeviceIndRes, pd3dGraphicsRootSignature);
+	pShader->CreateShaderVariables(pd3dDeviceIndRes, pd3dCommandList);
+	pShader->CreateCbvAndSrvDescriptorHeaps(pd3dDeviceIndRes, pd3dCommandList, 1, 2);
+	pShader->CreateConstantBufferViews(pd3dDeviceIndRes, pd3dCommandList, 1, m_pd3dcbGameObject.Get(), ncbElementBytes);
+
+	SetCbvGPUDescriptorHandle(pShader->GetGPUCbvDescriptorStartHandle());
+
+	SetShader(pShader);
 }
 
-int n = 0;
-CRevolvingObject::CRevolvingObject()
-	:CGameObject(1)
-{
-	m_xmf3RevolutionAxis = XMFLOAT3(n, 0.0f, 1.0f);
-	if (n++ == 0)
-		m_fRevolutionSpeed = 0.0f;
-	else
-		m_fRevolutionSpeed = 3.14f;
-}
-
-CRevolvingObject::~CRevolvingObject()
+CFlyerShip::~CFlyerShip()
 {
 }
 
-void CRevolvingObject::SetDay()
-{
-	if (m_xmf3RevolutionAxis.x == 0)
-		m_fRevolutionSpeed = 0.0f;
-	else if(m_xmf3RevolutionAxis.x == 1)
-		m_fRevolutionSpeed = 3.14f;
-}
-
-void CRevolvingObject::SetNight()
-{
-	if (m_xmf3RevolutionAxis.x == 0)
-		m_fRevolutionSpeed = 3.14f;
-	else if (m_xmf3RevolutionAxis.x == 1)
-		m_fRevolutionSpeed = 0.0f;
-}
-
-void CRevolvingObject::Animate(float fTimeElapsed)
-{
-	m_fRevolutionSpeed += fTimeElapsed * 0.3f;
-	m_xmf4x4World._41 = 1400 * cos(m_fRevolutionSpeed) + 800;
-	m_xmf4x4World._42 = 1400 * sin(m_fRevolutionSpeed);
-	m_xmf4x4World._43 = 800;
-	if (m_fRevolutionSpeed > 6.28) m_fRevolutionSpeed -= 6.28;
-	//XMMATRIX mtxRotate = XMMatrixRotationAxis(
-	//	XMLoadFloat3(&m_xmf3RevolutionAxis), 
-	//	XMConvertToRadians(m_fRevolutionSpeed * fTimeElapsed));
-	//m_xmf4x4World = Matrix4x4::Multiply(m_xmf4x4World, mtxRotate);
-}
 
 CHeightMapTerrain::CHeightMapTerrain(
-	  CD3DDeviceIndRes *pd3dDeviceIndRes
+	  CD3DDeviceIndRes* pd3dDeviceIndRes
 	, ID3D12GraphicsCommandList *pd3dCommandList
 	, ID3D12RootSignature *pd3dGraphicsRootSignature
 	, LPCTSTR pFileName, int nWidth, int nLength
@@ -529,7 +724,6 @@ CHeightMapTerrain::CHeightMapTerrain(
 	, XMFLOAT3 xmf3Scale, XMFLOAT4 xmf4Color) 
 	: CGameObject(0)
 {
-	m_Tag = ObjectType::Background;
 	m_nWidth = nWidth;
 	m_nLength = nLength;
 
@@ -549,14 +743,14 @@ CHeightMapTerrain::CHeightMapTerrain(
 	for (int i = 0; i < m_nMeshes; i++) 
 		m_ppMeshes[i] = NULL;
 
-	CHeightMapGridMeshTextured *pHeightMapGridMesh = NULL;
+	CHeightMapGridMesh* pHeightMapGridMesh = NULL;
 	for (int z = 0, zStart = 0; z < czBlocks; z++)
 	{
 		for (int x = 0, xStart = 0; x < cxBlocks; x++)
 		{
 			xStart = x * (nBlockWidth - 1);
 			zStart = z * (nBlockLength - 1);
-			pHeightMapGridMesh = new CHeightMapGridMeshTextured(
+			pHeightMapGridMesh = new CHeightMapGridMesh(
 				pd3dDeviceIndRes
 				, pd3dCommandList
 				, xStart, zStart
@@ -575,10 +769,8 @@ CHeightMapTerrain::CHeightMapTerrain(
 	pTerrainMaterial->SetTexture(pTerrainTexture);
 	SetMaterial(pTerrainMaterial);
 
-	CTexturedTerrainShader *pShader = new CTexturedTerrainShader();
+	CTerrainShader *pShader = new CTerrainShader();
 	pShader->CreateShader(pd3dDeviceIndRes, pd3dGraphicsRootSignature);
-	pShader->SetTerrain(this);
-	pShader->CreateShaderVariables(pd3dDeviceIndRes, pd3dCommandList);
 	pShader->CreateCbvAndSrvDescriptorHeaps(pd3dDeviceIndRes, pd3dCommandList, 0, 2);
 	pShader->CreateShaderResourceViews(pd3dDeviceIndRes, pd3dCommandList, pTerrainTexture, 5, false);
 	pTerrainMaterial->SetShader(pShader);
@@ -616,9 +808,9 @@ void CHeightMapTerrain::Render(ID3D12GraphicsCommandList * pd3dCommandList, CCam
 }
 
 CSkyBox::CSkyBox(
-	CD3DDeviceIndRes *pd3dDeviceIndRes
-	, ID3D12GraphicsCommandList *pd3dCommandList
-	, ID3D12RootSignature *pd3dGraphicsRootSignature) 
+	  CD3DDeviceIndRes*				pd3dDeviceIndRes
+	, ID3D12GraphicsCommandList*	pd3dCommandList
+	, ID3D12RootSignature*			pd3dGraphicsRootSignature) 
 	: CGameObject(6)
 {
 	CRectMeshTextured *pSkyBoxMesh = new CRectMeshTextured(pd3dDeviceIndRes, pd3dCommandList, 20.0f, 20.0f, 0.0f, 0.0f, 0.0f, +10.0f);
@@ -648,8 +840,6 @@ CSkyBox::CSkyBox(
 	SetMaterial(pSkyBoxMaterial);
 	CSkyBoxShader *pSkyBoxShader = new CSkyBoxShader();
 	pSkyBoxShader->CreateShader(pd3dDeviceIndRes, pd3dGraphicsRootSignature);
-	pSkyBoxShader->SetSkyBox(this);
-	pSkyBoxShader->CreateShaderVariables(pd3dDeviceIndRes, pd3dCommandList);
 	pSkyBoxShader->CreateCbvAndSrvDescriptorHeaps(pd3dDeviceIndRes, pd3dCommandList, 0, 6);
 	pSkyBoxShader->CreateShaderResourceViews(pd3dDeviceIndRes, pd3dCommandList, pSkyBoxTexture, 5, false);
 	pSkyBoxMaterial->SetShader(pSkyBoxShader);

@@ -32,6 +32,9 @@
 #include <string>
 #include <vector>
 #include <algorithm>
+#include <fstream>
+
+using namespace std;
 
 // Direct 헤더 파일
 #include <d3d12.h>
