@@ -1,73 +1,293 @@
+//-----------------------------------------------------------------------------
+// File: CScene.cpp
+//-----------------------------------------------------------------------------
+
 #include "stdafx.h"
-#include "Player.h"
-#include "GameFramework.h"
 #include "Scene.h"
 
 CScene::CScene()
 {
-	m_nCurrentBulletIdx = 0;
-	m_nCurrentParticleIdx = 0;
-	m_fBulletTimer = 0.0f;
-	m_fRestartCounter = 0.0f;
-	m_ptOldCursorPos = { 0, 0 };
 }
+
 CScene::~CScene()
 {
 }
 
-void CScene::SetHWNDAndHInstance(HWND hWnd, HINSTANCE hInstance)
+void CScene::BuildLightsAndMaterials()
 {
-	m_hWnd = hWnd;
-	m_hInstance = hInstance;
+	m_pLights = new LIGHTS;
+	::ZeroMemory(m_pLights, sizeof(LIGHTS));
+
+	m_pLights->m_xmf4GlobalAmbient = XMFLOAT4(0.1f, 0.1f, 0.1f, 1.0f);
+
+	m_pLights->m_pLights[0].m_bEnable = true;
+	m_pLights->m_pLights[0].m_nType = POINT_LIGHT;
+	m_pLights->m_pLights[0].m_fRange = 100.0f;
+	m_pLights->m_pLights[0].m_xmf4Ambient = XMFLOAT4(0.1f, 0.1f, 0.1f, 1.0f);
+	m_pLights->m_pLights[0].m_xmf4Diffuse = XMFLOAT4(0.8f, 0.8f, 0.8f, 1.0f);
+	m_pLights->m_pLights[0].m_xmf4Specular = XMFLOAT4(0.1f, 0.1f, 0.1f, 0.0f);
+	m_pLights->m_pLights[0].m_xmf3Position = XMFLOAT3(130.0f, 30.0f, 30.0f);
+	m_pLights->m_pLights[0].m_xmf3Direction = XMFLOAT3(0.0f, 0.0f, 0.0f);
+	m_pLights->m_pLights[0].m_xmf3Attenuation = XMFLOAT3(1.0f, 0.001f, 0.0001f);
+	m_pLights->m_pLights[1].m_bEnable = true;
+	m_pLights->m_pLights[1].m_nType = SPOT_LIGHT;
+	m_pLights->m_pLights[1].m_fRange = 300.0f;
+	m_pLights->m_pLights[1].m_xmf4Ambient = XMFLOAT4(0.1f, 0.1f, 0.1f, 1.0f);
+	m_pLights->m_pLights[1].m_xmf4Diffuse = XMFLOAT4(0.35f, 0.35f, 0.35f, 1.0f);
+	m_pLights->m_pLights[1].m_xmf4Specular = XMFLOAT4(0.38f, 0.38f, 0.38f, 0.0f);
+	m_pLights->m_pLights[1].m_xmf3Position = XMFLOAT3(-50.0f, 20.0f, -5.0f);
+	m_pLights->m_pLights[1].m_xmf3Direction = XMFLOAT3(0.0f, 0.0f, 1.0f);
+	m_pLights->m_pLights[1].m_xmf3Attenuation = XMFLOAT3(1.0f, 0.1f, 0.001f);
+	m_pLights->m_pLights[1].m_fFalloff = 8.0f;
+	m_pLights->m_pLights[1].m_fPhi = (float)cos(XMConvertToRadians(70.0f));
+	m_pLights->m_pLights[1].m_fTheta = (float)cos(XMConvertToRadians(50.0f));
+	m_pLights->m_pLights[2].m_bEnable = true;
+	m_pLights->m_pLights[2].m_nType = DIRECTIONAL_LIGHT;
+	m_pLights->m_pLights[2].m_xmf4Ambient = XMFLOAT4(0.25f, 0.25f, 0.25f, 1.0f);
+	m_pLights->m_pLights[2].m_xmf4Diffuse = XMFLOAT4(0.75f, 0.75f, 0.75f, 1.0f);
+	m_pLights->m_pLights[2].m_xmf4Specular = XMFLOAT4(0.3f, 0.3f, 0.3f, 1.0f);
+	m_pLights->m_pLights[2].m_xmf3Direction = XMFLOAT3(-1.0f, -1.0f, 0.0f);
+	m_pLights->m_pLights[3].m_bEnable = true;
+	m_pLights->m_pLights[3].m_nType = SPOT_LIGHT;
+	m_pLights->m_pLights[3].m_fRange = 60.0f;
+	m_pLights->m_pLights[3].m_xmf4Ambient = XMFLOAT4(0.1f, 0.1f, 0.1f, 1.0f);
+	m_pLights->m_pLights[3].m_xmf4Diffuse = XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f);
+	m_pLights->m_pLights[3].m_xmf4Specular = XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f);
+	m_pLights->m_pLights[3].m_xmf3Position = XMFLOAT3(-150.0f, 30.0f, 30.0f);
+	m_pLights->m_pLights[3].m_xmf3Direction = XMFLOAT3(0.0f, 1.0f, 1.0f);
+	m_pLights->m_pLights[3].m_xmf3Attenuation = XMFLOAT3(1.0f, 0.01f, 0.0001f);
+	m_pLights->m_pLights[3].m_fFalloff = 8.0f;
+	m_pLights->m_pLights[3].m_fPhi = (float)cos(XMConvertToRadians(90.0f));
+	m_pLights->m_pLights[3].m_fTheta = (float)cos(XMConvertToRadians(30.0f));
+	m_pLights->m_pLights[4].m_bEnable = true;
+	m_pLights->m_pLights[4].m_nType = DIRECTIONAL_LIGHT;
+	m_pLights->m_pLights[4].m_xmf4Ambient = XMFLOAT4(0.25f, 0.25f, 0.25f, 1.0f);
+	m_pLights->m_pLights[4].m_xmf4Diffuse = XMFLOAT4(0.75f, 0.75f, 0.75f, 1.0f);
+	m_pLights->m_pLights[4].m_xmf4Specular = XMFLOAT4(0.3f, 0.3f, 0.3f, 1.0f);
+	m_pLights->m_pLights[4].m_xmf3Direction = XMFLOAT3(1.0f, 1.0f, 1.0f);
+
+	m_pMaterials = new MATERIALS;
+	::ZeroMemory(m_pMaterials, sizeof(MATERIALS));
+
+	m_pMaterials->m_pReflections[0] ={ XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f), XMFLOAT4(0.2f, 0.2f, 0.2f, 5.0f), XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f) };
+	m_pMaterials->m_pReflections[1] ={ XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f), XMFLOAT4(1.0f, 1.0f, 1.0f, 10.0f), XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f) };
+	m_pMaterials->m_pReflections[2] ={ XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f), XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f), XMFLOAT4(1.0f, 1.0f, 1.0f, 15.0f), XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f) };
+	m_pMaterials->m_pReflections[3] ={ XMFLOAT4(0.5f, 0.0f, 1.0f, 1.0f), XMFLOAT4(0.0f, 0.5f, 1.0f, 1.0f), XMFLOAT4(1.0f, 1.0f, 1.0f, 20.0f), XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f) };
+	m_pMaterials->m_pReflections[4] ={ XMFLOAT4(0.0f, 0.5f, 1.0f, 1.0f), XMFLOAT4(0.5f, 0.0f, 1.0f, 1.0f), XMFLOAT4(1.0f, 1.0f, 1.0f, 25.0f), XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f) };
+	m_pMaterials->m_pReflections[5] ={ XMFLOAT4(0.0f, 0.5f, 0.5f, 1.0f), XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f), XMFLOAT4(1.0f, 1.0f, 1.0f, 30.0f), XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f) };
+	m_pMaterials->m_pReflections[6] ={ XMFLOAT4(0.5f, 0.5f, 1.0f, 1.0f), XMFLOAT4(0.5f, 0.5f, 1.0f, 1.0f), XMFLOAT4(1.0f, 1.0f, 1.0f, 35.0f), XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f) };
+	m_pMaterials->m_pReflections[7] ={ XMFLOAT4(1.0f, 0.5f, 1.0f, 1.0f), XMFLOAT4(1.0f, 0.0f, 1.0f, 1.0f), XMFLOAT4(1.0f, 1.0f, 1.0f, 40.0f), XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f) };
+
+	m_nMaterials = 8;
+
+	for (int i = 0; i < m_nObjects; i++) UpdateMaterial(m_ppObjects[i]);
 }
 
-ID3D12RootSignature* CScene::GetGraphicsRootSignature()
+void CScene::UpdateMaterial(CGameObject *pObject)
 {
-	return(m_pd3dGraphicsRootSignature.Get());
-}
-ID3D12RootSignature* CScene::CreateGraphicsRootSignature(CD3DDeviceIndRes* pd3dDeviceIndRes)
-{
-	ID3D12RootSignature* pd3dGraphicsRootSignature = NULL;
-	D3D12_DESCRIPTOR_RANGE pd3dDescriptorRanges[4];
+	CMaterial *pMaterial = pObject->m_pMaterial;
+	if (pMaterial)
+	{
+		if (m_nMaterials < MAX_MATERIALS)
+		{
+			m_pMaterials->m_pReflections[m_nMaterials].m_xmf4Ambient = pMaterial->m_xmf4Albedo;
+			m_pMaterials->m_pReflections[m_nMaterials].m_xmf4Diffuse = pMaterial->m_xmf4Albedo;
+			m_pMaterials->m_pReflections[m_nMaterials].m_xmf4Specular = XMFLOAT4(1.0f, 1.0f, 1.0f, 20.0f);
+			m_pMaterials->m_pReflections[m_nMaterials].m_xmf4Emissive = XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
+			pMaterial->m_nReflection = m_nMaterials++;
+		}
+		else
+			pMaterial->m_nReflection = 0;
+	}
 
-	pd3dDescriptorRanges[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-	pd3dDescriptorRanges[0].NumDescriptors = 6;
-	pd3dDescriptorRanges[0].BaseShaderRegister = 1; //t1: gtxtTextures[6]
+	if (pObject->m_pSibling) UpdateMaterial(pObject->m_pSibling);
+	if (pObject->m_pChild) UpdateMaterial(pObject->m_pChild);
+}
+
+void CScene::SetMaterial(int nIndex, MATERIAL *pMaterial)
+{
+	m_pMaterials->m_pReflections[nIndex] = *pMaterial;
+}
+
+void CScene::BuildObjects(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *pd3dCommandList)
+{
+	m_pd3dGraphicsRootSignature = CreateGraphicsRootSignature(pd3dDevice);
+
+	// Terrain
+	{
+		XMFLOAT3 xmf3Scale(6.5f, 2.0f, 6.5f);
+		XMFLOAT4 xmf4Color(0.0f, 0.2f, 0.0f, 0.0f);
+		m_pTerrain = new CHeightMapTerrain(
+			pd3dDevice
+			, pd3dCommandList
+			, m_pd3dGraphicsRootSignature
+			, _T("Assets/Image/Terrain/HeightMap.raw")
+			, 257, 257, 257, 257, xmf3Scale, xmf4Color);
+	}
+	
+	// SkyBox
+	m_pSkyBox = new CSkyBox(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
+
+	XMFLOAT3 xmf3Scale = m_pTerrain->GetScale();
+	float fHalfHeightMapWidth = m_pTerrain->GetHeightMapWidth() * xmf3Scale.x * 0.5f;
+	float fHalfHeightMapLength = m_pTerrain->GetHeightMapLength() * xmf3Scale.z * 0.5f;
+	// Static billboards
+	{
+		const int num_texture = 8;
+		std::wstring billboard_texture_path[num_texture];
+		billboard_texture_path[0] = L"Assets/Image/Grasses/Grass01.DDS";
+		billboard_texture_path[1] = L"Assets/Image/Grasses/Grass02.DDS";
+		billboard_texture_path[2] = L"Assets/Image/Grasses/Grass03.DDS";
+		billboard_texture_path[3] = L"Assets/Image/Grasses/Grass04.DDS";
+		billboard_texture_path[4] = L"Assets/Image/Grasses/Grass05.DDS";
+		billboard_texture_path[5] = L"Assets/Image/Grasses/Grass06.DDS";
+		billboard_texture_path[6] = L"Assets/Image/Trees/Tree01.DDS";
+		billboard_texture_path[7] = L"Assets/Image/Trees/Tree02.DDS";
+
+		CTexture* pBillboardTexture[num_texture];
+		for (int i = 0; i < num_texture; ++i)
+		{
+			pBillboardTexture[i] = new CTexture(1, RESOURCE_TEXTURE2D_ARRAY, 0);
+			pBillboardTexture[i]->LoadTextureFromFile(pd3dDevice, pd3dCommandList, &(*(billboard_texture_path[i].begin())), 0);
+		}
+
+		m_nBillboard = num_texture;
+		m_ppBillboards = new CStaticBillboards*[m_nBillboard];
+
+		const float radius = 1000.f;
+		const int num_grasses_in_area = 1000;
+		const int num_tress_in_area = 100;
+		int num_billboard_in_area = 0;
+		for (int i = 0; i < m_nBillboard; ++i)
+		{
+			UINT texture_idx = rand() % num_texture;
+			XMFLOAT3 xmf3CenterPos = XMFLOAT3();
+			XMFLOAT2 xmf2Size = XMFLOAT2();
+			if (texture_idx < 6)
+			{
+				xmf2Size = XMFLOAT2(50, 20);
+				num_billboard_in_area = num_grasses_in_area;
+			}
+			else if (texture_idx < 8)
+			{
+				xmf2Size = XMFLOAT2(20, 50);
+				num_billboard_in_area = num_tress_in_area;
+			}
+			m_ppBillboards[i] = new CStaticBillboards(
+				pd3dDevice
+				, pd3dCommandList
+				, m_pd3dGraphicsRootSignature
+				, L"Assets/Image/Grasses/Grass01.DDS"
+				, num_billboard_in_area
+				, XMFLOAT3(fHalfHeightMapWidth, 0, fHalfHeightMapLength)
+				, xmf2Size
+				, radius
+				, static_cast<void*>(m_pTerrain));
+		}
+	}
+
+	m_nObjects = 1;
+	m_ppObjects = new CGameObject*[m_nObjects];
+
+#ifdef _WITH_GUNSHIP_MODEL
+	m_ppObjects[0] = new CGunshipHellicopter(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
+	m_ppObjects[0]->SetPosition(XMFLOAT3(0.0f, 0.0f, 50.0f));
+	//m_ppObjects[1] = new CGunshipHellicopter(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
+	//m_ppObjects[1]->SetPosition(XMFLOAT3(-30.0f, 5.0f, 30.0f));
+	//m_ppObjects[2] = new CGunshipHellicopter(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
+	//m_ppObjects[2]->SetPosition(XMFLOAT3(+30.0f, 0.0f, 20.0f));
+	//m_ppObjects[3] = new CGunshipHellicopter(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
+	//m_ppObjects[3]->SetPosition(XMFLOAT3(+40.0f, 10.0f, 50.0f));
+	//m_ppObjects[4] = new CGunshipHellicopter(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
+	//m_ppObjects[4]->SetPosition(XMFLOAT3(+40.0f, -10.0f, 30.0f));
+#endif
+#ifdef _WITH_APACHE_MODEL
+	m_ppObjects[0] = new CApacheHellicopter(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
+	m_ppObjects[0]->SetPosition(XMFLOAT3(0.0f, 0.0f, 0.0f));
+	m_ppObjects[0]->Rotate(0.0f, 90.0f, 0.0f);
+#endif
+
+	BuildLightsAndMaterials();
+
+	CreateShaderVariables(pd3dDevice, pd3dCommandList);
+}
+
+void CScene::ReleaseObjects()
+{
+	if (m_pd3dGraphicsRootSignature) m_pd3dGraphicsRootSignature->Release();
+
+	if (m_ppShaders)
+	{
+		for (int i = 0; i < m_nShaders; i++)
+		{
+			m_ppShaders[i]->ReleaseShaderVariables();
+			m_ppShaders[i]->ReleaseObjects();
+			m_ppShaders[i]->Release();
+		}
+		delete[] m_ppShaders;
+	}
+
+	if (m_ppObjects)
+	{
+		for (int i = 0; i < m_nObjects; i++) delete m_ppObjects[i];
+		delete[] m_ppObjects;
+	}
+
+	ReleaseShaderVariables();
+
+	if (m_pLights) delete m_pLights;
+	if (m_pMaterials) delete m_pMaterials;
+
+	if (m_pSkyBox) delete m_pSkyBox;
+	if (m_pTerrain) delete m_pTerrain;
+
+	if (m_ppBillboards)
+	{
+		for (int i = 0; i < m_nBillboard; i++) delete m_ppBillboards[i];
+		delete[] m_ppBillboards;
+	}
+}
+
+void CScene::ReleaseUploadBuffers()
+{
+	for (int i = 0; i < m_nShaders; i++) m_ppShaders[i]->ReleaseUploadBuffers();
+
+	for (int i = 0; i < m_nObjects; i++) m_ppObjects[i]->ReleaseUploadBuffers();
+}
+
+ID3D12RootSignature *CScene::CreateGraphicsRootSignature(ID3D12Device *pd3dDevice)
+{
+	ID3D12RootSignature *pd3dGraphicsRootSignature = NULL;
+
+	D3D12_DESCRIPTOR_RANGE pd3dDescriptorRanges[2];
+
+	pd3dDescriptorRanges[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
+	pd3dDescriptorRanges[0].NumDescriptors = 1;
+	pd3dDescriptorRanges[0].BaseShaderRegister = 2; //Game Objects
 	pd3dDescriptorRanges[0].RegisterSpace = 0;
-	pd3dDescriptorRanges[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+	pd3dDescriptorRanges[0].OffsetInDescriptorsFromTableStart = 0;
 
 	pd3dDescriptorRanges[1].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-	pd3dDescriptorRanges[1].NumDescriptors = 1;
-	pd3dDescriptorRanges[1].BaseShaderRegister = 7; //t7: gtxtTerrainBaseTexture
+	pd3dDescriptorRanges[1].NumDescriptors = 6;
+	pd3dDescriptorRanges[1].BaseShaderRegister = 0; //Texture
 	pd3dDescriptorRanges[1].RegisterSpace = 0;
-	pd3dDescriptorRanges[1].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
-
-	pd3dDescriptorRanges[2].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-	pd3dDescriptorRanges[2].NumDescriptors = 1;
-	pd3dDescriptorRanges[2].BaseShaderRegister = 8; //t8: gtxtTerrainDetailTexture
-	pd3dDescriptorRanges[2].RegisterSpace = 0;
-	pd3dDescriptorRanges[2].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
-
-	pd3dDescriptorRanges[3].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-	pd3dDescriptorRanges[3].NumDescriptors = 1;
-	pd3dDescriptorRanges[3].BaseShaderRegister = 9; //t9: gtxtSkyBoxTexture
-	pd3dDescriptorRanges[3].RegisterSpace = 0;
-	pd3dDescriptorRanges[3].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+	pd3dDescriptorRanges[1].OffsetInDescriptorsFromTableStart = 0;
 
 	D3D12_ROOT_PARAMETER pd3dRootParameters[6];
+
 	pd3dRootParameters[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
 	pd3dRootParameters[0].Descriptor.ShaderRegister = 0; //Player
 	pd3dRootParameters[0].Descriptor.RegisterSpace = 0;
-	pd3dRootParameters[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+	pd3dRootParameters[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX;
 
 	pd3dRootParameters[1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
 	pd3dRootParameters[1].Descriptor.ShaderRegister = 1; //Camera
 	pd3dRootParameters[1].Descriptor.RegisterSpace = 0;
 	pd3dRootParameters[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 
-	pd3dRootParameters[2].ParameterType = D3D12_ROOT_PARAMETER_TYPE_SRV;
-	pd3dRootParameters[2].Descriptor.ShaderRegister = 0; //t0
-	pd3dRootParameters[2].Descriptor.RegisterSpace = 0;
+	pd3dRootParameters[2].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+	pd3dRootParameters[2].DescriptorTable.NumDescriptorRanges = 1;
+	pd3dRootParameters[2].DescriptorTable.pDescriptorRanges = &pd3dDescriptorRanges[0]; //Game Objects
 	pd3dRootParameters[2].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 
 	pd3dRootParameters[3].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
@@ -81,90 +301,56 @@ ID3D12RootSignature* CScene::CreateGraphicsRootSignature(CD3DDeviceIndRes* pd3dD
 	pd3dRootParameters[4].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 
 	pd3dRootParameters[5].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-	pd3dRootParameters[5].DescriptorTable.NumDescriptorRanges = 4;
-	pd3dRootParameters[5].DescriptorTable.pDescriptorRanges = pd3dDescriptorRanges;
-	pd3dRootParameters[5].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+	pd3dRootParameters[5].DescriptorTable.NumDescriptorRanges = 1;
+	pd3dRootParameters[5].DescriptorTable.pDescriptorRanges = &pd3dDescriptorRanges[1]; //Texture
+	pd3dRootParameters[5].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
 
-	D3D12_ROOT_SIGNATURE_FLAGS d3dRootSignatureFlags =
-		D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT |
-		D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS |
-		D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS;
-		//| D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS;
-		//| D3D12_ROOT_SIGNATURE_FLAG_DENY_PIXEL_SHADER_ROOT_ACCESS;
+	D3D12_STATIC_SAMPLER_DESC d3dSamplerDesc;
+	::ZeroMemory(&d3dSamplerDesc, sizeof(D3D12_STATIC_SAMPLER_DESC));
+	d3dSamplerDesc.Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
+	d3dSamplerDesc.AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+	d3dSamplerDesc.AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+	d3dSamplerDesc.AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+	d3dSamplerDesc.MipLODBias = 0;
+	d3dSamplerDesc.MaxAnisotropy = 1;
+	d3dSamplerDesc.ComparisonFunc = D3D12_COMPARISON_FUNC_ALWAYS;
+	d3dSamplerDesc.MinLOD = 0;
+	d3dSamplerDesc.MaxLOD = D3D12_FLOAT32_MAX;
+	d3dSamplerDesc.ShaderRegister = 0;
+	d3dSamplerDesc.RegisterSpace = 0;
+	d3dSamplerDesc.ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
 
-	D3D12_STATIC_SAMPLER_DESC pd3dSamplerDescs[2];
-	pd3dSamplerDescs[0].Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
-	pd3dSamplerDescs[0].AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-	pd3dSamplerDescs[0].AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-	pd3dSamplerDescs[0].AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-	pd3dSamplerDescs[0].MipLODBias = 0;
-	pd3dSamplerDescs[0].MaxAnisotropy = 1;
-	pd3dSamplerDescs[0].ComparisonFunc = D3D12_COMPARISON_FUNC_ALWAYS;
-	pd3dSamplerDescs[0].MinLOD = 0;
-	pd3dSamplerDescs[0].MaxLOD = D3D12_FLOAT32_MAX;
-	pd3dSamplerDescs[0].ShaderRegister = 0;
-	pd3dSamplerDescs[0].RegisterSpace = 0;
-	pd3dSamplerDescs[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
-
-	pd3dSamplerDescs[1].Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
-	pd3dSamplerDescs[1].AddressU = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
-	pd3dSamplerDescs[1].AddressV = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
-	pd3dSamplerDescs[1].AddressW = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
-	pd3dSamplerDescs[1].MipLODBias = 0;
-	pd3dSamplerDescs[1].MaxAnisotropy = 1;
-	pd3dSamplerDescs[1].ComparisonFunc = D3D12_COMPARISON_FUNC_ALWAYS;
-	pd3dSamplerDescs[1].MinLOD = 0;
-	pd3dSamplerDescs[1].MaxLOD = D3D12_FLOAT32_MAX;
-	pd3dSamplerDescs[1].ShaderRegister = 1;
-	pd3dSamplerDescs[1].RegisterSpace = 0;
-	pd3dSamplerDescs[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
-
+	D3D12_ROOT_SIGNATURE_FLAGS d3dRootSignatureFlags = 
+		D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT 
+		| D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS 
+		| D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS;
 	D3D12_ROOT_SIGNATURE_DESC d3dRootSignatureDesc;
 	::ZeroMemory(&d3dRootSignatureDesc, sizeof(D3D12_ROOT_SIGNATURE_DESC));
 	d3dRootSignatureDesc.NumParameters = _countof(pd3dRootParameters);
 	d3dRootSignatureDesc.pParameters = pd3dRootParameters;
-	d3dRootSignatureDesc.NumStaticSamplers = _countof(pd3dSamplerDescs);
-	d3dRootSignatureDesc.pStaticSamplers = pd3dSamplerDescs;
+	d3dRootSignatureDesc.NumStaticSamplers = 1;
+	d3dRootSignatureDesc.pStaticSamplers = &d3dSamplerDesc;
 	d3dRootSignatureDesc.Flags = d3dRootSignatureFlags;
 
-	ComPtr<ID3DBlob> pd3dSignatureBlob = NULL;
-	ComPtr<ID3DBlob> pd3dErrorBlob = NULL;
-	D3D12SerializeRootSignature(
-		  &d3dRootSignatureDesc
-		, D3D_ROOT_SIGNATURE_VERSION_1
-		, &pd3dSignatureBlob
-		, &pd3dErrorBlob);
-
-	pd3dDeviceIndRes->CreateRootSignature(
-		  0
-		, pd3dSignatureBlob->GetBufferPointer()
-		, pd3dSignatureBlob->GetBufferSize()
-		, &pd3dGraphicsRootSignature);
+	ID3DBlob *pd3dSignatureBlob = NULL;
+	ID3DBlob *pd3dErrorBlob = NULL;
+	D3D12SerializeRootSignature(&d3dRootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1, &pd3dSignatureBlob, &pd3dErrorBlob);
+	pd3dDevice->CreateRootSignature(0, pd3dSignatureBlob->GetBufferPointer(), pd3dSignatureBlob->GetBufferSize(), __uuidof(ID3D12RootSignature), (void **)&pd3dGraphicsRootSignature);
+	if (pd3dSignatureBlob) pd3dSignatureBlob->Release();
+	if (pd3dErrorBlob) pd3dErrorBlob->Release();
 
 	return(pd3dGraphicsRootSignature);
 }
 
-void CScene::CreateShaderVariables(CD3DDeviceIndRes* pd3dDeviceIndRes, ID3D12GraphicsCommandList *pd3dCommandList)
+void CScene::CreateShaderVariables(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *pd3dCommandList)
 {
 	UINT ncbElementBytes = ((sizeof(LIGHTS) + 255) & ~255); //256의 배수
-	m_pd3dcbLights = pd3dDeviceIndRes->CreateBufferResource(
-		pd3dCommandList
-		, NULL
-		, ncbElementBytes
-		, D3D12_HEAP_TYPE_UPLOAD
-		, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER
-		, NULL);
+	m_pd3dcbLights = ::CreateBufferResource(pd3dDevice, pd3dCommandList, NULL, ncbElementBytes, D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, NULL);
 
 	m_pd3dcbLights->Map(0, NULL, (void **)&m_pcbMappedLights);
 
 	UINT ncbMaterialBytes = ((sizeof(MATERIALS) + 255) & ~255); //256의 배수
-	m_pd3dcbMaterials = pd3dDeviceIndRes->CreateBufferResource(
-		pd3dCommandList
-		, NULL
-		, ncbMaterialBytes
-		, D3D12_HEAP_TYPE_UPLOAD
-		, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER
-		, NULL);
+	m_pd3dcbMaterials = ::CreateBufferResource(pd3dDevice, pd3dCommandList, NULL, ncbMaterialBytes, D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, NULL);
 
 	m_pd3dcbMaterials->Map(0, NULL, (void **)&m_pcbMappedMaterials);
 }
@@ -180,360 +366,67 @@ void CScene::ReleaseShaderVariables()
 	if (m_pd3dcbLights)
 	{
 		m_pd3dcbLights->Unmap(0, NULL);
+		m_pd3dcbLights->Release();
 	}
 	if (m_pd3dcbMaterials)
 	{
 		m_pd3dcbMaterials->Unmap(0, NULL);
+		m_pd3dcbMaterials->Release();
 	}
 }
 
-void CScene::BuildLightsAndMaterials()
+bool CScene::OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam)
 {
-	m_pLights = new LIGHTS;
-	::ZeroMemory(m_pLights, sizeof(LIGHTS));
-
-	m_pLights->m_xmf4GlobalAmbient = XMFLOAT4(0.005f, 0.005f, 0.005f, 1.0f);
-
-	// 플레이어 손전등
-	m_pLights->m_pLights[0].m_bEnable = true;
-	m_pLights->m_pLights[0].m_nType = SPOT_LIGHT;
-	m_pLights->m_pLights[0].m_fRange = 300.0f;
-	m_pLights->m_pLights[0].m_xmf4Ambient = XMFLOAT4(0.1f, 0.1f, 0.1f, 1.0f);
-	m_pLights->m_pLights[0].m_xmf4Diffuse = XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f);
-	m_pLights->m_pLights[0].m_xmf4Specular = XMFLOAT4(0.3f, 0.3f, 0.3f, 0.0f);
-	m_pLights->m_pLights[0].m_xmf3Position = XMFLOAT3(-50.0f, 20.0f, -5.0f);
-	m_pLights->m_pLights[0].m_xmf3Direction = XMFLOAT3(0.0f, 0.0f, 1.0f);
-	m_pLights->m_pLights[0].m_xmf3Attenuation = XMFLOAT3(1.0f, 0.01f, 0.0001f);
-	m_pLights->m_pLights[0].m_fFalloff = 9.0f;
-	m_pLights->m_pLights[0].m_fPhi = (float)cos(XMConvertToRadians(70.0f));
-	m_pLights->m_pLights[0].m_fTheta = (float)cos(XMConvertToRadians(35.0f));
-
-	// 태양
-	m_pLights->m_pLights[1].m_bEnable = true;
-	m_pLights->m_pLights[1].m_nType = DIRECTIONAL_LIGHT;
-	m_pLights->m_pLights[1].m_xmf4Ambient = XMFLOAT4(0.2f, 0.2f, 0.2f, 1.0f);
-	m_pLights->m_pLights[1].m_xmf4Diffuse = XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f);
-	m_pLights->m_pLights[1].m_xmf4Specular = XMFLOAT4(0.3f, 0.3f, 0.3f, 0.0f);
-	m_pLights->m_pLights[1].m_xmf3Direction = XMFLOAT3(0.0f, -1.0f, 0.0f);
-	m_pLights->m_pLights[1].m_xmf3Position = XMFLOAT3(-50.0f, 1020.0f, -5.0f);
-
-	// 달
-	m_pLights->m_pLights[2].m_bEnable = true;
-	m_pLights->m_pLights[2].m_nType = POINT_LIGHT;
-	m_pLights->m_pLights[2].m_fRange = 2000.0f;
-	m_pLights->m_pLights[2].m_xmf4Ambient = XMFLOAT4(0.1f, 0.1f, 0.1f, 1.0f);
-	m_pLights->m_pLights[2].m_xmf4Diffuse = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
-	m_pLights->m_pLights[2].m_xmf4Specular = XMFLOAT4(0.1f, 0.1f, 0.1f, 0.0f);
-	m_pLights->m_pLights[2].m_xmf3Position = XMFLOAT3(130.0f, 30.0f, 30.0f);
-	m_pLights->m_pLights[2].m_xmf3Direction = XMFLOAT3(0.0f, 0.0f, 0.0f);
-	m_pLights->m_pLights[2].m_xmf3Attenuation = XMFLOAT3(1.0f, 0.00001f, 0.000001f);
-
-	m_pMaterials = new MATERIALS;
-	::ZeroMemory(m_pMaterials, sizeof(MATERIALS));
-
-	m_pMaterials->m_pReflections[0] = { XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f), XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f), XMFLOAT4(1.0f, 1.0f, 1.0f, 5.0f), XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f) };
-	m_pMaterials->m_pReflections[1] = { XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f), XMFLOAT4(1.0f, 1.0f, 1.0f, 10.0f), XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f) };
-	m_pMaterials->m_pReflections[2] = { XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f), XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f), XMFLOAT4(1.0f, 1.0f, 1.0f, 15.0f), XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f) };
-	m_pMaterials->m_pReflections[3] = { XMFLOAT4(0.5f, 0.0f, 1.0f, 1.0f), XMFLOAT4(0.0f, 0.5f, 1.0f, 1.0f), XMFLOAT4(1.0f, 1.0f, 1.0f, 20.0f), XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f) };
-	m_pMaterials->m_pReflections[4] = { XMFLOAT4(0.0f, 0.5f, 1.0f, 1.0f), XMFLOAT4(0.5f, 0.0f, 1.0f, 1.0f), XMFLOAT4(1.0f, 1.0f, 1.0f, 25.0f), XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f) };
-	m_pMaterials->m_pReflections[5] = { XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f), XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f), XMFLOAT4(1.0f, 1.0f, 1.0f, 30.0f), XMFLOAT4(1.0f, 1.0f, 0.0f, 1.0f) };
-	m_pMaterials->m_pReflections[6] = { XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f), XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f), XMFLOAT4(1.0f, 1.0f, 1.0f, 35.0f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f) };
-	m_pMaterials->m_pReflections[7] = { XMFLOAT4(0.0f, 0.8f, 0.0f, 1.0f), XMFLOAT4(0.2f, 0.2f, 0.2f, 1.0f), XMFLOAT4(1.0f, 1.0f, 1.0f, 40.0f), XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f) };
-}
-void CScene::BuildObjects(
-	CD3DDeviceIndRes* pd3dDeviceIndRes
-	, ID3D12GraphicsCommandList *pd3dCommandList)
-{
-	m_pd3dGraphicsRootSignature = CreateGraphicsRootSignature(pd3dDeviceIndRes);
-
-	// Terrain
-	{
-		XMFLOAT3 xmf3Scale(6.5f, 2.0f, 6.5f);
-		XMFLOAT4 xmf4Color(0.0f, 0.2f, 0.0f, 0.0f);
-#ifdef _WITH_TERRAIN_PARTITION
-		m_pTerrain = new CHeightMapTerrain(
-			pd3dDeviceIndRes
-			, pd3dCommandList
-			, m_pd3dGraphicsRootSignature.Get()
-			, _T("Assets/Image/Terrain/HeightMap.raw")
-			, 257, 257, 17, 17, xmf3Scale, xmf4Color);
-#else
-		m_pTerrain = new CHeightMapTerrain(
-			pd3dDeviceIndRes
-			, pd3dCommandList
-			, m_pd3dGraphicsRootSignature.Get()
-			, _T("Assets/Image/Terrain/HeightMap.raw")
-			, 257, 257, 257, 257, xmf3Scale, xmf4Color);
-#endif
-	}
-
-	// SkyBox
-	{
-		m_pSkyBox = new CSkyBox(
-			pd3dDeviceIndRes
-			, pd3dCommandList
-			, m_pd3dGraphicsRootSignature.Get());
-	}
-
-	// Tree
-	{
-		m_pTrees = new CBillBoardShader();
-		m_pTrees->CreateShader(pd3dDeviceIndRes, m_pd3dGraphicsRootSignature.Get());
-		int nTrees = NUM_TREES;
-		CBillBoardVertex* pvtxTrees = new CBillBoardVertex[nTrees];
-		XMFLOAT3 xmf3Pos;
-		XMFLOAT2 xmfSize = XMFLOAT2(20, 50);
-		for (int i = 0; i < nTrees; ++i)
-		{
-			xmf3Pos.x = (float)RANDOM_NUM(800, 1500);
-			xmf3Pos.z = (float)RANDOM_NUM(800, 1500);
-			xmf3Pos.y = m_pTerrain->GetHeight(
-				xmf3Pos.x, xmf3Pos.z) + xmfSize.y / 2.f;
-			pvtxTrees[i].m_xmf4Pos = xmf3Pos;
-			pvtxTrees[i].m_xmf2Size = xmfSize;
-		}
-		m_pTrees->BuildObjects(
-			pd3dDeviceIndRes
-			, pd3dCommandList
-			, pvtxTrees
-			, nTrees);
-
-		CTexture *pTexture = new CTexture(6, RESOURCE_TEXTURE2D, 0);
-		pTexture->LoadTextureFromFile(pd3dDeviceIndRes, pd3dCommandList, L"Assets/Image/Trees/Tree01.dds", 0);
-		pTexture->LoadTextureFromFile(pd3dDeviceIndRes, pd3dCommandList, L"Assets/Image/Trees/Tree02.dds", 1);
-		pTexture->LoadTextureFromFile(pd3dDeviceIndRes, pd3dCommandList, L"Assets/Image/Trees/Tree03.dds", 2);
-		pTexture->LoadTextureFromFile(pd3dDeviceIndRes, pd3dCommandList, L"Assets/Image/Trees/Tree04.dds", 3);
-		pTexture->LoadTextureFromFile(pd3dDeviceIndRes, pd3dCommandList, L"Assets/Image/Trees/Tree06.dds", 4);
-		pTexture->LoadTextureFromFile(pd3dDeviceIndRes, pd3dCommandList, L"Assets/Image/Trees/Tree08.dds", 5);
-
-		m_pTrees->SetTexture(pTexture);
-		m_pTrees->CreateShaderVariables(pd3dDeviceIndRes, pd3dCommandList);
-		m_pTrees->CreateCbvAndSrvDescriptorHeaps(pd3dDeviceIndRes, pd3dCommandList, 0, 6);
-		m_pTrees->CreateShaderResourceViews(pd3dDeviceIndRes, pd3dCommandList, pTexture, 5, false);
-	}
-
-	// Grass
-	{
-		m_pGrasses = new CBillBoardShader();
-		m_pGrasses->CreateShader(pd3dDeviceIndRes, m_pd3dGraphicsRootSignature.Get());
-		int nGrasses = NUM_GRASSES;
-		CBillBoardVertex* pvtxGrasses = new CBillBoardVertex[nGrasses];
-		XMFLOAT3 xmf3Pos;
-		XMFLOAT2 xmfSize = XMFLOAT2(20, 10);
-		for (int i = 0; i < nGrasses; ++i)
-		{
-			xmf3Pos.x = (float)RANDOM_NUM(800, 1500);
-			xmf3Pos.z = (float)RANDOM_NUM(0, 800);
-			xmf3Pos.y = m_pTerrain->GetHeight(
-				xmf3Pos.x, xmf3Pos.z) + xmfSize.y / 2.f;
-			pvtxGrasses[i].m_xmf4Pos = xmf3Pos;
-			pvtxGrasses[i].m_xmf2Size = xmfSize;
-		}
-		m_pGrasses->BuildObjects(
-			pd3dDeviceIndRes
-			, pd3dCommandList
-			, pvtxGrasses
-			, nGrasses);
-
-		CTexture *pTexture = new CTexture(6, RESOURCE_TEXTURE2D, 0);
-		pTexture->LoadTextureFromFile(pd3dDeviceIndRes, pd3dCommandList, L"Assets/Image/Grasses/Grass01.DDS", 0);
-		pTexture->LoadTextureFromFile(pd3dDeviceIndRes, pd3dCommandList, L"Assets/Image/Grasses/Grass02.DDS", 1);
-		pTexture->LoadTextureFromFile(pd3dDeviceIndRes, pd3dCommandList, L"Assets/Image/Grasses/Grass08.DDS", 2);
-		pTexture->LoadTextureFromFile(pd3dDeviceIndRes, pd3dCommandList, L"Assets/Image/Grasses/Grass12.DDS", 3);
-		pTexture->LoadTextureFromFile(pd3dDeviceIndRes, pd3dCommandList, L"Assets/Image/Flowers/Flower07.DDS", 4);
-		pTexture->LoadTextureFromFile(pd3dDeviceIndRes, pd3dCommandList, L"Assets/Image/Flowers/Flower06.DDS", 5);
-
-		m_pGrasses->SetTexture(pTexture);
-		m_pGrasses->CreateShaderVariables(pd3dDeviceIndRes, pd3dCommandList);
-		m_pGrasses->CreateCbvAndSrvDescriptorHeaps(pd3dDeviceIndRes, pd3dCommandList, 0, 6);
-		m_pGrasses->CreateShaderResourceViews(pd3dDeviceIndRes, pd3dCommandList, pTexture, 5, false);
-	}
-
-
-	BuildLightsAndMaterials();
-
-	CreateShaderVariables(pd3dDeviceIndRes, pd3dCommandList);
+	return(false);
 }
 
-void CScene::ReleaseObjects()
+bool CScene::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam)
 {
-	for (int i = 0; i < m_nShaders; i++)
+	return(false);
+}
+
+bool CScene::ProcessInput(UCHAR *pKeysBuffer)
+{
+	return(false);
+}
+
+void CScene::AnimateObjects(float fTimeElapsed)
+{
+	for (int i = 0; i < m_nShaders; i++) m_ppShaders[i]->AnimateObjects(fTimeElapsed);
+
+	for (int i = 0; i < m_nObjects; i++) m_ppObjects[i]->Animate(fTimeElapsed);
+
+	if (m_pLights)
 	{
-		m_pShaders[i].ReleaseShaderVariables();
-		m_pShaders[i].ReleaseObjects();
+		m_pLights->m_pLights[1].m_xmf3Position = m_pPlayer->GetPosition();
+		m_pLights->m_pLights[1].m_xmf3Direction = m_pPlayer->GetLookVector();
 	}
-	if (m_pShaders) delete[] m_pShaders;
-	if (m_pTerrain) delete m_pTerrain;
-
-	ReleaseShaderVariables();
-
-	if (m_pLights) delete m_pLights;
-	if (m_pMaterials) delete m_pMaterials;
-	if (m_pSkyBox) delete m_pSkyBox;
-
-	if (m_pTrees) delete m_pTrees;
-	if (m_pGrasses) delete m_pGrasses;
 }
 
 void CScene::Render(ID3D12GraphicsCommandList *pd3dCommandList, CCamera *pCamera)
 {
-	pd3dCommandList->SetGraphicsRootSignature(m_pd3dGraphicsRootSignature.Get());
+	pd3dCommandList->SetGraphicsRootSignature(m_pd3dGraphicsRootSignature);
 
 	pCamera->SetViewportsAndScissorRects(pd3dCommandList);
 	pCamera->UpdateShaderVariables(pd3dCommandList);
+
 	UpdateShaderVariables(pd3dCommandList);
 
 	D3D12_GPU_VIRTUAL_ADDRESS d3dcbLightsGpuVirtualAddress = m_pd3dcbLights->GetGPUVirtualAddress();
 	pd3dCommandList->SetGraphicsRootConstantBufferView(4, d3dcbLightsGpuVirtualAddress); //Lights
 
 	D3D12_GPU_VIRTUAL_ADDRESS d3dcbMaterialsGpuVirtualAddress = m_pd3dcbMaterials->GetGPUVirtualAddress();
-	pd3dCommandList->SetGraphicsRootConstantBufferView(3, d3dcbMaterialsGpuVirtualAddress);
+	pd3dCommandList->SetGraphicsRootConstantBufferView(3, d3dcbMaterialsGpuVirtualAddress); //Materials
 
 	if (m_pSkyBox) m_pSkyBox->Render(pd3dCommandList, pCamera);
 	if (m_pTerrain) m_pTerrain->Render(pd3dCommandList, pCamera);
-	if (m_pGrasses) m_pGrasses->Render(pd3dCommandList, pCamera);
-	if (m_pTrees) m_pTrees->Render(pd3dCommandList, pCamera);
-	for (int i = 0; i < m_nShaders; i++)
-		m_pShaders[i].Render(pd3dCommandList, pCamera);
-}
-bool CScene::ProcessInput(float fTimeElapsed)
-{
-	if (!m_pPlayer) return false;
-	static UCHAR pKeyBuffer[256];
-	DWORD dwDirection = 0;
+	if (m_ppBillboards)
+		for (int i = 0; i < m_nBillboard; ++i)
+			m_ppBillboards[i]->Render(pd3dCommandList, pCamera);
 
-	if (::GetKeyboardState(pKeyBuffer))
-	{
-		if (pKeyBuffer['W'] & 0xF0) dwDirection |= DIR_FORWARD;
-		if (pKeyBuffer['S'] & 0xF0) dwDirection |= DIR_BACKWARD;
-		if (pKeyBuffer['A'] & 0xF0) dwDirection |= DIR_LEFT;
-		if (pKeyBuffer['D'] & 0xF0) dwDirection |= DIR_RIGHT;
-		if (pKeyBuffer['Q'] & 0xF0) dwDirection |= DIR_UP;
-		if (pKeyBuffer['E'] & 0xF0) dwDirection |= DIR_DOWN;
-		if (pKeyBuffer['F'] & 0xF0)
-			m_pLights->m_pLights[0].m_bEnable = true;
-		if (pKeyBuffer['G'] & 0xF0)
-			m_pLights->m_pLights[0].m_bEnable = false;
-		if (pKeyBuffer[VK_SPACE] & 0xF0)
-			ShootBullet();
-	}
+	for (int i = 0; i < m_nShaders; i++) m_ppShaders[i]->Render(pd3dCommandList, pCamera);
 
-	float cxDelta = 0.0f, cyDelta = 0.0f;
-	POINT ptCursorPos;
-	if (::GetCapture() == m_hWnd)
-	{
-		//마우스 커서를 화면에서 없앤다(보이지 않게 한다).
-		::SetCursor(NULL);
-		::GetCursorPos(&ptCursorPos);
-		cxDelta = (float)(ptCursorPos.x - m_ptOldCursorPos.x) / 3.0f;
-		cyDelta = (float)(ptCursorPos.y - m_ptOldCursorPos.y) / 3.0f;
-		::SetCursorPos(m_ptOldCursorPos.x, m_ptOldCursorPos.y);
-	}
-
-	if ((dwDirection != 0) || (cxDelta != 0.0f) || (cyDelta != 0.0f))
-	{
-		
-		if (cxDelta || cyDelta)
-		{
-			if (pKeyBuffer[VK_RBUTTON] & 0xF0)
-				m_pPlayer->Rotate(cyDelta, 0.0f, -cxDelta);
-			else
-				m_pPlayer->Rotate(cyDelta, cxDelta, 0.0f);
-		}
-		if (dwDirection)
-			m_pPlayer->Move(dwDirection, 50.0f * fTimeElapsed, true);
-	}
-
-	m_pPlayer->Update(fTimeElapsed);
-	return(true);
-}
-void CScene::AnimateObjects(float fTimeElapsed)
-{
-	XMFLOAT3 PlayerPos = m_pPlayer->GetPosition();
-	if (m_bGameOver)
-	{
-		m_fRestartCounter += fTimeElapsed;
-		if (m_fRestartCounter > 2)
-		{
-			m_fRestartCounter = 0.0f;
-			m_bGameOver = false;
-			m_pPlayer->SetPosition(XMFLOAT3(800, 300, 800));
-		}
-	}
-	m_fBulletTimer += fTimeElapsed;
-	for (int i = 0; i < m_nShaders; i++)
-		m_pShaders[i].AnimateObjects(fTimeElapsed);
-	m_pPlayer->Animate(fTimeElapsed);
-
-	PhysicsProcessing(fTimeElapsed);
-
-	for (int i = 0; i < m_nObjects; ++i)
-		{
-		CGameObject* Object = m_ppObjects[i];
-		XMFLOAT3 ObjectPos = Object->GetPosition();
-		float height = m_pTerrain->GetHeight(ObjectPos.x, ObjectPos.z) + 6.0f;
-		if(ObjectPos.y < height)
-		Object->SetPosition(ObjectPos.x, height, ObjectPos.z);
-	}
-
-	if (m_pLights)
-	{
-		m_pLights->m_pLights[0].m_xmf3Position = m_pPlayer->GetPosition();
-		m_pLights->m_pLights[0].m_xmf3Direction = m_pPlayer->GetLookVector();
-	}
+	for (int i = 0; i < m_nObjects; i++) m_ppObjects[i]->UpdateTransform(NULL);
+	for (int i = 0; i < m_nObjects; i++) m_ppObjects[i]->Render(pd3dCommandList, pCamera);
 }
 
-void CScene::PhysicsProcessing(float fTimeElapsed)
-{
-	
-}
-
-void CScene::ReleaseUploadBuffers()
-{
-	for (int i = 0; i < m_nShaders; i++) 
-		m_pShaders[i].ReleaseUploadBuffers();
-	if (m_pTerrain) m_pTerrain->ReleaseUploadBuffers();
-}
-
-bool CScene::OnProcessingMouseMessage(
-	HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam)
-{
-	switch (nMessageID)
-	{
-	case WM_LBUTTONDOWN:
-	case WM_RBUTTONDOWN:
-		//마우스가 눌려지면 마우스 픽킹을 하여 선택한 게임 객체를 찾는다.
-		//m_pSelectedObject = PickObjectPointedByCursor(LOWORD(lParam),
-		//	HIWORD(lParam), m_pPlayer->GetCamera());
-		//마우스 캡쳐를 하고 현재 마우스 위치를 가져온다.
-		::SetCapture(hWnd);
-		::GetCursorPos(&m_ptOldCursorPos);
-		break;
-	case WM_LBUTTONUP:
-		//if(m_pSelectedObject)
-		//	ShootBullet();
-	case WM_RBUTTONUP:
-		//마우스 캡쳐를 해제한다.
-		::ReleaseCapture();
-		break;
-	case WM_MOUSEMOVE:
-		break;
-	default:
-		break;
-	}
-	return(false);
-}
-bool CScene::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wParam,
-	LPARAM lParam)
-{
-	return(false);
-}
-
-void CScene::ShootBullet()
-{
-	if (m_fBulletTimer > BulletDelay)
-	{
-		m_fBulletTimer = 0.0f;
-		
-	}
-}

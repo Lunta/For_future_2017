@@ -1,13 +1,14 @@
 #pragma once
-#include "GameObject.h"
-#include "Camera.h"
 
-#define DIR_FORWARD		0x01
-#define DIR_BACKWARD	0x02
-#define DIR_LEFT		0x04
-#define DIR_RIGHT		0x08
-#define DIR_UP			0x10
-#define DIR_DOWN		0x20
+#define DIR_FORWARD				0x01
+#define DIR_BACKWARD			0x02
+#define DIR_LEFT				0x04
+#define DIR_RIGHT				0x08
+#define DIR_UP					0x10
+#define DIR_DOWN				0x20
+
+#include "Object.h"
+#include "Camera.h"
 
 struct CB_PLAYER_INFO
 {
@@ -39,12 +40,7 @@ protected:
 	CCamera						*m_pCamera = NULL;
 
 public:
-	CPlayer(
-		  CD3DDeviceIndRes*				pd3dDeviceIndRes
-		, ID3D12GraphicsCommandList*	pd3dCommandList
-		, ID3D12RootSignature*			pd3dGraphicsRootSignature
-		, void*							pContext = NULL
-		, int							nMeshes = 1);
+	CPlayer(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *pd3dCommandList, ID3D12RootSignature *pd3dGraphicsRootSignature, void *pContext=NULL, int nMeshes = 1);
 	virtual ~CPlayer();
 
 	XMFLOAT3 GetPosition() { return(m_xmf3Position); }
@@ -80,7 +76,7 @@ public:
 	virtual void OnCameraUpdateCallback(float fTimeElapsed) { }
 	void SetCameraUpdatedContext(LPVOID pContext) { m_pCameraUpdatedContext = pContext; }
 
-	virtual void CreateShaderVariables(CD3DDeviceIndRes* pd3dDeviceIndRes, ID3D12GraphicsCommandList *pd3dCommandList);
+	virtual ID3D12Resource *CreateShaderVariables(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *pd3dCommandList);
 	virtual void ReleaseShaderVariables();
 	virtual void UpdateShaderVariables(ID3D12GraphicsCommandList *pd3dCommandList);
 
@@ -89,18 +85,31 @@ public:
 	virtual CCamera *ChangeCamera(DWORD nNewCameraMode, float fTimeElapsed) { return(NULL); }
 	virtual void OnPrepareRender();
 	virtual void Render(ID3D12GraphicsCommandList *pd3dCommandList, CCamera *pCamera = NULL);
+	virtual void Animate(float fTimeElapsed);
 
 protected:
-	ID3D12Resource*					m_pd3dcbPlayer = NULL;
-	CB_PLAYER_INFO*					m_pcbMappedPlayer = NULL;
+	ID3D12Resource					*m_pd3dcbPlayer = NULL;
+	CB_PLAYER_INFO					*m_pcbMappedPlayer = NULL;
 };
 
 class CAirplanePlayer : public CPlayer
 {
 public:
-	CAirplanePlayer(CD3DDeviceIndRes* pd3dDeviceIndRes, ID3D12GraphicsCommandList *pd3dCommandList, ID3D12RootSignature *pd3dGraphicsRootSignature, void *pContext = NULL, int nMeshes = 1);
+	CAirplanePlayer(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *pd3dCommandList, ID3D12RootSignature *pd3dGraphicsRootSignature, void *pContext=NULL, int nMeshes=1);
 	virtual ~CAirplanePlayer();
 
 	virtual CCamera *ChangeCamera(DWORD nNewCameraMode, float fTimeElapsed);
-	virtual void OnPrepareRender();
 };
+
+class CTerrainPlayer : public CPlayer
+{
+public:
+	CTerrainPlayer(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *pd3dCommandList, ID3D12RootSignature *pd3dGraphicsRootSignature, void *pContext=NULL, int nMeshes = 1);
+	virtual ~CTerrainPlayer();
+
+	virtual CCamera *ChangeCamera(DWORD nNewCameraMode, float fTimeElapsed);
+
+	virtual void OnPlayerUpdateCallback(float fTimeElapsed);
+	virtual void OnCameraUpdateCallback(float fTimeElapsed);
+};
+

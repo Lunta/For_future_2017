@@ -1,46 +1,24 @@
-ï»¿#include "stdafx.h"
-#include "Mesh.h"
+//-----------------------------------------------------------------------------
+// File: CMesh.cpp
+//-----------------------------------------------------------------------------
 
-CMesh::CMesh(
-	  CD3DDeviceIndRes* pd3dDeviceIndRes
-	, ID3D12GraphicsCommandList * pd3dCommandList)
-	: m_pd3dVertexBuffer(nullptr)
-	, m_pd3dVertexUploadBuffer(nullptr)
-	, m_pd3dIndexBuffer(nullptr)
-	, m_pd3dIndexUploadBuffer(nullptr)
-	, m_d3dPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST)
-	, m_nSlot(0)
-	, m_nVertices(0)
-	, m_nStride(0)
-	, m_nOffset(0)
-	, m_nIndices(0)
-	, m_nStartIndex(0)
-	, m_nBaseVertex(0)
+#include "stdafx.h"
+#include "Mesh.h"
+#include "Object.h"
+
+CMesh::CMesh(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *pd3dCommandList)
 {
-	memset(&m_d3dVertexBufferView, 0, sizeof(D3D12_VERTEX_BUFFER_VIEW));
-	memset(&m_d3dIndexBufferView, 0, sizeof(D3D12_INDEX_BUFFER_VIEW));
 }
-CMesh::CMesh(
-	  CD3DDeviceIndRes*				pd3dDeviceIndRes
-	, ID3D12GraphicsCommandList*	pd3dCommandList
-	, UINT							nVertices
-	, CVertex*						pVertices
-	, UINT							nIndices
-	, UINT*							pIndices)
+
+CMesh::CMesh(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *pd3dCommandList, UINT nVertices, XMFLOAT3 *pxmf3Positions, UINT nIndices, UINT *pnIndices)
 {
 	m_nStride = sizeof(CVertex);
 	m_nVertices = nVertices;
 
-	CVertex* arrVertices = new CVertex[m_nVertices];
-	memcpy(arrVertices, pVertices, sizeof(CVertex) * m_nVertices);
+	CVertex *pVertices = new CVertex[m_nVertices];
+	for (UINT i = 0; i < m_nVertices; i++) pVertices[i] = CVertex(pxmf3Positions[i]);
 
-	m_pd3dVertexBuffer = pd3dDeviceIndRes->CreateBufferResource(
-		  pd3dCommandList
-		, arrVertices
-		, m_nStride * m_nVertices
-		, D3D12_HEAP_TYPE_DEFAULT
-		, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER
-		, &m_pd3dVertexUploadBuffer);
+	m_pd3dVertexBuffer = ::CreateBufferResource(pd3dDevice, pd3dCommandList, pVertices, m_nStride * m_nVertices, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, &m_pd3dVertexUploadBuffer);
 
 	m_d3dVertexBufferView.BufferLocation = m_pd3dVertexBuffer->GetGPUVirtualAddress();
 	m_d3dVertexBufferView.StrideInBytes = m_nStride;
@@ -49,66 +27,136 @@ CMesh::CMesh(
 	if (nIndices > 0)
 	{
 		m_nIndices = nIndices;
-		m_pd3dIndexBuffer = pd3dDeviceIndRes->CreateBufferResource(
-			  pd3dCommandList
-			, pIndices
-			, sizeof(UINT) * m_nIndices
-			, D3D12_HEAP_TYPE_DEFAULT
-			, D3D12_RESOURCE_STATE_INDEX_BUFFER
-			, &m_pd3dIndexUploadBuffer);
+
+		m_pd3dIndexBuffer = ::CreateBufferResource(pd3dDevice, pd3dCommandList, pnIndices, sizeof(UINT) * m_nIndices, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_INDEX_BUFFER, &m_pd3dIndexUploadBuffer);
 
 		m_d3dIndexBufferView.BufferLocation = m_pd3dIndexBuffer->GetGPUVirtualAddress();
 		m_d3dIndexBufferView.Format = DXGI_FORMAT_R32_UINT;
 		m_d3dIndexBufferView.SizeInBytes = sizeof(UINT) * m_nIndices;
 	}
 }
+
 CMesh::~CMesh()
 {
+	if (m_pd3dVertexBuffer) m_pd3dVertexBuffer->Release();
+	if (m_pd3dIndexBuffer) m_pd3dIndexBuffer->Release();
+	if (m_pd3dVertexUploadBuffer) m_pd3dVertexUploadBuffer->Release();
+	if (m_pd3dIndexUploadBuffer) m_pd3dIndexUploadBuffer->Release();
 }
 
 void CMesh::ReleaseUploadBuffers()
 {
-	m_pd3dVertexUploadBuffer.Reset();
-	m_pd3dIndexUploadBuffer.Reset();
+	if (m_pd3dVertexUploadBuffer) m_pd3dVertexUploadBuffer->Release();
+	if (m_pd3dIndexUploadBuffer) m_pd3dIndexUploadBuffer->Release();
+	m_pd3dVertexUploadBuffer = NULL;
+	m_pd3dIndexUploadBuffer = NULL;
 };
 
 void CMesh::Render(ID3D12GraphicsCommandList *pd3dCommandList)
 {
-	Render(pd3dCommandList, 1);
-}
-void CMesh::Render(ID3D12GraphicsCommandList *pd3dCommandList, UINT nInstances)
-{
-	pd3dCommandList->IASetVertexBuffers(m_nSlot, 1, &m_d3dVertexBufferView);
 	pd3dCommandList->IASetPrimitiveTopology(m_d3dPrimitiveTopology);
+	pd3dCommandList->IASetVertexBuffers(m_nSlot, 1, &m_d3dVertexBufferView);
 	if (m_pd3dIndexBuffer)
 	{
 		pd3dCommandList->IASetIndexBuffer(&m_d3dIndexBufferView);
-		pd3dCommandList->DrawIndexedInstanced(m_nIndices, nInstances, 0, 0, 0);
+		pd3dCommandList->DrawIndexedInstanced(m_nIndices, 1, 0, 0, 0);
 	}
 	else
 	{
-		pd3dCommandList->DrawInstanced(m_nVertices, nInstances, m_nOffset, 0);
+		pd3dCommandList->DrawInstanced(m_nVertices, 1, m_nOffset, 0);
 	}
 }
 
-void CMesh::CalculateTriangleListVertexNormals(XMFLOAT3* pxmf3Normals, XMFLOAT3* pxmf3Positions, UINT nVertices)
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+CMeshTextured::CMeshTextured(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *pd3dCommandList) : CMesh(pd3dDevice, pd3dCommandList)
+{
+}
+
+CMeshTextured::CMeshTextured(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *pd3dCommandList, UINT nVertices, XMFLOAT3 *pxmf3Positions, XMFLOAT2 *pxmf2UVs, UINT nIndices, UINT *pnIndices) : CMesh(pd3dDevice, pd3dCommandList)
+{
+	m_nStride = sizeof(CTexturedVertex);
+	m_nVertices = nVertices;
+
+	CTexturedVertex *pVertices = new CTexturedVertex[m_nVertices];
+	for (UINT i = 0; i < m_nVertices; i++) pVertices[i] = CTexturedVertex(pxmf3Positions[i], pxmf2UVs[i]);
+
+	m_pd3dVertexBuffer = ::CreateBufferResource(pd3dDevice, pd3dCommandList, pVertices, m_nStride * m_nVertices, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, &m_pd3dVertexUploadBuffer);
+
+	m_d3dVertexBufferView.BufferLocation = m_pd3dVertexBuffer->GetGPUVirtualAddress();
+	m_d3dVertexBufferView.StrideInBytes = m_nStride;
+	m_d3dVertexBufferView.SizeInBytes = m_nStride * m_nVertices;
+
+	if (nIndices > 0)
+	{
+		m_nIndices = nIndices;
+
+		m_pd3dIndexBuffer = ::CreateBufferResource(pd3dDevice, pd3dCommandList, pnIndices, sizeof(UINT) * m_nIndices, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_INDEX_BUFFER, &m_pd3dIndexUploadBuffer);
+
+		m_d3dIndexBufferView.BufferLocation = m_pd3dIndexBuffer->GetGPUVirtualAddress();
+		m_d3dIndexBufferView.Format = DXGI_FORMAT_R32_UINT;
+		m_d3dIndexBufferView.SizeInBytes = sizeof(UINT) * m_nIndices;
+	}
+}
+
+CMeshTextured::~CMeshTextured()
+{
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+CMeshIlluminated::CMeshIlluminated(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *pd3dCommandList) : CMesh(pd3dDevice, pd3dCommandList)
+{
+}
+
+CMeshIlluminated::CMeshIlluminated(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *pd3dCommandList, UINT nVertices, XMFLOAT3 *pxmf3Positions, XMFLOAT3 *pxmf3Normals, UINT nIndices, UINT *pnIndices) : CMesh(pd3dDevice, pd3dCommandList)
+{
+	m_nStride = sizeof(CIlluminatedVertex);
+	m_nVertices = nVertices;
+
+	CIlluminatedVertex *pVertices = new CIlluminatedVertex[m_nVertices];
+	for (UINT i = 0; i < m_nVertices; i++) pVertices[i] = CIlluminatedVertex(pxmf3Positions[i], pxmf3Normals[i]);
+
+	m_pd3dVertexBuffer = ::CreateBufferResource(pd3dDevice, pd3dCommandList, pVertices, m_nStride * m_nVertices, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, &m_pd3dVertexUploadBuffer);
+
+	m_d3dVertexBufferView.BufferLocation = m_pd3dVertexBuffer->GetGPUVirtualAddress();
+	m_d3dVertexBufferView.StrideInBytes = m_nStride;
+	m_d3dVertexBufferView.SizeInBytes = m_nStride * m_nVertices;
+
+	if (nIndices > 0)
+	{
+		m_nIndices = nIndices;
+
+		m_pd3dIndexBuffer = ::CreateBufferResource(pd3dDevice, pd3dCommandList, pnIndices, sizeof(UINT) * m_nIndices, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_INDEX_BUFFER, &m_pd3dIndexUploadBuffer);
+
+		m_d3dIndexBufferView.BufferLocation = m_pd3dIndexBuffer->GetGPUVirtualAddress();
+		m_d3dIndexBufferView.Format = DXGI_FORMAT_R32_UINT;
+		m_d3dIndexBufferView.SizeInBytes = sizeof(UINT) * m_nIndices;
+	}
+}
+
+CMeshIlluminated::~CMeshIlluminated()
+{
+}
+
+void CMeshIlluminated::CalculateTriangleListVertexNormals(XMFLOAT3 *pxmf3Normals, XMFLOAT3 *pxmf3Positions, int nVertices)
 {
 	int nPrimitives = nVertices / 3;
 	UINT nIndex0, nIndex1, nIndex2;
 	for (int i = 0; i < nPrimitives; i++)
 	{
-		nIndex0 = i * 3 + 0;
-		nIndex1 = i * 3 + 1;
-		nIndex2 = i * 3 + 2;
+		nIndex0 = i*3+0;
+		nIndex1 = i*3+1;
+		nIndex2 = i*3+2;
 		XMFLOAT3 xmf3Edge01 = Vector3::Subtract(pxmf3Positions[nIndex1], pxmf3Positions[nIndex0]);
 		XMFLOAT3 xmf3Edge02 = Vector3::Subtract(pxmf3Positions[nIndex2], pxmf3Positions[nIndex0]);
 		pxmf3Normals[nIndex0] = pxmf3Normals[nIndex1] = pxmf3Normals[nIndex2] = Vector3::CrossProduct(xmf3Edge01, xmf3Edge02, true);
 	}
 }
 
-void CMesh::CalculateTriangleListVertexNormals(XMFLOAT3 * pxmf3Normals, XMFLOAT3 * pxmf3Positions, UINT nVertices, UINT * pIndices, UINT nIndices)
+void CMeshIlluminated::CalculateTriangleListVertexNormals(XMFLOAT3 *pxmf3Normals, XMFLOAT3 *pxmf3Positions, UINT nVertices, UINT *pnIndices, UINT nIndices)
 {
-	UINT nPrimitives = (pIndices) ? (nIndices / 3) : (nVertices / 3);
+	UINT nPrimitives = (pnIndices) ? (nIndices / 3) : (nVertices / 3);
 	XMFLOAT3 xmf3SumOfNormal, xmf3Edge01, xmf3Edge02, xmf3Normal;
 	UINT nIndex0, nIndex1, nIndex2;
 	for (UINT j = 0; j < nVertices; j++)
@@ -116,10 +164,10 @@ void CMesh::CalculateTriangleListVertexNormals(XMFLOAT3 * pxmf3Normals, XMFLOAT3
 		xmf3SumOfNormal = XMFLOAT3(0.0f, 0.0f, 0.0f);
 		for (UINT i = 0; i < nPrimitives; i++)
 		{
-			nIndex0 = pIndices[i * 3 + 0];
-			nIndex1 = pIndices[i * 3 + 1];
-			nIndex2 = pIndices[i * 3 + 2];
-			if (pIndices && ((nIndex0 == j) || (nIndex1 == j) || (nIndex2 == j)))
+			nIndex0 = pnIndices[i*3+0];
+			nIndex1 = pnIndices[i*3+1];
+			nIndex2 = pnIndices[i*3+2];
+			if (pnIndices && ((nIndex0 == j) || (nIndex1 == j) || (nIndex2 == j)))
 			{
 				xmf3Edge01 = Vector3::Subtract(pxmf3Positions[nIndex1], pxmf3Positions[nIndex0]);
 				xmf3Edge02 = Vector3::Subtract(pxmf3Positions[nIndex2], pxmf3Positions[nIndex0]);
@@ -131,9 +179,9 @@ void CMesh::CalculateTriangleListVertexNormals(XMFLOAT3 * pxmf3Normals, XMFLOAT3
 	}
 }
 
-void CMesh::CalculateTriangleStripVertexNormals(XMFLOAT3* pxmf3Normals, XMFLOAT3* pxmf3Positions, UINT nVertices, UINT* pIndices, UINT nIndices)
+void CMeshIlluminated::CalculateTriangleStripVertexNormals(XMFLOAT3 *pxmf3Normals, XMFLOAT3 *pxmf3Positions, UINT nVertices, UINT *pnIndices, UINT nIndices)
 {
-	UINT nPrimitives = (pIndices) ? (nIndices - 2) : (nVertices - 2);
+	UINT nPrimitives = (pnIndices) ? (nIndices - 2) : (nVertices - 2);
 	XMFLOAT3 xmf3SumOfNormal(0.0f, 0.0f, 0.0f);
 	UINT nIndex0, nIndex1, nIndex2;
 	for (UINT j = 0; j < nVertices; j++)
@@ -142,10 +190,10 @@ void CMesh::CalculateTriangleStripVertexNormals(XMFLOAT3* pxmf3Normals, XMFLOAT3
 		for (UINT i = 0; i < nPrimitives; i++)
 		{
 			nIndex0 = ((i % 2) == 0) ? (i + 0) : (i + 1);
-			if (pIndices) nIndex0 = pIndices[nIndex0];
+			if (pnIndices) nIndex0 = pnIndices[nIndex0];
 			nIndex1 = ((i % 2) == 0) ? (i + 1) : (i + 0);
-			if (pIndices) nIndex1 = pIndices[nIndex1];
-			nIndex2 = (pIndices) ? pIndices[i + 2] : (i + 2);
+			if (pnIndices) nIndex1 = pnIndices[nIndex1];
+			nIndex2 = (pnIndices) ? pnIndices[i + 2] : (i + 2);
 			if ((nIndex0 == j) || (nIndex1 == j) || (nIndex2 == j))
 			{
 				XMFLOAT3 xmf3Edge01 = Vector3::Subtract(pxmf3Positions[nIndex1], pxmf3Positions[nIndex0]);
@@ -158,26 +206,323 @@ void CMesh::CalculateTriangleStripVertexNormals(XMFLOAT3* pxmf3Normals, XMFLOAT3
 	}
 }
 
-void CMesh::CalculateVertexNormals(XMFLOAT3* pxmf3Normals, XMFLOAT3* pxmf3Positions, UINT nVertices, UINT* pIndices, UINT nIndices)
+void CMeshIlluminated::CalculateVertexNormals(XMFLOAT3 *pxmf3Normals, XMFLOAT3 *pxmf3Positions, int nVertices, UINT *pnIndices, int nIndices)
 {
 	switch (m_d3dPrimitiveTopology)
 	{
-	case D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST:
-		if (pIndices)
-			CalculateTriangleListVertexNormals(pxmf3Normals, pxmf3Positions, nVertices, pIndices, nIndices);
-		else
-			CalculateTriangleListVertexNormals(pxmf3Normals, pxmf3Positions, nVertices);
-		break;
-	case D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP:
-		CalculateTriangleStripVertexNormals(pxmf3Normals, pxmf3Positions, nVertices, pIndices, nIndices);
-		break;
-	default:
-		break;
+		case D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST:
+			if (pnIndices)
+				CalculateTriangleListVertexNormals(pxmf3Normals, pxmf3Positions, nVertices, pnIndices, nIndices);
+			else
+				CalculateTriangleListVertexNormals(pxmf3Normals, pxmf3Positions, nVertices);
+			break;
+		case D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP:
+			CalculateTriangleStripVertexNormals(pxmf3Normals, pxmf3Positions, nVertices, pnIndices, nIndices);
+			break;
+		default:
+			break;
 	}
 }
 
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+CMeshIlluminatedTextured::CMeshIlluminatedTextured(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *pd3dCommandList) : CMeshIlluminated(pd3dDevice, pd3dCommandList)
+{
+}
+
+CMeshIlluminatedTextured::CMeshIlluminatedTextured(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *pd3dCommandList, UINT nVertices, XMFLOAT3 *pxmf3Positions, XMFLOAT3 *pxmf3Normals, XMFLOAT2 *pxmf2UVs, UINT nIndices, UINT *pnIndices) : CMeshIlluminated(pd3dDevice, pd3dCommandList)
+{
+	m_nStride = sizeof(CIlluminatedTexturedVertex);
+	m_nVertices = nVertices;
+
+	CIlluminatedTexturedVertex *pVertices = new CIlluminatedTexturedVertex[m_nVertices];
+	for (UINT i = 0; i < m_nVertices; i++) pVertices[i] = CIlluminatedTexturedVertex(pxmf3Positions[i], pxmf3Normals[i], pxmf2UVs[i]);
+
+	m_pd3dVertexBuffer = ::CreateBufferResource(pd3dDevice, pd3dCommandList, pVertices, m_nStride * m_nVertices, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, &m_pd3dVertexUploadBuffer);
+
+	m_d3dVertexBufferView.BufferLocation = m_pd3dVertexBuffer->GetGPUVirtualAddress();
+	m_d3dVertexBufferView.StrideInBytes = m_nStride;
+	m_d3dVertexBufferView.SizeInBytes = m_nStride * m_nVertices;
+
+	if (nIndices > 0)
+	{
+		m_nIndices = nIndices;
+
+		m_pd3dIndexBuffer = ::CreateBufferResource(pd3dDevice, pd3dCommandList, pnIndices, sizeof(UINT) * m_nIndices, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_INDEX_BUFFER, &m_pd3dIndexUploadBuffer);
+
+		m_d3dIndexBufferView.BufferLocation = m_pd3dIndexBuffer->GetGPUVirtualAddress();
+		m_d3dIndexBufferView.Format = DXGI_FORMAT_R32_UINT;
+		m_d3dIndexBufferView.SizeInBytes = sizeof(UINT) * m_nIndices;
+	}
+}
+
+CMeshIlluminatedTextured::~CMeshIlluminatedTextured()
+{
+}
+
+//////////////////////////////////////////////////////////////////////////////////
+//
+CCubeMeshIlluminatedTextured::CCubeMeshIlluminatedTextured(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *pd3dCommandList, float fWidth, float fHeight, float fDepth) : CMeshIlluminatedTextured(pd3dDevice, pd3dCommandList)
+{
+	m_nVertices = 36;
+	m_nStride = sizeof(CIlluminatedTexturedVertex);
+	m_nOffset = 0;
+	m_nSlot = 0;
+	m_d3dPrimitiveTopology = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+
+	float fx = fWidth*0.5f, fy = fHeight*0.5f, fz = fDepth*0.5f;
+
+	XMFLOAT3 pxmf3Positions[36];
+	int i = 0;
+	pxmf3Positions[i++] = XMFLOAT3(-fx, +fy, -fz);
+	pxmf3Positions[i++] = XMFLOAT3(+fx, +fy, -fz);
+	pxmf3Positions[i++] = XMFLOAT3(+fx, -fy, -fz);
+
+	pxmf3Positions[i++] = XMFLOAT3(-fx, +fy, -fz);
+	pxmf3Positions[i++] = XMFLOAT3(+fx, -fy, -fz);
+	pxmf3Positions[i++] = XMFLOAT3(-fx, -fy, -fz);
+
+	pxmf3Positions[i++] = XMFLOAT3(-fx, +fy, +fz);
+	pxmf3Positions[i++] = XMFLOAT3(+fx, +fy, +fz);
+	pxmf3Positions[i++] = XMFLOAT3(+fx, +fy, -fz);
+
+	pxmf3Positions[i++] = XMFLOAT3(-fx, +fy, +fz);
+	pxmf3Positions[i++] = XMFLOAT3(+fx, +fy, -fz);
+	pxmf3Positions[i++] = XMFLOAT3(-fx, +fy, -fz);
+
+	pxmf3Positions[i++] = XMFLOAT3(-fx, -fy, +fz);
+	pxmf3Positions[i++] = XMFLOAT3(+fx, -fy, +fz);
+	pxmf3Positions[i++] = XMFLOAT3(+fx, +fy, +fz);
+
+	pxmf3Positions[i++] = XMFLOAT3(-fx, -fy, +fz);
+	pxmf3Positions[i++] = XMFLOAT3(+fx, +fy, +fz);
+	pxmf3Positions[i++] = XMFLOAT3(-fx, +fy, +fz);
+
+	pxmf3Positions[i++] = XMFLOAT3(-fx, -fy, -fz);
+	pxmf3Positions[i++] = XMFLOAT3(+fx, -fy, -fz);
+	pxmf3Positions[i++] = XMFLOAT3(+fx, -fy, +fz);
+
+	pxmf3Positions[i++] = XMFLOAT3(-fx, -fy, -fz);
+	pxmf3Positions[i++] = XMFLOAT3(+fx, -fy, +fz);
+	pxmf3Positions[i++] = XMFLOAT3(-fx, -fy, +fz);
+
+	pxmf3Positions[i++] = XMFLOAT3(-fx, +fy, +fz);
+	pxmf3Positions[i++] = XMFLOAT3(-fx, +fy, -fz);
+	pxmf3Positions[i++] = XMFLOAT3(-fx, -fy, -fz);
+
+	pxmf3Positions[i++] = XMFLOAT3(-fx, +fy, +fz);
+	pxmf3Positions[i++] = XMFLOAT3(-fx, -fy, -fz);
+	pxmf3Positions[i++] = XMFLOAT3(-fx, -fy, +fz);
+
+	pxmf3Positions[i++] = XMFLOAT3(+fx, +fy, -fz);
+	pxmf3Positions[i++] = XMFLOAT3(+fx, +fy, +fz);
+	pxmf3Positions[i++] = XMFLOAT3(+fx, -fy, +fz);
+
+	pxmf3Positions[i++] = XMFLOAT3(+fx, +fy, -fz);
+	pxmf3Positions[i++] = XMFLOAT3(+fx, -fy, +fz);
+	pxmf3Positions[i++] = XMFLOAT3(+fx, -fy, -fz);
+
+	XMFLOAT2 pxmf2TexCoords[36];
+	i = 0;
+	pxmf2TexCoords[i++] = XMFLOAT2(0.0f, 0.0f);
+	pxmf2TexCoords[i++] = XMFLOAT2(1.0f, 0.0f);
+	pxmf2TexCoords[i++] = XMFLOAT2(1.0f, 1.0f);
+
+	pxmf2TexCoords[i++] = XMFLOAT2(0.0f, 0.0f);
+	pxmf2TexCoords[i++] = XMFLOAT2(1.0f, 1.0f);
+	pxmf2TexCoords[i++] = XMFLOAT2(0.0f, 1.0f);
+
+	pxmf2TexCoords[i++] = XMFLOAT2(0.0f, 0.0f);
+	pxmf2TexCoords[i++] = XMFLOAT2(1.0f, 0.0f);
+	pxmf2TexCoords[i++] = XMFLOAT2(1.0f, 1.0f);
+
+	pxmf2TexCoords[i++] = XMFLOAT2(0.0f, 0.0f);
+	pxmf2TexCoords[i++] = XMFLOAT2(1.0f, 1.0f);
+	pxmf2TexCoords[i++] = XMFLOAT2(0.0f, 1.0f);
+
+	pxmf2TexCoords[i++] = XMFLOAT2(0.0f, 0.0f);
+	pxmf2TexCoords[i++] = XMFLOAT2(1.0f, 0.0f);
+	pxmf2TexCoords[i++] = XMFLOAT2(1.0f, 1.0f);
+
+	pxmf2TexCoords[i++] = XMFLOAT2(0.0f, 0.0f);
+	pxmf2TexCoords[i++] = XMFLOAT2(1.0f, 1.0f);
+	pxmf2TexCoords[i++] = XMFLOAT2(0.0f, 1.0f);
+
+	pxmf2TexCoords[i++] = XMFLOAT2(0.0f, 0.0f);
+	pxmf2TexCoords[i++] = XMFLOAT2(1.0f, 0.0f);
+	pxmf2TexCoords[i++] = XMFLOAT2(1.0f, 1.0f);
+
+	pxmf2TexCoords[i++] = XMFLOAT2(0.0f, 0.0f);
+	pxmf2TexCoords[i++] = XMFLOAT2(1.0f, 1.0f);
+	pxmf2TexCoords[i++] = XMFLOAT2(0.0f, 1.0f);
+
+	pxmf2TexCoords[i++] = XMFLOAT2(0.0f, 0.0f);
+	pxmf2TexCoords[i++] = XMFLOAT2(1.0f, 0.0f);
+	pxmf2TexCoords[i++] = XMFLOAT2(1.0f, 1.0f);
+
+	pxmf2TexCoords[i++] = XMFLOAT2(0.0f, 0.0f);
+	pxmf2TexCoords[i++] = XMFLOAT2(1.0f, 1.0f);
+	pxmf2TexCoords[i++] = XMFLOAT2(0.0f, 1.0f);
+
+	pxmf2TexCoords[i++] = XMFLOAT2(0.0f, 0.0f);
+	pxmf2TexCoords[i++] = XMFLOAT2(1.0f, 0.0f);
+	pxmf2TexCoords[i++] = XMFLOAT2(1.0f, 1.0f);
+
+	pxmf2TexCoords[i++] = XMFLOAT2(0.0f, 0.0f);
+	pxmf2TexCoords[i++] = XMFLOAT2(1.0f, 1.0f);
+	pxmf2TexCoords[i++] = XMFLOAT2(0.0f, 1.0f);
+
+	XMFLOAT3 pxmf3Normals[36];
+	CalculateVertexNormals(pxmf3Normals, pxmf3Positions, m_nVertices, NULL, 0);
+
+	CIlluminatedTexturedVertex pVertices[36];
+	for (int i = 0; i < 36; i++) pVertices[i] = CIlluminatedTexturedVertex(pxmf3Positions[i], pxmf3Normals[i], pxmf2TexCoords[i]);
+
+	m_pd3dVertexBuffer = ::CreateBufferResource(pd3dDevice, pd3dCommandList, pVertices, m_nStride * m_nVertices, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, &m_pd3dVertexUploadBuffer);
+
+	m_d3dVertexBufferView.BufferLocation = m_pd3dVertexBuffer->GetGPUVirtualAddress();
+	m_d3dVertexBufferView.StrideInBytes = m_nStride;
+	m_d3dVertexBufferView.SizeInBytes = m_nStride * m_nVertices;
+}
+
+CCubeMeshIlluminatedTextured::~CCubeMeshIlluminatedTextured()
+{
+}
+
+//////////////////////////////////////////////////////////////////////////////////
+//
+CAirplaneMeshDiffused::CAirplaneMeshDiffused(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *pd3dCommandList, float fWidth, float fHeight, float fDepth, XMFLOAT4 xmf4Color) : CMeshDiffused(pd3dDevice, pd3dCommandList)
+{
+	m_nVertices = 24 * 3;
+	m_nStride = sizeof(CDiffusedVertex);
+	m_nOffset = 0;
+	m_nSlot = 0;
+	m_d3dPrimitiveTopology = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+
+	float fx = fWidth*0.5f, fy = fHeight*0.5f, fz = fDepth*0.5f;
+
+	CDiffusedVertex pVertices[24 * 3];
+
+	float x1 = fx * 0.2f, y1 = fy * 0.2f, x2 = fx * 0.1f, y3 = fy * 0.3f, y2 = ((y1 - (fy - y3)) / x1) * x2 + (fy - y3);
+	int i = 0;
+
+	//Upper Plane
+	pVertices[i++] = CDiffusedVertex(XMFLOAT3(0.0f, +(fy + y3), -fz), Vector4::Add(xmf4Color, RANDOM_COLOR));
+	pVertices[i++] = CDiffusedVertex(XMFLOAT3(+x1, -y1, -fz), Vector4::Add(xmf4Color, RANDOM_COLOR));
+	pVertices[i++] = CDiffusedVertex(XMFLOAT3(0.0f, 0.0f, -fz), Vector4::Add(xmf4Color, RANDOM_COLOR));
+
+	pVertices[i++] = CDiffusedVertex(XMFLOAT3(0.0f, +(fy + y3), -fz), Vector4::Add(xmf4Color, RANDOM_COLOR));
+	pVertices[i++] = CDiffusedVertex(XMFLOAT3(0.0f, 0.0f, -fz), Vector4::Add(xmf4Color, RANDOM_COLOR));
+	pVertices[i++] = CDiffusedVertex(XMFLOAT3(-x1, -y1, -fz), Vector4::Add(xmf4Color, RANDOM_COLOR));
+
+	pVertices[i++] = CDiffusedVertex(XMFLOAT3(+x2, +y2, -fz), Vector4::Add(xmf4Color, RANDOM_COLOR));
+	pVertices[i++] = CDiffusedVertex(XMFLOAT3(+fx, -y3, -fz), Vector4::Add(xmf4Color, RANDOM_COLOR));
+	pVertices[i++] = CDiffusedVertex(XMFLOAT3(+x1, -y1, -fz), Vector4::Add(xmf4Color, RANDOM_COLOR));
+
+	pVertices[i++] = CDiffusedVertex(XMFLOAT3(-x2, +y2, -fz), Vector4::Add(xmf4Color, RANDOM_COLOR));
+	pVertices[i++] = CDiffusedVertex(XMFLOAT3(-x1, -y1, -fz), Vector4::Add(xmf4Color, RANDOM_COLOR));
+	pVertices[i++] = CDiffusedVertex(XMFLOAT3(-fx, -y3, -fz), Vector4::Add(xmf4Color, RANDOM_COLOR));
+
+	//Lower Plane
+	pVertices[i++] = CDiffusedVertex(XMFLOAT3(0.0f, +(fy + y3), +fz), Vector4::Add(xmf4Color, RANDOM_COLOR));
+	pVertices[i++] = CDiffusedVertex(XMFLOAT3(0.0f, 0.0f, +fz), Vector4::Add(xmf4Color, RANDOM_COLOR));
+	pVertices[i++] = CDiffusedVertex(XMFLOAT3(+x1, -y1, +fz), Vector4::Add(xmf4Color, RANDOM_COLOR));
+
+	pVertices[i++] = CDiffusedVertex(XMFLOAT3(0.0f, +(fy + y3), +fz), Vector4::Add(xmf4Color, RANDOM_COLOR));
+	pVertices[i++] = CDiffusedVertex(XMFLOAT3(-x1, -y1, +fz), Vector4::Add(xmf4Color, RANDOM_COLOR));
+	pVertices[i++] = CDiffusedVertex(XMFLOAT3(0.0f, 0.0f, +fz), Vector4::Add(xmf4Color, RANDOM_COLOR));
+
+	pVertices[i++] = CDiffusedVertex(XMFLOAT3(+x2, +y2, +fz), Vector4::Add(xmf4Color, RANDOM_COLOR));
+	pVertices[i++] = CDiffusedVertex(XMFLOAT3(+x1, -y1, +fz), Vector4::Add(xmf4Color, RANDOM_COLOR));
+	pVertices[i++] = CDiffusedVertex(XMFLOAT3(+fx, -y3, +fz), Vector4::Add(xmf4Color, RANDOM_COLOR));
+
+	pVertices[i++] = CDiffusedVertex(XMFLOAT3(-x2, +y2, +fz), Vector4::Add(xmf4Color, RANDOM_COLOR));
+	pVertices[i++] = CDiffusedVertex(XMFLOAT3(-fx, -y3, +fz), Vector4::Add(xmf4Color, RANDOM_COLOR));
+	pVertices[i++] = CDiffusedVertex(XMFLOAT3(-x1, -y1, +fz), Vector4::Add(xmf4Color, RANDOM_COLOR));
+
+	//Right Plane
+	pVertices[i++] = CDiffusedVertex(XMFLOAT3(0.0f, +(fy + y3), -fz), Vector4::Add(xmf4Color, RANDOM_COLOR));
+	pVertices[i++] = CDiffusedVertex(XMFLOAT3(0.0f, +(fy + y3), +fz), Vector4::Add(xmf4Color, RANDOM_COLOR));
+	pVertices[i++] = CDiffusedVertex(XMFLOAT3(+x2, +y2, -fz), Vector4::Add(xmf4Color, RANDOM_COLOR));
+
+	pVertices[i++] = CDiffusedVertex(XMFLOAT3(+x2, +y2, -fz), Vector4::Add(xmf4Color, RANDOM_COLOR));
+	pVertices[i++] = CDiffusedVertex(XMFLOAT3(0.0f, +(fy + y3), +fz), Vector4::Add(xmf4Color, RANDOM_COLOR));
+	pVertices[i++] = CDiffusedVertex(XMFLOAT3(+x2, +y2, +fz), Vector4::Add(xmf4Color, RANDOM_COLOR));
+
+	pVertices[i++] = CDiffusedVertex(XMFLOAT3(+x2, +y2, -fz), Vector4::Add(xmf4Color, RANDOM_COLOR));
+	pVertices[i++] = CDiffusedVertex(XMFLOAT3(+x2, +y2, +fz), Vector4::Add(xmf4Color, RANDOM_COLOR));
+	pVertices[i++] = CDiffusedVertex(XMFLOAT3(+fx, -y3, -fz), Vector4::Add(xmf4Color, RANDOM_COLOR));
+
+	pVertices[i++] = CDiffusedVertex(XMFLOAT3(+fx, -y3, -fz), Vector4::Add(xmf4Color, RANDOM_COLOR));
+	pVertices[i++] = CDiffusedVertex(XMFLOAT3(+x2, +y2, +fz), Vector4::Add(xmf4Color, RANDOM_COLOR));
+	pVertices[i++] = CDiffusedVertex(XMFLOAT3(+fx, -y3, +fz), Vector4::Add(xmf4Color, RANDOM_COLOR));
+
+	//Back/Right Plane
+	pVertices[i++] = CDiffusedVertex(XMFLOAT3(+x1, -y1, -fz), Vector4::Add(xmf4Color, RANDOM_COLOR));
+	pVertices[i++] = CDiffusedVertex(XMFLOAT3(+fx, -y3, -fz), Vector4::Add(xmf4Color, RANDOM_COLOR));
+	pVertices[i++] = CDiffusedVertex(XMFLOAT3(+fx, -y3, +fz), Vector4::Add(xmf4Color, RANDOM_COLOR));
+
+	pVertices[i++] = CDiffusedVertex(XMFLOAT3(+x1, -y1, -fz), Vector4::Add(xmf4Color, RANDOM_COLOR));
+	pVertices[i++] = CDiffusedVertex(XMFLOAT3(+fx, -y3, +fz), Vector4::Add(xmf4Color, RANDOM_COLOR));
+	pVertices[i++] = CDiffusedVertex(XMFLOAT3(+x1, -y1, +fz), Vector4::Add(xmf4Color, RANDOM_COLOR));
+
+	pVertices[i++] = CDiffusedVertex(XMFLOAT3(0.0f, 0.0f, -fz), Vector4::Add(xmf4Color, RANDOM_COLOR));
+	pVertices[i++] = CDiffusedVertex(XMFLOAT3(+x1, -y1, -fz), Vector4::Add(xmf4Color, RANDOM_COLOR));
+	pVertices[i++] = CDiffusedVertex(XMFLOAT3(+x1, -y1, +fz), Vector4::Add(xmf4Color, RANDOM_COLOR));
+
+	pVertices[i++] = CDiffusedVertex(XMFLOAT3(0.0f, 0.0f, -fz), Vector4::Add(xmf4Color, RANDOM_COLOR));
+	pVertices[i++] = CDiffusedVertex(XMFLOAT3(+x1, -y1, +fz), Vector4::Add(xmf4Color, RANDOM_COLOR));
+	pVertices[i++] = CDiffusedVertex(XMFLOAT3(0.0f, 0.0f, +fz), Vector4::Add(xmf4Color, RANDOM_COLOR));
+
+	//Left Plane
+	pVertices[i++] = CDiffusedVertex(XMFLOAT3(0.0f, +(fy + y3), +fz), Vector4::Add(xmf4Color, RANDOM_COLOR));
+	pVertices[i++] = CDiffusedVertex(XMFLOAT3(0.0f, +(fy + y3), -fz), Vector4::Add(xmf4Color, RANDOM_COLOR));
+	pVertices[i++] = CDiffusedVertex(XMFLOAT3(-x2, +y2, -fz), Vector4::Add(xmf4Color, RANDOM_COLOR));
+
+	pVertices[i++] = CDiffusedVertex(XMFLOAT3(0.0f, +(fy + y3), +fz), Vector4::Add(xmf4Color, RANDOM_COLOR));
+	pVertices[i++] = CDiffusedVertex(XMFLOAT3(-x2, +y2, -fz), Vector4::Add(xmf4Color, RANDOM_COLOR));
+	pVertices[i++] = CDiffusedVertex(XMFLOAT3(-x2, +y2, +fz), Vector4::Add(xmf4Color, RANDOM_COLOR));
+
+	pVertices[i++] = CDiffusedVertex(XMFLOAT3(-x2, +y2, +fz), Vector4::Add(xmf4Color, RANDOM_COLOR));
+	pVertices[i++] = CDiffusedVertex(XMFLOAT3(-x2, +y2, -fz), Vector4::Add(xmf4Color, RANDOM_COLOR));
+	pVertices[i++] = CDiffusedVertex(XMFLOAT3(-fx, -y3, -fz), Vector4::Add(xmf4Color, RANDOM_COLOR));
+
+	pVertices[i++] = CDiffusedVertex(XMFLOAT3(-x2, +y2, +fz), Vector4::Add(xmf4Color, RANDOM_COLOR));
+	pVertices[i++] = CDiffusedVertex(XMFLOAT3(-fx, -y3, -fz), Vector4::Add(xmf4Color, RANDOM_COLOR));
+	pVertices[i++] = CDiffusedVertex(XMFLOAT3(-fx, -y3, +fz), Vector4::Add(xmf4Color, RANDOM_COLOR));
+
+	//Back/Left Plane
+	pVertices[i++] = CDiffusedVertex(XMFLOAT3(0.0f, 0.0f, -fz), Vector4::Add(xmf4Color, RANDOM_COLOR));
+	pVertices[i++] = CDiffusedVertex(XMFLOAT3(0.0f, 0.0f, +fz), Vector4::Add(xmf4Color, RANDOM_COLOR));
+	pVertices[i++] = CDiffusedVertex(XMFLOAT3(-x1, -y1, +fz), Vector4::Add(xmf4Color, RANDOM_COLOR));
+
+	pVertices[i++] = CDiffusedVertex(XMFLOAT3(0.0f, 0.0f, -fz), Vector4::Add(xmf4Color, RANDOM_COLOR));
+	pVertices[i++] = CDiffusedVertex(XMFLOAT3(-x1, -y1, +fz), Vector4::Add(xmf4Color, RANDOM_COLOR));
+	pVertices[i++] = CDiffusedVertex(XMFLOAT3(-x1, -y1, -fz), Vector4::Add(xmf4Color, RANDOM_COLOR));
+
+	pVertices[i++] = CDiffusedVertex(XMFLOAT3(-x1, -y1, -fz), Vector4::Add(xmf4Color, RANDOM_COLOR));
+	pVertices[i++] = CDiffusedVertex(XMFLOAT3(-x1, -y1, +fz), Vector4::Add(xmf4Color, RANDOM_COLOR));
+	pVertices[i++] = CDiffusedVertex(XMFLOAT3(-fx, -y3, +fz), Vector4::Add(xmf4Color, RANDOM_COLOR));
+
+	pVertices[i++] = CDiffusedVertex(XMFLOAT3(-x1, -y1, -fz), Vector4::Add(xmf4Color, RANDOM_COLOR));
+	pVertices[i++] = CDiffusedVertex(XMFLOAT3(-fx, -y3, +fz), Vector4::Add(xmf4Color, RANDOM_COLOR));
+	pVertices[i++] = CDiffusedVertex(XMFLOAT3(-fx, -y3, -fz), Vector4::Add(xmf4Color, RANDOM_COLOR));
+
+	m_pd3dVertexBuffer = ::CreateBufferResource(pd3dDevice, pd3dCommandList, pVertices, m_nStride * m_nVertices, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, &m_pd3dVertexUploadBuffer);
+
+	m_d3dVertexBufferView.BufferLocation = m_pd3dVertexBuffer->GetGPUVirtualAddress();
+	m_d3dVertexBufferView.StrideInBytes = m_nStride;
+	m_d3dVertexBufferView.SizeInBytes = m_nStride * m_nVertices;
+}
+
+CAirplaneMeshDiffused::~CAirplaneMeshDiffused()
+{
+}
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////
 CRectMeshTextured::CRectMeshTextured(
-	  CD3DDeviceIndRes*				pd3dDeviceIndRes
+	ID3D12Device*				pd3dDevice
 	, ID3D12GraphicsCommandList*	pd3dCommandList
 	, float							fWidth
 	, float							fHeight
@@ -185,13 +530,13 @@ CRectMeshTextured::CRectMeshTextured(
 	, float							fxPosition
 	, float							fyPosition
 	, float							fzPosition)
-	: CMesh(pd3dDeviceIndRes, pd3dCommandList)
+	: CMesh(pd3dDevice, pd3dCommandList)
 {
 	m_nVertices = 6;
-	m_nStride = sizeof(CSkyBoxVertex);
+	m_nStride = sizeof(CTexturedVertex);
 	m_d3dPrimitiveTopology = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 
-	CSkyBoxVertex pVertices[6];
+	CTexturedVertex pVertices[6];
 
 	float fx = (fWidth * 0.5f) + fxPosition
 		, fy = (fHeight * 0.5f) + fyPosition,
@@ -201,68 +546,69 @@ CRectMeshTextured::CRectMeshTextured(
 	{
 		if (fxPosition > 0.0f)
 		{
-			pVertices[0] = CSkyBoxVertex(XMFLOAT3(fx, +fy, -fz), XMFLOAT2(1.0f, 0.0f));
-			pVertices[1] = CSkyBoxVertex(XMFLOAT3(fx, -fy, -fz), XMFLOAT2(1.0f, 1.0f));
-			pVertices[2] = CSkyBoxVertex(XMFLOAT3(fx, -fy, +fz), XMFLOAT2(0.0f, 1.0f));
-			pVertices[3] = CSkyBoxVertex(XMFLOAT3(fx, -fy, +fz), XMFLOAT2(0.0f, 1.0f));
-			pVertices[4] = CSkyBoxVertex(XMFLOAT3(fx, +fy, +fz), XMFLOAT2(0.0f, 0.0f));
-			pVertices[5] = CSkyBoxVertex(XMFLOAT3(fx, +fy, -fz), XMFLOAT2(1.0f, 0.0f));
+			pVertices[0] = CTexturedVertex(XMFLOAT3(fx, +fy, -fz), XMFLOAT2(1.0f, 0.0f));
+			pVertices[1] = CTexturedVertex(XMFLOAT3(fx, -fy, -fz), XMFLOAT2(1.0f, 1.0f));
+			pVertices[2] = CTexturedVertex(XMFLOAT3(fx, -fy, +fz), XMFLOAT2(0.0f, 1.0f));
+			pVertices[3] = CTexturedVertex(XMFLOAT3(fx, -fy, +fz), XMFLOAT2(0.0f, 1.0f));
+			pVertices[4] = CTexturedVertex(XMFLOAT3(fx, +fy, +fz), XMFLOAT2(0.0f, 0.0f));
+			pVertices[5] = CTexturedVertex(XMFLOAT3(fx, +fy, -fz), XMFLOAT2(1.0f, 0.0f));
 		}
 		else
 		{
-			pVertices[0] = CSkyBoxVertex(XMFLOAT3(fx, +fy, +fz), XMFLOAT2(1.0f, 0.0f));
-			pVertices[1] = CSkyBoxVertex(XMFLOAT3(fx, -fy, +fz), XMFLOAT2(1.0f, 1.0f));
-			pVertices[2] = CSkyBoxVertex(XMFLOAT3(fx, -fy, -fz), XMFLOAT2(0.0f, 1.0f));
-			pVertices[3] = CSkyBoxVertex(XMFLOAT3(fx, -fy, -fz), XMFLOAT2(0.0f, 1.0f));
-			pVertices[4] = CSkyBoxVertex(XMFLOAT3(fx, +fy, -fz), XMFLOAT2(0.0f, 0.0f));
-			pVertices[5] = CSkyBoxVertex(XMFLOAT3(fx, +fy, +fz), XMFLOAT2(1.0f, 0.0f));
+			pVertices[0] = CTexturedVertex(XMFLOAT3(fx, +fy, +fz), XMFLOAT2(1.0f, 0.0f));
+			pVertices[1] = CTexturedVertex(XMFLOAT3(fx, -fy, +fz), XMFLOAT2(1.0f, 1.0f));
+			pVertices[2] = CTexturedVertex(XMFLOAT3(fx, -fy, -fz), XMFLOAT2(0.0f, 1.0f));
+			pVertices[3] = CTexturedVertex(XMFLOAT3(fx, -fy, -fz), XMFLOAT2(0.0f, 1.0f));
+			pVertices[4] = CTexturedVertex(XMFLOAT3(fx, +fy, -fz), XMFLOAT2(0.0f, 0.0f));
+			pVertices[5] = CTexturedVertex(XMFLOAT3(fx, +fy, +fz), XMFLOAT2(1.0f, 0.0f));
 		}
 	}
 	else if (fHeight == 0.0f)
 	{
 		if (fyPosition > 0.0f)
 		{
-			pVertices[0] = CSkyBoxVertex(XMFLOAT3(+fx, fy, -fz), XMFLOAT2(1.0f, 0.0f));
-			pVertices[1] = CSkyBoxVertex(XMFLOAT3(+fx, fy, +fz), XMFLOAT2(1.0f, 1.0f));
-			pVertices[2] = CSkyBoxVertex(XMFLOAT3(-fx, fy, +fz), XMFLOAT2(0.0f, 1.0f));
-			pVertices[3] = CSkyBoxVertex(XMFLOAT3(-fx, fy, +fz), XMFLOAT2(0.0f, 1.0f));
-			pVertices[4] = CSkyBoxVertex(XMFLOAT3(-fx, fy, -fz), XMFLOAT2(0.0f, 0.0f));
-			pVertices[5] = CSkyBoxVertex(XMFLOAT3(+fx, fy, -fz), XMFLOAT2(1.0f, 0.0f));
+			pVertices[0] = CTexturedVertex(XMFLOAT3(+fx, fy, -fz), XMFLOAT2(1.0f, 0.0f));
+			pVertices[1] = CTexturedVertex(XMFLOAT3(+fx, fy, +fz), XMFLOAT2(1.0f, 1.0f));
+			pVertices[2] = CTexturedVertex(XMFLOAT3(-fx, fy, +fz), XMFLOAT2(0.0f, 1.0f));
+			pVertices[3] = CTexturedVertex(XMFLOAT3(-fx, fy, +fz), XMFLOAT2(0.0f, 1.0f));
+			pVertices[4] = CTexturedVertex(XMFLOAT3(-fx, fy, -fz), XMFLOAT2(0.0f, 0.0f));
+			pVertices[5] = CTexturedVertex(XMFLOAT3(+fx, fy, -fz), XMFLOAT2(1.0f, 0.0f));
 		}
 		else
 		{
-			pVertices[0] = CSkyBoxVertex(XMFLOAT3(+fx, fy, +fz), XMFLOAT2(1.0f, 0.0f));
-			pVertices[1] = CSkyBoxVertex(XMFLOAT3(+fx, fy, -fz), XMFLOAT2(1.0f, 1.0f));
-			pVertices[2] = CSkyBoxVertex(XMFLOAT3(-fx, fy, -fz), XMFLOAT2(0.0f, 1.0f));
-			pVertices[3] = CSkyBoxVertex(XMFLOAT3(-fx, fy, -fz), XMFLOAT2(0.0f, 1.0f));
-			pVertices[4] = CSkyBoxVertex(XMFLOAT3(-fx, fy, +fz), XMFLOAT2(0.0f, 0.0f));
-			pVertices[5] = CSkyBoxVertex(XMFLOAT3(+fx, fy, +fz), XMFLOAT2(1.0f, 0.0f));
+			pVertices[0] = CTexturedVertex(XMFLOAT3(+fx, fy, +fz), XMFLOAT2(1.0f, 0.0f));
+			pVertices[1] = CTexturedVertex(XMFLOAT3(+fx, fy, -fz), XMFLOAT2(1.0f, 1.0f));
+			pVertices[2] = CTexturedVertex(XMFLOAT3(-fx, fy, -fz), XMFLOAT2(0.0f, 1.0f));
+			pVertices[3] = CTexturedVertex(XMFLOAT3(-fx, fy, -fz), XMFLOAT2(0.0f, 1.0f));
+			pVertices[4] = CTexturedVertex(XMFLOAT3(-fx, fy, +fz), XMFLOAT2(0.0f, 0.0f));
+			pVertices[5] = CTexturedVertex(XMFLOAT3(+fx, fy, +fz), XMFLOAT2(1.0f, 0.0f));
 		}
 	}
 	else if (fDepth == 0.0f)
 	{
 		if (fzPosition > 0.0f)
 		{
-			pVertices[0] = CSkyBoxVertex(XMFLOAT3(+fx, +fy, fz), XMFLOAT2(1.0f, 0.0f));
-			pVertices[1] = CSkyBoxVertex(XMFLOAT3(+fx, -fy, fz), XMFLOAT2(1.0f, 1.0f));
-			pVertices[2] = CSkyBoxVertex(XMFLOAT3(-fx, -fy, fz), XMFLOAT2(0.0f, 1.0f));
-			pVertices[3] = CSkyBoxVertex(XMFLOAT3(-fx, -fy, fz), XMFLOAT2(0.0f, 1.0f));
-			pVertices[4] = CSkyBoxVertex(XMFLOAT3(-fx, +fy, fz), XMFLOAT2(0.0f, 0.0f));
-			pVertices[5] = CSkyBoxVertex(XMFLOAT3(+fx, +fy, fz), XMFLOAT2(1.0f, 0.0f));
+			pVertices[0] = CTexturedVertex(XMFLOAT3(+fx, +fy, fz), XMFLOAT2(1.0f, 0.0f));
+			pVertices[1] = CTexturedVertex(XMFLOAT3(+fx, -fy, fz), XMFLOAT2(1.0f, 1.0f));
+			pVertices[2] = CTexturedVertex(XMFLOAT3(-fx, -fy, fz), XMFLOAT2(0.0f, 1.0f));
+			pVertices[3] = CTexturedVertex(XMFLOAT3(-fx, -fy, fz), XMFLOAT2(0.0f, 1.0f));
+			pVertices[4] = CTexturedVertex(XMFLOAT3(-fx, +fy, fz), XMFLOAT2(0.0f, 0.0f));
+			pVertices[5] = CTexturedVertex(XMFLOAT3(+fx, +fy, fz), XMFLOAT2(1.0f, 0.0f));
 		}
 		else
 		{
-			pVertices[0] = CSkyBoxVertex(XMFLOAT3(-fx, +fy, fz), XMFLOAT2(1.0f, 0.0f));
-			pVertices[1] = CSkyBoxVertex(XMFLOAT3(-fx, -fy, fz), XMFLOAT2(1.0f, 1.0f));
-			pVertices[2] = CSkyBoxVertex(XMFLOAT3(+fx, -fy, fz), XMFLOAT2(0.0f, 1.0f));
-			pVertices[3] = CSkyBoxVertex(XMFLOAT3(+fx, -fy, fz), XMFLOAT2(0.0f, 1.0f));
-			pVertices[4] = CSkyBoxVertex(XMFLOAT3(+fx, +fy, fz), XMFLOAT2(0.0f, 0.0f));
-			pVertices[5] = CSkyBoxVertex(XMFLOAT3(-fx, +fy, fz), XMFLOAT2(1.0f, 0.0f));
+			pVertices[0] = CTexturedVertex(XMFLOAT3(-fx, +fy, fz), XMFLOAT2(1.0f, 0.0f));
+			pVertices[1] = CTexturedVertex(XMFLOAT3(-fx, -fy, fz), XMFLOAT2(1.0f, 1.0f));
+			pVertices[2] = CTexturedVertex(XMFLOAT3(+fx, -fy, fz), XMFLOAT2(0.0f, 1.0f));
+			pVertices[3] = CTexturedVertex(XMFLOAT3(+fx, -fy, fz), XMFLOAT2(0.0f, 1.0f));
+			pVertices[4] = CTexturedVertex(XMFLOAT3(+fx, +fy, fz), XMFLOAT2(0.0f, 0.0f));
+			pVertices[5] = CTexturedVertex(XMFLOAT3(-fx, +fy, fz), XMFLOAT2(1.0f, 0.0f));
 		}
 	}
 
-	m_pd3dVertexBuffer = pd3dDeviceIndRes->CreateBufferResource(
-		pd3dCommandList
+	m_pd3dVertexBuffer = ::CreateBufferResource(
+		  pd3dDevice
+		, pd3dCommandList
 		, pVertices
 		, m_nStride * m_nVertices
 		, D3D12_HEAP_TYPE_DEFAULT
@@ -276,7 +622,7 @@ CRectMeshTextured::CRectMeshTextured(
 CRectMeshTextured::~CRectMeshTextured()
 {
 }
-
+//////////////////////////////////////////////////////////////////////////////////////////////////////
 CHeightMapImage::CHeightMapImage(
 	  LPCTSTR						pFileName
 	, int							nWidth
@@ -289,9 +635,9 @@ CHeightMapImage::CHeightMapImage(
 
 	BYTE *pHeightMapPixels = new BYTE[m_nWidth * m_nLength];
 
-	//íŒŒì¼ì„ ì—´ê³  ì½ëŠ”ë‹¤. ë†’ì´ ë§µ ì´ë¯¸ì§€ëŠ” íŒŒì¼ í—¤ë”ê°€ ì—†ëŠ” RAW ì´ë¯¸ì§€ì´ë‹¤.
+	//ÆÄÀÏÀ» ¿­°í ÀĞ´Â´Ù. ³ôÀÌ ¸Ê ÀÌ¹ÌÁö´Â ÆÄÀÏ Çì´õ°¡ ¾ø´Â RAW ÀÌ¹ÌÁöÀÌ´Ù.
 	HANDLE hFile = ::CreateFile(
-		  pFileName
+		pFileName
 		, GENERIC_READ
 		, 0
 		, NULL
@@ -303,14 +649,14 @@ CHeightMapImage::CHeightMapImage(
 	::ReadFile(hFile, pHeightMapPixels, (m_nWidth * m_nLength), &dwBytesRead, NULL);
 	::CloseHandle(hFile);
 
-	/*ì´ë¯¸ì§€ì˜ y-ì¶•ê³¼ ì§€í˜•ì˜ z-ì¶•ì´ ë°©í–¥ì´ ë°˜ëŒ€ì´ë¯€ë¡œ ì´ë¯¸ì§€ë¥¼ ìƒí•˜ëŒ€ì¹­ ì‹œì¼œ ì €ì¥í•œë‹¤. ê·¸ëŸ¬ë©´ ë‹¤ìŒ ê·¸ë¦¼ê³¼ ê°™ì´ ì´
-	ë¯¸ì§€ì˜ ì¢Œí‘œì¶•ê³¼ ì§€í˜•ì˜ ì¢Œí‘œì¶•ì˜ ë°©í–¥ì´ ì¼ì¹˜í•˜ê²Œ ëœë‹¤.*/
+	/*ÀÌ¹ÌÁöÀÇ y-Ãà°ú ÁöÇüÀÇ z-ÃàÀÌ ¹æÇâÀÌ ¹İ´ëÀÌ¹Ç·Î ÀÌ¹ÌÁö¸¦ »óÇÏ´ëÄª ½ÃÄÑ ÀúÀåÇÑ´Ù. ±×·¯¸é ´ÙÀ½ ±×¸²°ú °°ÀÌ ÀÌ
+	¹ÌÁöÀÇ ÁÂÇ¥Ãà°ú ÁöÇüÀÇ ÁÂÇ¥ÃàÀÇ ¹æÇâÀÌ ÀÏÄ¡ÇÏ°Ô µÈ´Ù.*/
 	m_pHeightMapPixels = new BYTE[m_nWidth * m_nLength];
 	for (int y = 0; y < m_nLength; y++)
 	{
 		for (int x = 0; x < m_nWidth; x++)
 		{
-			m_pHeightMapPixels[x + ((m_nLength - 1 - y)*m_nWidth)] = 
+			m_pHeightMapPixels[x + ((m_nLength - 1 - y)*m_nWidth)] =
 				pHeightMapPixels[x + (y*m_nWidth)];
 		}
 	}
@@ -324,55 +670,57 @@ CHeightMapImage::~CHeightMapImage()
 
 XMFLOAT3 CHeightMapImage::GetHeightMapNormal(int x, int z)
 {
-	// x-ì¢Œí‘œì™€ z-ì¢Œí‘œê°€ ë†’ì´ ë§µì˜ ë²”ìœ„ë¥¼ ë²—ì–´ë‚˜ë©´ ì§€í˜•ì˜ ë²•ì„  ë²¡í„°ëŠ” y-ì¶• ë°©í–¥ ë²¡í„°ì´ë‹¤.
+	// x-ÁÂÇ¥¿Í z-ÁÂÇ¥°¡ ³ôÀÌ ¸ÊÀÇ ¹üÀ§¸¦ ¹ş¾î³ª¸é ÁöÇüÀÇ ¹ı¼± º¤ÅÍ´Â y-Ãà ¹æÇâ º¤ÅÍÀÌ´Ù.
 	if ((x < 0.0f) || (z < 0.0f) || (x >= m_nWidth) || (z >= m_nLength))
 		return(XMFLOAT3(0.0f, 1.0f, 0.0f));
 
-	// ë†’ì´ ë§µì—ì„œ (x, z) ì¢Œí‘œì˜ í”½ì…€ ê°’ê³¼ ì¸ì ‘í•œ ë‘ ê°œì˜ ì  (x+1, z), (z, z+1)ì— ëŒ€í•œ 
-	// í”½ì…€ ê°’ì„ ì‚¬ìš©í•˜ì—¬ ë²•ì„  ë²¡í„°ë¥¼ ê³„ì‚°í•œë‹¤.
+	// ³ôÀÌ ¸Ê¿¡¼­ (x, z) ÁÂÇ¥ÀÇ ÇÈ¼¿ °ª°ú ÀÎÁ¢ÇÑ µÎ °³ÀÇ Á¡ (x+1, z), (z, z+1)¿¡ ´ëÇÑ 
+	// ÇÈ¼¿ °ªÀ» »ç¿ëÇÏ¿© ¹ı¼± º¤ÅÍ¸¦ °è»êÇÑ´Ù.
 	int nHeightMapIndex = x + (z * m_nWidth);
 	int xHeightMapAdd = (x < (m_nWidth - 1)) ? 1 : -1;
 	int zHeightMapAdd = (z < (m_nLength - 1)) ? m_nWidth : -m_nWidth;
 
-	//(x, z), (x+1, z), (z, z+1)ì˜ í”½ì…€ì—ì„œ ì§€í˜•ì˜ ë†’ì´ë¥¼ êµ¬í•œë‹¤.
+	//(x, z), (x+1, z), (z, z+1)ÀÇ ÇÈ¼¿¿¡¼­ ÁöÇüÀÇ ³ôÀÌ¸¦ ±¸ÇÑ´Ù.
 	float y1 = (float)m_pHeightMapPixels[nHeightMapIndex] * m_xmf3Scale.y;
 	float y2 = (float)m_pHeightMapPixels[nHeightMapIndex + xHeightMapAdd] * m_xmf3Scale.y;
 	float y3 = (float)m_pHeightMapPixels[nHeightMapIndex + zHeightMapAdd] * m_xmf3Scale.y;
 
-	//xmf3Edge1ì€ (0, y3, m_xmf3Scale.z) - (0, y1, 0) ë²¡í„°ì´ë‹¤.
+	//xmf3Edge1Àº (0, y3, m_xmf3Scale.z) - (0, y1, 0) º¤ÅÍÀÌ´Ù.
 	XMFLOAT3 xmf3Edge1 = XMFLOAT3(0.0f, y3 - y1, m_xmf3Scale.z);
 
-	//xmf3Edge2ëŠ” (m_xmf3Scale.x, y2, 0) - (0, y1, 0) ë²¡í„°ì´ë‹¤.
+	//xmf3Edge2´Â (m_xmf3Scale.x, y2, 0) - (0, y1, 0) º¤ÅÍÀÌ´Ù.
 	XMFLOAT3 xmf3Edge2 = XMFLOAT3(m_xmf3Scale.x, y2 - y1, 0.0f);
 
-	//ë²•ì„  ë²¡í„°ëŠ” xmf3Edge1ê³¼ xmf3Edge2ì˜ ì™¸ì ì„ ì •ê·œí™”í•˜ë©´ ëœë‹¤.
+	//¹ı¼± º¤ÅÍ´Â xmf3Edge1°ú xmf3Edge2ÀÇ ¿ÜÀûÀ» Á¤±ÔÈ­ÇÏ¸é µÈ´Ù.
 	XMFLOAT3 xmf3Normal = Vector3::CrossProduct(xmf3Edge1, xmf3Edge2, true);
 	return(xmf3Normal);
 }
 
 XMFLOAT3 CHeightMapImage::GetHeightMapTangent(int x, int z)
 {
-	if ((x < 0.0f) || (z < 0.0f) || (x >= m_nWidth) || (z >= m_nLength))
-		return(XMFLOAT3(0.0f, 1.0f, 0.0f));
+	if ((x < 0.0f) || (z < 0.0f) || (x >= m_nWidth) || (z >= m_nLength)) return(XMFLOAT3(0.0f, 1.0f, 0.0f));
 
 	int nHeightMapIndex = x + (z * m_nWidth);
 	int xHeightMapAdd = (x < (m_nWidth - 1)) ? 1 : -1;
 	int zHeightMapAdd = (z < (m_nLength - 1)) ? m_nWidth : -m_nWidth;
-
 	float y1 = (float)m_pHeightMapPixels[nHeightMapIndex] * m_xmf3Scale.y;
 	float y2 = (float)m_pHeightMapPixels[nHeightMapIndex + xHeightMapAdd] * m_xmf3Scale.y;
 	float y3 = (float)m_pHeightMapPixels[nHeightMapIndex + zHeightMapAdd] * m_xmf3Scale.y;
+	XMFLOAT3 xmf3Edge1 = XMFLOAT3(0.0f, y3 - y1, m_xmf3Scale.z);
+	XMFLOAT3 xmf3Edge2 = XMFLOAT3(m_xmf3Scale.x, y2 - y1, 0.0f);
 
-	return XMFLOAT3(1.f, (y2 - y1) / m_xmf3Scale.x, 0.0f);
+	XMFLOAT3 xmf3Tangent = Vector3::ScalarProduct(xmf3Edge2, 1.f / m_xmf3Scale.x);
+
+	return(xmf3Tangent);
 }
 
 #define _WITH_APPROXIMATE_OPPOSITE_CORNER
 float CHeightMapImage::GetHeight(float fx, float fz)
 {
-	/*ì§€í˜•ì˜ ì¢Œí‘œ (fx, fz)ëŠ” ì´ë¯¸ì§€ ì¢Œí‘œê³„ì´ë‹¤. ë†’ì´ ë§µì˜ x-ì¢Œí‘œì™€ z-ì¢Œí‘œê°€ ë†’ì´ ë§µì˜ ë²”ìœ„ë¥¼ ë²—ì–´ë‚˜ë©´ ì§€í˜•ì˜ ë†’ì´ëŠ”
-	0ì´ë‹¤.*/
+	/*ÁöÇüÀÇ ÁÂÇ¥ (fx, fz)´Â ÀÌ¹ÌÁö ÁÂÇ¥°èÀÌ´Ù. ³ôÀÌ ¸ÊÀÇ x-ÁÂÇ¥¿Í z-ÁÂÇ¥°¡ ³ôÀÌ ¸ÊÀÇ ¹üÀ§¸¦ ¹ş¾î³ª¸é ÁöÇüÀÇ ³ôÀÌ´Â
+	0ÀÌ´Ù.*/
 	if ((fx < 0.0f) || (fz < 0.0f) || (fx >= m_nWidth) || (fz >= m_nLength)) return(0.0f);
-	//ë†’ì´ ë§µì˜ ì¢Œí‘œì˜ ì •ìˆ˜ ë¶€ë¶„ê³¼ ì†Œìˆ˜ ë¶€ë¶„ì„ ê³„ì‚°í•œë‹¤.
+	//³ôÀÌ ¸ÊÀÇ ÁÂÇ¥ÀÇ Á¤¼ö ºÎºĞ°ú ¼Ò¼ö ºÎºĞÀ» °è»êÇÑ´Ù.
 	int x = (int)fx;
 	int z = (int)fz;
 	float fxPercent = fx - x;
@@ -382,14 +730,14 @@ float CHeightMapImage::GetHeight(float fx, float fz)
 	float fTopLeft = (float)m_pHeightMapPixels[x + ((z + 1)*m_nWidth)];
 	float fTopRight = (float)m_pHeightMapPixels[(x + 1) + ((z + 1)*m_nWidth)];
 #ifdef _WITH_APPROXIMATE_OPPOSITE_CORNER
-	//z-ì¢Œí‘œê°€ 1, 3, 5, ...ì¸ ê²½ìš° ì¸ë±ìŠ¤ê°€ ì˜¤ë¥¸ìª½ì—ì„œ ì™¼ìª½ìœ¼ë¡œ ë‚˜ì—´ëœë‹¤.
+	//z-ÁÂÇ¥°¡ 1, 3, 5, ...ÀÎ °æ¿ì ÀÎµ¦½º°¡ ¿À¸¥ÂÊ¿¡¼­ ¿ŞÂÊÀ¸·Î ³ª¿­µÈ´Ù.
 	bool bRightToLeft = ((z % 2) != 0);
 	if (bRightToLeft)
 	{
-		/*ì§€í˜•ì˜ ì‚¼ê°í˜•ë“¤ì´ ì˜¤ë¥¸ìª½ì—ì„œ ì™¼ìª½ ë°©í–¥ìœ¼ë¡œ ë‚˜ì—´ë˜ëŠ” ê²½ìš°ì´ë‹¤. ë‹¤ìŒ ê·¸ë¦¼ì˜ ì˜¤ë¥¸ìª½ì€ (fzPercent < fxPercent)
-		ì¸ ê²½ìš°ì´ë‹¤. ì´ ê²½ìš° TopLeftì˜ í”½ì…€ ê°’ì€ (fTopLeft = fTopRight + (fBottomLeft - fBottomRight))ë¡œ ê·¼ì‚¬í•œë‹¤.
-		ë‹¤ìŒ ê·¸ë¦¼ì˜ ì™¼ìª½ì€ (fzPercent â‰¥ fxPercent)ì¸ ê²½ìš°ì´ë‹¤. ì´ ê²½ìš° BottomRightì˜ í”½ì…€ ê°’ì€ (fBottomRight =
-		fBottomLeft + (fTopRight - fTopLeft))ë¡œ ê·¼ì‚¬í•œë‹¤.*/
+		/*ÁöÇüÀÇ »ï°¢ÇüµéÀÌ ¿À¸¥ÂÊ¿¡¼­ ¿ŞÂÊ ¹æÇâÀ¸·Î ³ª¿­µÇ´Â °æ¿ìÀÌ´Ù. ´ÙÀ½ ±×¸²ÀÇ ¿À¸¥ÂÊÀº (fzPercent < fxPercent)
+		ÀÎ °æ¿ìÀÌ´Ù. ÀÌ °æ¿ì TopLeftÀÇ ÇÈ¼¿ °ªÀº (fTopLeft = fTopRight + (fBottomLeft - fBottomRight))·Î ±Ù»çÇÑ´Ù.
+		´ÙÀ½ ±×¸²ÀÇ ¿ŞÂÊÀº (fzPercent ¡Ã fxPercent)ÀÎ °æ¿ìÀÌ´Ù. ÀÌ °æ¿ì BottomRightÀÇ ÇÈ¼¿ °ªÀº (fBottomRight =
+		fBottomLeft + (fTopRight - fTopLeft))·Î ±Ù»çÇÑ´Ù.*/
 		if (fzPercent >= fxPercent)
 			fBottomRight = fBottomLeft + (fTopRight - fTopLeft);
 		else
@@ -397,17 +745,17 @@ float CHeightMapImage::GetHeight(float fx, float fz)
 	}
 	else
 	{
-		/*ì§€í˜•ì˜ ì‚¼ê°í˜•ë“¤ì´ ì™¼ìª½ì—ì„œ ì˜¤ë¥¸ìª½ ë°©í–¥ìœ¼ë¡œ ë‚˜ì—´ë˜ëŠ” ê²½ìš°ì´ë‹¤. ë‹¤ìŒ ê·¸ë¦¼ì˜ ì™¼ìª½ì€ (fzPercent < (1.0f -
-		fxPercent))ì¸ ê²½ìš°ì´ë‹¤. ì´ ê²½ìš° TopRightì˜ í”½ì…€ ê°’ì€ (fTopRight = fTopLeft + (fBottomRight - fBottomLeft))ë¡œ
-		ê·¼ì‚¬í•œë‹¤. ë‹¤ìŒ ê·¸ë¦¼ì˜ ì˜¤ë¥¸ìª½ì€ (fzPercent â‰¥ (1.0f - fxPercent))ì¸ ê²½ìš°ì´ë‹¤. ì´ ê²½ìš° BottomLeftì˜ í”½ì…€ ê°’ì€
-		(fBottomLeft = fTopLeft + (fBottomRight - fTopRight))ë¡œ ê·¼ì‚¬í•œë‹¤.*/
+		/*ÁöÇüÀÇ »ï°¢ÇüµéÀÌ ¿ŞÂÊ¿¡¼­ ¿À¸¥ÂÊ ¹æÇâÀ¸·Î ³ª¿­µÇ´Â °æ¿ìÀÌ´Ù. ´ÙÀ½ ±×¸²ÀÇ ¿ŞÂÊÀº (fzPercent < (1.0f -
+		fxPercent))ÀÎ °æ¿ìÀÌ´Ù. ÀÌ °æ¿ì TopRightÀÇ ÇÈ¼¿ °ªÀº (fTopRight = fTopLeft + (fBottomRight - fBottomLeft))·Î
+		±Ù»çÇÑ´Ù. ´ÙÀ½ ±×¸²ÀÇ ¿À¸¥ÂÊÀº (fzPercent ¡Ã (1.0f - fxPercent))ÀÎ °æ¿ìÀÌ´Ù. ÀÌ °æ¿ì BottomLeftÀÇ ÇÈ¼¿ °ªÀº
+		(fBottomLeft = fTopLeft + (fBottomRight - fTopRight))·Î ±Ù»çÇÑ´Ù.*/
 		if (fzPercent < (1.0f - fxPercent))
 			fTopRight = fTopLeft + (fBottomRight - fBottomLeft);
 		else
 			fBottomLeft = fTopLeft + (fBottomRight - fTopRight);
 	}
 #endif
-	//ì‚¬ê°í˜•ì˜ ë„¤ ì ì„ ë³´ê°„í•˜ì—¬ ë†’ì´(í”½ì…€ ê°’)ë¥¼ ê³„ì‚°í•œë‹¤.
+	//»ç°¢ÇüÀÇ ³× Á¡À» º¸°£ÇÏ¿© ³ôÀÌ(ÇÈ¼¿ °ª)¸¦ °è»êÇÑ´Ù.
 	float fTopHeight = fTopLeft * (1 - fxPercent) + fTopRight * fxPercent;
 	float fBottomHeight = fBottomLeft * (1 - fxPercent) + fBottomRight * fxPercent;
 	float fHeight = fBottomHeight * (1 - fzPercent) + fTopHeight * fzPercent;
@@ -415,15 +763,16 @@ float CHeightMapImage::GetHeight(float fx, float fz)
 }
 
 
+//////////////////////////////////////////////////////////////////////////////////////////////////////
 CHeightMapGridMesh::CHeightMapGridMesh(
-	  CD3DDeviceIndRes*				pd3dDeviceIndRes
+	  ID3D12Device*					pd3dDevice
 	, ID3D12GraphicsCommandList*	pd3dCommandList
 	, int xStart, int zStart, int nWidth, int nLength
-	, XMFLOAT3 xmf3Scale, XMFLOAT4 xmf4Color, void *pContext) 
-	: CMesh(pd3dDeviceIndRes, pd3dCommandList)
+	, XMFLOAT3 xmf3Scale, XMFLOAT4 xmf4Color, void *pContext)
+	: CMesh(pd3dDevice, pd3dCommandList)
 {
 	m_nVertices = nWidth * nLength;
-	m_nStride = sizeof(CVertex);
+	m_nStride = sizeof(CTerrainVertex);
 	m_nOffset = 0;
 	m_nSlot = 0;
 	m_d3dPrimitiveTopology = D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP;
@@ -432,11 +781,11 @@ CHeightMapGridMesh::CHeightMapGridMesh(
 	m_nLength = nLength;
 	m_xmf3Scale = xmf3Scale;
 
-	CVertex *pVertices = new CVertex[m_nVertices];
+	CTerrainVertex *pVertices = new CTerrainVertex[m_nVertices];
 
-	CHeightMapImage *pHeightMapImage = (CHeightMapImage *)pContext;
-	int cxHeightMap = pHeightMapImage->GetHeightMapWidth();
-	int czHeightMap = pHeightMapImage->GetHeightMapLength();
+	CHeightMapImage *pTerrain = (CHeightMapImage *)pContext;
+	int cxHeightMap = pTerrain->GetHeightMapWidth();
+	int czHeightMap = pTerrain->GetHeightMapLength();
 
 	float fHeight = 0.0f, fMinHeight = FLT_MAX, fMaxHeight = FLT_MIN;
 	for (int i = 0, z = zStart; z < (zStart + nLength); z++)
@@ -447,25 +796,26 @@ CHeightMapGridMesh::CHeightMapGridMesh(
 			float fScaledZ = static_cast<float>(z) * m_xmf3Scale.z;
 
 			fHeight = OnGetHeight(x, z, pContext);
-			pVertices[i].m_xmf3Position		= XMFLOAT3(fScaledX, fHeight, fScaledZ);
-			pVertices[i].m_xmf3Normal		= pHeightMapImage->GetHeightMapNormal(fScaledX, fScaledZ);
-			pVertices[i].m_xmf3Tangent		= pHeightMapImage->GetHeightMapTangent(fScaledX, fScaledZ);
+			pVertices[i].m_xmf4Pos = XMFLOAT3(fScaledX, fHeight, fScaledZ);
+			pVertices[i].m_xmf3Normal = pTerrain->GetHeightMapNormal(x, z);
+			pVertices[i].m_xmf3Tangent = pTerrain->GetHeightMapTangent(x, z);
 
-			pVertices[i].m_xmf2TexCoord0	= XMFLOAT2(
-				  static_cast<float>(x) / static_cast<float>(cxHeightMap - 1)
+			pVertices[i].m_xmf2TexCoord0 = XMFLOAT2(
+				static_cast<float>(x) / static_cast<float>(cxHeightMap - 1)
 				, static_cast<float>(czHeightMap - 1 - z) / static_cast<float>(czHeightMap - 1));
 
-			pVertices[i].m_xmf2TexCoord1	= XMFLOAT2(
-				  static_cast<float>(x * 2) / m_xmf3Scale.x
-				, static_cast<float>(z * 2) / m_xmf3Scale.z);
+			pVertices[i].m_xmf2TexCoord1 = XMFLOAT2(
+				static_cast<float>(x) / m_xmf3Scale.x * 0.5f
+				, static_cast<float>(z) / m_xmf3Scale.z * 0.5f);
 
 			if (fHeight < fMinHeight) fMinHeight = fHeight;
 			if (fHeight > fMaxHeight) fMaxHeight = fHeight;
 		}
 	}
 
-	m_pd3dVertexBuffer = pd3dDeviceIndRes->CreateBufferResource(
-		  pd3dCommandList
+	m_pd3dVertexBuffer = ::CreateBufferResource(
+		  pd3dDevice
+		, pd3dCommandList
 		, pVertices
 		, m_nStride * m_nVertices
 		, D3D12_HEAP_TYPE_DEFAULT
@@ -503,8 +853,9 @@ CHeightMapGridMesh::CHeightMapGridMesh(
 		}
 	}
 
-	m_pd3dIndexBuffer = pd3dDeviceIndRes->CreateBufferResource(
-		pd3dCommandList
+	m_pd3dIndexBuffer = ::CreateBufferResource(
+		pd3dDevice
+		, pd3dCommandList
 		, pIndices
 		, sizeof(UINT) * m_nIndices
 		, D3D12_HEAP_TYPE_DEFAULT
@@ -523,10 +874,78 @@ CHeightMapGridMesh::~CHeightMapGridMesh()
 
 float CHeightMapGridMesh::OnGetHeight(int x, int z, void *pContext)
 {
-	CHeightMapImage *pHeightMapImage = (CHeightMapImage *)pContext;
-	BYTE *pHeightMapPixels = pHeightMapImage->GetHeightMapPixels();
-	XMFLOAT3 xmf3Scale = pHeightMapImage->GetScale();
-	int nWidth = pHeightMapImage->GetHeightMapWidth();
+	CHeightMapImage *pTerrain = (CHeightMapImage *)pContext;
+	BYTE *pHeightMapPixels = pTerrain->GetHeightMapPixels();
+	XMFLOAT3 xmf3Scale = pTerrain->GetScale();
+	int nWidth = pTerrain->GetHeightMapWidth();
 	float fHeight = pHeightMapPixels[x + (z*nWidth)] * xmf3Scale.y;
 	return(fHeight);
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+CStaticBillBoardMesh::CStaticBillBoardMesh(
+	  ID3D12Device*					pd3dDevice
+	, ID3D12GraphicsCommandList*	pd3dCommandList
+	, UINT							nBillboards
+	, XMFLOAT3						xmf3CenterPos
+	, XMFLOAT2						xmf2Size
+	, float							fClusterBillboardsRadius
+	, void*							pContext)
+	: CMesh(pd3dDevice, pd3dCommandList)
+{
+	m_nVertices = nBillboards;
+	m_nStride = sizeof(CBillboardVertex);
+	m_nOffset = 0;
+	m_nSlot = 0;
+	m_d3dPrimitiveTopology = D3D_PRIMITIVE_TOPOLOGY_POINTLIST;
+
+	CHeightMapTerrain *pTerrain = (CHeightMapTerrain *)pContext;
+	XMFLOAT3 xmf3Scale = pTerrain->GetScale();
+	int HeightMapWidth = pTerrain->GetHeightMapWidth() * xmf3Scale.x;
+	int HeightMapLength = pTerrain->GetHeightMapLength() * xmf3Scale.z;
+
+	CBillboardVertex* pVertices = new CBillboardVertex[m_nVertices];
+	UINT idx = 0;
+	const int randomFactor = 10000;
+	const float LeanFactorThreshold = 0.2f;
+	while (idx < m_nVertices)
+	{
+		float fRadiusRandomFactor = 
+			static_cast<float>(rand() % randomFactor) / static_cast<float>(randomFactor);
+		XMFLOAT3 xmf3OffSetNormal = Vector3::Normalize(XMFLOAT3(
+			  (rand() % randomFactor) - (randomFactor / 2)
+			, 0
+			, (rand() % randomFactor) - (randomFactor / 2)));
+		XMFLOAT3 xmf3Pos = Vector3::Add(xmf3CenterPos, Vector3::ScalarProduct(xmf3OffSetNormal, fRadiusRandomFactor * fClusterBillboardsRadius));
+		if (xmf3Pos.x < 0 || xmf3Pos.x > HeightMapWidth) continue;
+		if (xmf3Pos.z < 0 || xmf3Pos.z > HeightMapLength) continue;
+		
+		XMFLOAT3 xmf3TerrainNormal = pTerrain->GetHeightMapImage()->GetHeightMapNormal(xmf3Pos.x, xmf3Pos.z);
+		float fLeanFactor = Vector3::DotProduct(xmf3TerrainNormal, XMFLOAT3(0, 1, 0));
+		if(fLeanFactor < 0) fLeanFactor = -fLeanFactor;
+		if (fLeanFactor > LeanFactorThreshold)
+		{
+			xmf3Pos.y = pTerrain->GetHeight(xmf3Pos.x, xmf3Pos.z) + (xmf2Size.y * 0.5f);
+			pVertices[idx].m_xmf4Pos = xmf3Pos;
+			pVertices[idx].m_xmf2Size = xmf2Size;
+			++idx;
+		}
+	}
+
+	m_pd3dVertexBuffer = ::CreateBufferResource(
+		pd3dDevice
+		, pd3dCommandList
+		, pVertices
+		, m_nStride * m_nVertices
+		, D3D12_HEAP_TYPE_DEFAULT
+		, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER
+		, &m_pd3dVertexUploadBuffer);
+
+	m_d3dVertexBufferView.BufferLocation = m_pd3dVertexBuffer->GetGPUVirtualAddress();
+	m_d3dVertexBufferView.StrideInBytes = m_nStride;
+	m_d3dVertexBufferView.SizeInBytes = m_nStride * m_nVertices;
+}
+
+CStaticBillBoardMesh::~CStaticBillBoardMesh()
+{
 }
