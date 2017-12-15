@@ -98,7 +98,7 @@ float4 PSTextured(VS_TEXTURED_OUTPUT input) : SV_TARGET
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
-Texture2D gtxtSkyBox : register(t0);
+Texture2D gtxtSkyBox : register(t3);
 
 float4 PSSkyBox(VS_TEXTURED_OUTPUT input) : SV_TARGET
 {
@@ -283,7 +283,7 @@ struct PS_BILLBOARD_INPUT
 	uint primID : SV_PrimitiveID;
 };
 
-Texture2D gtxtBillBoard : register(t0);
+Texture2D gtxtBillBoard[6] : register(t9);
 
 GS_BILLBOARD_INPUT VSBillBoard(VS_BILLBOARD_INPUT input)
 {
@@ -317,9 +317,9 @@ void GSBillBoard(
 
 	float2 pUVs[4] =
 	{
-		float2(0.0f, 1.0f)
+		float2(0.0f, 0.95f)
 		, float2(0.0f, 0.0f)
-		, float2(1.0f, 1.0f)
+		, float2(1.0f, 0.95f)
 		, float2(1.0f, 0.0f)
 	};
 
@@ -337,10 +337,120 @@ void GSBillBoard(
 
 float4 PSBillBoard(PS_BILLBOARD_INPUT input) : SV_Target
 {
-	float4 cTexture = gtxtBillBoard.Sample(gSamplerState, input.uv);
+	float4 cTexture = gtxtBillBoard[NonUniformResourceIndex(input.primID % 6)].Sample(gSamplerState, input.uv);
+	if (cTexture.a < 0.01f) discard;
+	
+	float4 cIlumination = Lighting(input.posW, input.normalW);
+	//float3 uvw = float3(input.uv, (input.primID % 6));
+	//float4 cTexture = gtxtBillBoard.Sample(gWrapSamplerState, uvw);
+	//float4 cColor = cIlumination * cTexture;
+	float4 cColor = cTexture*0.95 + cIlumination*0.05;
+	cColor.a = cTexture.a;
+
+	return (cColor);
+	//return float4(1, 1, 1, 1);
+}
+
+
+/////////////////////////////////////////////////////////////////////////////////////////////////
+struct VS_PARTICLE_INPUT
+{
+	float3 posW : POSITION;
+	float2 sizeW : SIZE;
+	float2 currImg : CURRENT_IMAGE;
+	float2 dividedUV : DIVIDED_TEXCOORD;
+};
+
+struct GS_PARTICLE_INPUT
+{
+	float3 centerW : POSITION;
+	float2 sizeW : SIZE;
+	float2 currImg : CURRENT_IMAGE;
+	float2 dividedUV : DIVIDED_TEXCOORD;
+};
+
+struct PS_PARTICLE_INPUT
+{
+	float4 posH : SV_POSITION;
+	float3 posW : POSITION;
+	float3 normalW : NORMAL;
+	float2 uv : TEXCOORD;
+	uint primID : SV_PrimitiveID;
+};
+
+Texture2D gtxtParticle : register(t15);
+
+GS_PARTICLE_INPUT VSParticle(VS_PARTICLE_INPUT input)
+{
+	GS_PARTICLE_INPUT output;
+	output.centerW = input.posW;
+	output.sizeW = input.sizeW;
+	output.currImg = input.currImg;
+	output.dividedUV = input.dividedUV;
+	return output;
+}
+
+[maxvertexcount(4)]
+void GSParticle(
+	  point GS_PARTICLE_INPUT					input[1]
+	, uint										primID : SV_PrimitiveID
+	, inout TriangleStream<PS_PARTICLE_INPUT>	outStream)
+{
+	float3 vUp = float3(0.0f, 1.0f, 0.0f);
+	float3 vLook = gvCameraPosition.xyz - input[0].centerW;
+	vLook = normalize(vLook);
+	float3 vRight = cross(vUp, vLook);
+
+	float fHalfW = input[0].sizeW.x * 0.5f;
+	float fHalfH = input[0].sizeW.y * 0.5f;
+	float3 vWidth = fHalfW * vRight;
+	float3 vHeight = fHalfH * vUp;
+
+	float4 pVertices[4];
+	pVertices[0] = float4(input[0].centerW + vWidth - vHeight, 1.0f);
+	pVertices[1] = float4(input[0].centerW + vWidth + vHeight, 1.0f);
+	pVertices[2] = float4(input[0].centerW - vWidth - vHeight, 1.0f);
+	pVertices[3] = float4(input[0].centerW - vWidth + vHeight, 1.0f);
+
+	float base_u = input[0].dividedUV.x;
+	float base_v = input[0].dividedUV.y;
+	float curr_u = uint(input[0].currImg.x) * base_u;
+	float curr_v = uint(input[0].currImg.y) * base_v;
+
+	float2 pUVs[4] =
+	{
+		  float2(curr_u,			curr_v + base_v)
+		, float2(curr_u,			curr_v)
+		, float2(curr_u + base_u,	curr_v + base_v)
+		, float2(curr_u + base_u,	curr_v)
+	};
+
+	//float2 pUVs[4] =
+	//{
+	//	  float2(0.0f, 1.0f)
+	//	, float2(0.0f, 0.0f)
+	//	, float2(1.0f, 1.0f)
+	//	, float2(1.0f, 0.0f)
+	//};
+
+	PS_PARTICLE_INPUT output;
+	for (int i = 0; i < 4; i++)
+	{
+		output.posW = pVertices[i].xyz;
+		output.posH = mul(mul(pVertices[i], gmtxView), gmtxProjection);
+		output.normalW = vLook;
+		output.uv = pUVs[i];
+		output.primID = primID;
+		outStream.Append(output);
+	}
+}
+
+float4 PSParticle(PS_PARTICLE_INPUT input) : SV_Target
+{
+	float4 cTexture = gtxtParticle.Sample(gSamplerState, input.uv);
 	if (cTexture.a < 0.01f) discard;
 
-	float4 cIlumination = Lighting(input.posW, input.normalW);
+	//float4 cIlumination = Lighting(input.posW, input.normalW);
 	//float3 uvw = float3(input.uv, (input.primID % 6));
 	//float4 cTexture = gtxtBillBoard.Sample(gWrapSamplerState, uvw);
 	//float4 cColor = cIlumination * cTexture;
@@ -348,5 +458,5 @@ float4 PSBillBoard(PS_BILLBOARD_INPUT input) : SV_Target
 	cColor.a = cTexture.a;
 
 	return (cColor);
-	// return float4(1, 1, 1, 1);
+	//return float4(1, 1, 1, 1);
 }

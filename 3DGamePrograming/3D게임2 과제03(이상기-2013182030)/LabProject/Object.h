@@ -167,6 +167,8 @@ public:
 	XMFLOAT3 GetUp();
 	XMFLOAT3 GetRight();
 
+	void SetLook(const XMFLOAT3& xmf3Look);
+
 	void SetWorldPosition(float x, float y, float z);
 	void SetPosition(float x, float y, float z);
 	void SetPosition(XMFLOAT3 xmf3Position);
@@ -259,6 +261,10 @@ public:
 	CGameObject					*m_pRotorFrame = NULL;
 	CGameObject					*m_pBackRotorFrame = NULL;
 	CGameObject					*m_pHellfileMissileFrame = NULL;
+
+	const float					m_cfThresholdTime = 3;
+	float						m_fTimer = 0.0f;
+	float						m_bTimeOut = false;
 };
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -320,28 +326,133 @@ public:
 	virtual void Render(ID3D12GraphicsCommandList *pd3dCommandList, CCamera *pCamera = NULL);
 };
 
-class CStaticBillboards : public CGameObject
+class CGrassBillboards : public CGameObject
 {
 public:
-	CStaticBillboards(
+	CGrassBillboards(
 		  ID3D12Device*					pd3dDevice
 		, ID3D12GraphicsCommandList*	pd3dCommandList
 		, ID3D12RootSignature*			pd3dGraphicsRootSignature
-		, LPWSTR						pFileName
 		, UINT							nBillboards
 		, XMFLOAT3						xmf3CenterPos
 		, XMFLOAT2						xmf2Size
 		, float							fClusterBillboardsRadius
 		, void*							pContext);
-	CStaticBillboards(
+	virtual ~CGrassBillboards();
+};
+
+class CTreeBillboards : public CGameObject
+{
+public:
+	CTreeBillboards(
 		ID3D12Device*					pd3dDevice
 		, ID3D12GraphicsCommandList*	pd3dCommandList
 		, ID3D12RootSignature*			pd3dGraphicsRootSignature
-		, CTexture* 					pTexture
 		, UINT							nBillboards
 		, XMFLOAT3						xmf3CenterPos
 		, XMFLOAT2						xmf2Size
 		, float							fClusterBillboardsRadius
 		, void*							pContext);
-	virtual ~CStaticBillboards();
+	virtual ~CTreeBillboards();
+};
+
+
+class CParticleBillboards : public CGameObject
+{
+public:
+	struct ParticleControler {
+		CParticleBillboardVertex&		Particle;
+		const XMFLOAT2					szSprite;
+		XMFLOAT3						xmf3Direction;
+		float							fSpeed;
+		float							fAnimateSpeed;
+		float							fAnimateTime;
+		float							fTimer;
+		bool							bActive;
+
+		ParticleControler(
+			  CParticleBillboardVertex&		particle
+			, const XMFLOAT2&				xmf2SpriteSize)
+			: Particle(particle)
+			, szSprite(xmf2SpriteSize)
+			, xmf3Direction(XMFLOAT3(0.0f, 0.0f, 0.0f))
+			, fAnimateSpeed(0)
+			, fAnimateTime(0)
+			, fSpeed(0)
+			, fTimer(0)
+			, bActive(false)
+		{
+			Particle.m_xmf2DividedTexCoord.x = 1.f / szSprite.x;
+			Particle.m_xmf2DividedTexCoord.y = 1.f / szSprite.y;
+		}
+		void StartAnimate(
+			  const XMFLOAT3&	pos
+			, XMFLOAT3&			dir
+			, float				speed
+			, float				animateTime
+			, float				animateSpeed = 0.0f)
+		{
+			Particle.m_xmf4Pos = pos;
+			xmf3Direction = Vector3::Normalize(dir);
+			fAnimateTime = animateTime;
+			fAnimateSpeed = animateSpeed;
+			if (animateSpeed < EPSILON && animateSpeed > -EPSILON)
+				fAnimateSpeed = szSprite.x * szSprite.y;
+			fSpeed = speed;
+			bActive = true;
+		} 
+		void Reset()
+		{
+			Particle.m_xmf2CurrTex = XMFLOAT2(0.0f, 0.0f);
+			Particle.m_xmf4Pos = XMFLOAT3(0.0f, 100000.0f, 0.0f);
+			xmf3Direction = XMFLOAT3(0.0f, 0.0f, 0.0f);
+			fSpeed = 0.0f;
+			fTimer = 0.0f;
+			fAnimateTime = 0.0f;
+			fAnimateSpeed = 0.0f;
+			bActive = false;
+		}
+		void Animate(float fTimeElapsed)
+		{
+			if (!bActive) return;
+			fTimer += fTimeElapsed;
+			Particle.m_xmf2CurrTex.x += fAnimateSpeed * fTimeElapsed;
+			if (Particle.m_xmf2CurrTex.x > szSprite.x)
+			{
+				Particle.m_xmf2CurrTex.x = 0;
+				Particle.m_xmf2CurrTex.y += 1;
+				if (Particle.m_xmf2CurrTex.y > szSprite.y)
+					Particle.m_xmf2CurrTex = XMFLOAT2(0.0f, 0.0f);
+			}
+			Particle.m_xmf4Pos = Vector3::Add(
+				  Particle.m_xmf4Pos
+				, Vector3::ScalarProduct(xmf3Direction, fSpeed * fTimeElapsed));
+			if (fTimer > fAnimateTime) Reset();
+		}
+	};
+public:
+	ParticleControler**					m_ppControlers;
+	UINT								m_nControlers;
+
+	UINT								m_iCurrControler;
+
+public:
+	CParticleBillboards(
+		ID3D12Device*					pd3dDevice
+		, ID3D12GraphicsCommandList*	pd3dCommandList
+		, ID3D12RootSignature*			pd3dGraphicsRootSignature
+		, LPWSTR						pFileName
+		, XMFLOAT2						szSprite
+		, UINT							nBillboards
+		, XMFLOAT2						xmf2Size);
+	virtual ~CParticleBillboards();
+
+	virtual void Animate(float fTimeElapsed) override;
+
+	void PopParticle(
+		  const XMFLOAT3&	pos
+		, XMFLOAT3&			dir
+		, float				speed
+		, float				animateTime
+		, float				animateSpeed = 0.0f);
 };

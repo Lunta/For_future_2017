@@ -907,7 +907,8 @@ CStaticBillBoardMesh::CStaticBillBoardMesh(
 	CBillboardVertex* pVertices = new CBillboardVertex[m_nVertices];
 	UINT idx = 0;
 	const int randomFactor = 10000;
-	const float LeanFactorThreshold = 0.2f;
+	const float LeanFactorThreshold = 0.95f;
+	const XMFLOAT2 fHalfScale = XMFLOAT2(xmf2Size.x * 0.5f, xmf2Size.y * 0.5f);
 	while (idx < m_nVertices)
 	{
 		float fRadiusRandomFactor = 
@@ -916,18 +917,21 @@ CStaticBillBoardMesh::CStaticBillBoardMesh(
 			  (rand() % randomFactor) - (randomFactor / 2)
 			, 0
 			, (rand() % randomFactor) - (randomFactor / 2)));
-		XMFLOAT3 xmf3Pos = Vector3::Add(xmf3CenterPos, Vector3::ScalarProduct(xmf3OffSetNormal, fRadiusRandomFactor * fClusterBillboardsRadius));
-		if (xmf3Pos.x < 0 || xmf3Pos.x > HeightMapWidth) continue;
-		if (xmf3Pos.z < 0 || xmf3Pos.z > HeightMapLength) continue;
+		XMFLOAT3 xmf3Pos = Vector3::Add(xmf3CenterPos, Vector3::ScalarProduct(
+			xmf3OffSetNormal, fRadiusRandomFactor * fClusterBillboardsRadius));
+		if (xmf3Pos.x < fHalfScale.x || xmf3Pos.x > HeightMapWidth -fHalfScale.x) continue;
+		if (xmf3Pos.z < fHalfScale.x || xmf3Pos.z > HeightMapLength-fHalfScale.x) continue;
 		
-		XMFLOAT3 xmf3TerrainNormal = pTerrain->GetHeightMapImage()->GetHeightMapNormal(xmf3Pos.x, xmf3Pos.z);
+		XMFLOAT3 xmf3TerrainNormal = 
+			pTerrain->GetHeightMapImage()->GetHeightMapNormal(xmf3Pos.x, xmf3Pos.z);
+
 		float fLeanFactor = Vector3::DotProduct(xmf3TerrainNormal, XMFLOAT3(0, 1, 0));
 		if(fLeanFactor < 0) fLeanFactor = -fLeanFactor;
+
 		if (fLeanFactor > LeanFactorThreshold)
 		{
-			xmf3Pos.y = pTerrain->GetHeight(xmf3Pos.x, xmf3Pos.z) + (xmf2Size.y * 0.5f);
-			pVertices[idx].m_xmf4Pos = xmf3Pos;
-			pVertices[idx].m_xmf2Size = xmf2Size;
+			xmf3Pos.y = pTerrain->GetHeight(xmf3Pos.x, xmf3Pos.z) + fHalfScale.y;
+			pVertices[idx] = CBillboardVertex(xmf3Pos, xmf2Size);
 			++idx;
 		}
 	}
@@ -948,4 +952,42 @@ CStaticBillBoardMesh::CStaticBillBoardMesh(
 
 CStaticBillBoardMesh::~CStaticBillBoardMesh()
 {
+}
+
+CParticleBillBoardMesh::CParticleBillBoardMesh(
+	  ID3D12Device*					pd3dDevice
+	, ID3D12GraphicsCommandList*	pd3dCommandList
+	, UINT							nBillboards
+	, XMFLOAT2						szBillboards)
+	: CMesh(pd3dDevice, pd3dCommandList)
+{
+	m_nVertices = nBillboards;
+	m_nStride = sizeof(CParticleBillboardVertex);
+	m_nOffset = 0;
+	m_nSlot = 0;
+	m_d3dPrimitiveTopology = D3D_PRIMITIVE_TOPOLOGY_POINTLIST;
+
+	m_pVertices = new CParticleBillboardVertex[m_nVertices];
+	for (int i = 0; i < m_nVertices; ++i)
+		m_pVertices[i].m_xmf2Size = szBillboards;
+
+	m_pd3dVertexBuffer = ::CreateBufferResource(
+		pd3dDevice
+		, pd3dCommandList
+		, m_pVertices
+		, m_nStride * m_nVertices
+		, D3D12_HEAP_TYPE_UPLOAD
+		, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER
+		, &m_pd3dVertexUploadBuffer);
+
+	m_pd3dVertexBuffer->Map(0, NULL, (void **)&m_pVertices);
+
+	m_d3dVertexBufferView.BufferLocation = m_pd3dVertexBuffer->GetGPUVirtualAddress();
+	m_d3dVertexBufferView.StrideInBytes = m_nStride;
+	m_d3dVertexBufferView.SizeInBytes = m_nStride * m_nVertices;
+}
+
+CParticleBillBoardMesh::~CParticleBillBoardMesh()
+{
+	m_pd3dVertexBuffer->Unmap(0, NULL);
 }

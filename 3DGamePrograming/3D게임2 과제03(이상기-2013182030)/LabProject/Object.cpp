@@ -394,6 +394,20 @@ XMFLOAT3 CGameObject::GetRight()
 	return(Vector3::Normalize(XMFLOAT3(m_xmf4x4World._11, m_xmf4x4World._12, m_xmf4x4World._13)));
 }
 
+void CGameObject::SetLook(const XMFLOAT3& xmf3Look)
+{
+	m_xmf4x4World._31 = xmf3Look.x;
+	m_xmf4x4World._33 = xmf3Look.z;
+	XMFLOAT3 right = Vector3::CrossProduct(GetUp(), GetLook(), true);
+	m_xmf4x4World._11 = right.x;
+	m_xmf4x4World._12 = right.y;
+	m_xmf4x4World._13 = right.z;
+	XMFLOAT3 look = Vector3::CrossProduct(right, GetUp(), true);
+	m_xmf4x4World._31 = look.x;
+	m_xmf4x4World._31 = look.y;
+	m_xmf4x4World._33 = look.z;
+}
+
 void CGameObject::MoveStrafe(float fDistance)
 {
 	XMFLOAT3 xmf3Position = GetPosition();
@@ -757,6 +771,14 @@ CGunshipHellicopter::~CGunshipHellicopter()
 
 void CGunshipHellicopter::Animate(float fTimeElapsed)
 {
+	if(!m_bTimeOut) m_fTimer += fTimeElapsed;
+	if (m_cfThresholdTime < m_fTimer)
+	{
+		m_fTimer = 0.0f;
+		m_bTimeOut = true;
+	}
+	MoveForward(20.f * fTimeElapsed);
+
 	if (m_pRotorFrame)
 	{
 		XMMATRIX xmmtxRotate = XMMatrixRotationY(XMConvertToRadians(360.0f * 3.0f) * fTimeElapsed);
@@ -895,7 +917,7 @@ CSkyBox::CSkyBox(
 	pSkyBoxShader->CreateShaderVariables(pd3dDevice, pd3dCommandList);
 	pSkyBoxShader->CreateCbvAndSrvDescriptorHeaps(pd3dDevice, pd3dCommandList, 1, 6);
 	pSkyBoxShader->CreateConstantBufferViews(pd3dDevice, pd3dCommandList, 1, m_pd3dcbGameObject, ncbElementBytes);
-	pSkyBoxShader->CreateShaderResourceViews(pd3dDevice, pd3dCommandList, pSkyBoxTexture, 5, false);
+	pSkyBoxShader->CreateShaderResourceViews(pd3dDevice, pd3dCommandList, pSkyBoxTexture, 6, false);
 
 	SetCbvGPUDescriptorHandle(pSkyBoxShader->GetGPUCbvDescriptorStartHandle());
 
@@ -945,11 +967,10 @@ void CSkyBox::Render(ID3D12GraphicsCommandList *pd3dCommandList, CCamera *pCamer
 	if (m_pChild) m_pChild->Render(pd3dCommandList, pCamera);
 }
 
-CStaticBillboards::CStaticBillboards(
+CGrassBillboards::CGrassBillboards(
 	  ID3D12Device*					pd3dDevice
 	, ID3D12GraphicsCommandList*	pd3dCommandList
 	, ID3D12RootSignature*			pd3dGraphicsRootSignature
-	, LPWSTR						pFileName
 	, UINT							nBillboards
 	, XMFLOAT3						xmf3CenterPos
 	, XMFLOAT2						xmf2Size
@@ -970,16 +991,20 @@ CStaticBillboards::CStaticBillboards(
 
 	UINT ncbElementBytes = ((sizeof(CB_GAMEOBJECT_INFO) + 255) & ~255);
 
-	CTexture* pBillboardTexture = new CTexture(1, RESOURCE_TEXTURE2D_ARRAY, 0);
-
-	pBillboardTexture->LoadTextureFromFile(pd3dDevice, pd3dCommandList, pFileName, 0);
+	CTexture* pBillboardTexture = new CTexture(6, RESOURCE_TEXTURE2D_ARRAY, 0);
+	pBillboardTexture->LoadTextureFromFile(pd3dDevice, pd3dCommandList, L"Assets/Image/Grasses/Grass01.DDS", 0);
+	pBillboardTexture->LoadTextureFromFile(pd3dDevice, pd3dCommandList, L"Assets/Image/Grasses/Grass02.DDS", 1);
+	pBillboardTexture->LoadTextureFromFile(pd3dDevice, pd3dCommandList, L"Assets/Image/Grasses/Grass03.DDS", 2);
+	pBillboardTexture->LoadTextureFromFile(pd3dDevice, pd3dCommandList, L"Assets/Image/Grasses/Grass04.DDS", 3);
+	pBillboardTexture->LoadTextureFromFile(pd3dDevice, pd3dCommandList, L"Assets/Image/Grasses/Grass05.DDS", 4);
+	pBillboardTexture->LoadTextureFromFile(pd3dDevice, pd3dCommandList, L"Assets/Image/Grasses/Grass06.DDS", 5);
 
 	CBillboardShader *pShader = new CBillboardShader();
 	pShader->CreateShader(pd3dDevice, pd3dGraphicsRootSignature);
 	pShader->CreateShaderVariables(pd3dDevice, pd3dCommandList);
-	pShader->CreateCbvAndSrvDescriptorHeaps(pd3dDevice, pd3dCommandList, 1, 1);
+	pShader->CreateCbvAndSrvDescriptorHeaps(pd3dDevice, pd3dCommandList, 1, 6);
 	pShader->CreateConstantBufferViews(pd3dDevice, pd3dCommandList, 1, m_pd3dcbGameObject, ncbElementBytes);
-	pShader->CreateShaderResourceViews(pd3dDevice, pd3dCommandList, pBillboardTexture, 5, false);
+	pShader->CreateShaderResourceViews(pd3dDevice, pd3dCommandList, pBillboardTexture, 7, false);
 
 	SetCbvGPUDescriptorHandle(pShader->GetGPUCbvDescriptorStartHandle());
 
@@ -990,16 +1015,11 @@ CStaticBillboards::CStaticBillboards(
 	SetMaterial(pBillboardMaterial);
 }
 
-CStaticBillboards::CStaticBillboards(
-	  ID3D12Device*					pd3dDevice
-	, ID3D12GraphicsCommandList*	pd3dCommandList
-	, ID3D12RootSignature*			pd3dGraphicsRootSignature
-	, CTexture*						pTexture
-	, UINT							nBillboards
-	, XMFLOAT3						xmf3CenterPos
-	, XMFLOAT2						xmf2Size
-	, float							fClusterBillboardsRadius
-	, void*							pContext)
+CGrassBillboards::~CGrassBillboards()
+{
+}
+
+CTreeBillboards::CTreeBillboards(ID3D12Device * pd3dDevice, ID3D12GraphicsCommandList * pd3dCommandList, ID3D12RootSignature * pd3dGraphicsRootSignature, UINT nBillboards, XMFLOAT3 xmf3CenterPos, XMFLOAT2 xmf2Size, float fClusterBillboardsRadius, void * pContext)
 {
 	CStaticBillBoardMesh* billboards = new CStaticBillBoardMesh(
 		pd3dDevice
@@ -1015,22 +1035,101 @@ CStaticBillboards::CStaticBillboards(
 
 	UINT ncbElementBytes = ((sizeof(CB_GAMEOBJECT_INFO) + 255) & ~255);
 
+	CTexture* pBillboardTexture = new CTexture(6, RESOURCE_TEXTURE2D_ARRAY, 0);
+	pBillboardTexture->LoadTextureFromFile(pd3dDevice, pd3dCommandList, L"Assets/Image/Trees/Tree01.DDS", 0);
+	pBillboardTexture->LoadTextureFromFile(pd3dDevice, pd3dCommandList, L"Assets/Image/Trees/Tree02.DDS", 1);
+	pBillboardTexture->LoadTextureFromFile(pd3dDevice, pd3dCommandList, L"Assets/Image/Trees/Tree01.DDS", 2);
+	pBillboardTexture->LoadTextureFromFile(pd3dDevice, pd3dCommandList, L"Assets/Image/Trees/Tree02.DDS", 3);	
+	pBillboardTexture->LoadTextureFromFile(pd3dDevice, pd3dCommandList, L"Assets/Image/Trees/Tree01.DDS", 4);
+	pBillboardTexture->LoadTextureFromFile(pd3dDevice, pd3dCommandList, L"Assets/Image/Trees/Tree02.DDS", 5);
+
 	CBillboardShader *pShader = new CBillboardShader();
 	pShader->CreateShader(pd3dDevice, pd3dGraphicsRootSignature);
 	pShader->CreateShaderVariables(pd3dDevice, pd3dCommandList);
-	pShader->CreateCbvAndSrvDescriptorHeaps(pd3dDevice, pd3dCommandList, 1, 1);
+	pShader->CreateCbvAndSrvDescriptorHeaps(pd3dDevice, pd3dCommandList, 1, 6);
 	pShader->CreateConstantBufferViews(pd3dDevice, pd3dCommandList, 1, m_pd3dcbGameObject, ncbElementBytes);
-	pShader->CreateShaderResourceViews(pd3dDevice, pd3dCommandList, pTexture, 5, false);
+	pShader->CreateShaderResourceViews(pd3dDevice, pd3dCommandList, pBillboardTexture, 7, false);
 
 	SetCbvGPUDescriptorHandle(pShader->GetGPUCbvDescriptorStartHandle());
 
 	CMaterial *pBillboardMaterial = new CMaterial();
-	pBillboardMaterial->SetTexture(pTexture);
+	pBillboardMaterial->SetTexture(pBillboardTexture);
 	pBillboardMaterial->SetReflection(0);
 	pBillboardMaterial->SetShader(pShader);
 	SetMaterial(pBillboardMaterial);
 }
 
-CStaticBillboards::~CStaticBillboards()
+CTreeBillboards::~CTreeBillboards()
 {
+}
+
+CParticleBillboards::CParticleBillboards(
+	ID3D12Device * pd3dDevice
+	, ID3D12GraphicsCommandList * pd3dCommandList
+	, ID3D12RootSignature * pd3dGraphicsRootSignature
+	, LPWSTR pFileName
+	, XMFLOAT2 szSprite, UINT nBillboards, XMFLOAT2 xmf2Size)
+	: m_iCurrControler(0)
+{
+	CParticleBillBoardMesh* billboards = new CParticleBillBoardMesh(
+		pd3dDevice
+		, pd3dCommandList
+		, nBillboards
+		, xmf2Size);
+
+	m_nControlers = billboards->GetnVertices();
+	m_ppControlers = new ParticleControler*[m_nControlers];
+	for (int i = 0; i < m_nControlers; ++i)
+	{
+		m_ppControlers[i] = new ParticleControler(
+			  billboards->GetVertices()[i]
+			, szSprite);
+	}
+
+	SetMesh(0, billboards);
+	CreateShaderVariables(pd3dDevice, pd3dCommandList);
+
+	UINT ncbElementBytes = ((sizeof(CB_GAMEOBJECT_INFO) + 255) & ~255);
+
+	CTexture* pBillboardTexture = new CTexture(1, RESOURCE_TEXTURE2D_ARRAY, 0);
+	pBillboardTexture->LoadTextureFromFile(pd3dDevice, pd3dCommandList, pFileName, 0);
+
+	CParticleBillboardShader *pShader = new CParticleBillboardShader();
+	pShader->CreateShader(pd3dDevice, pd3dGraphicsRootSignature);
+	pShader->CreateShaderVariables(pd3dDevice, pd3dCommandList);
+	pShader->CreateCbvAndSrvDescriptorHeaps(pd3dDevice, pd3dCommandList, 1, 1);
+	pShader->CreateConstantBufferViews(pd3dDevice, pd3dCommandList, 1, m_pd3dcbGameObject, ncbElementBytes);
+	pShader->CreateShaderResourceViews(pd3dDevice, pd3dCommandList, pBillboardTexture, 8, false);
+
+	SetCbvGPUDescriptorHandle(pShader->GetGPUCbvDescriptorStartHandle());
+
+	CMaterial *pBillboardMaterial = new CMaterial();
+	pBillboardMaterial->SetTexture(pBillboardTexture);
+	pBillboardMaterial->SetReflection(0);
+	pBillboardMaterial->SetShader(pShader);
+	SetMaterial(pBillboardMaterial);
+}
+
+CParticleBillboards::~CParticleBillboards()
+{
+	for (int i = 0; i < m_nControlers; ++i)
+		delete m_ppControlers[i];
+	delete[] m_ppControlers;
+}
+
+void CParticleBillboards::Animate(float fTimeElapsed)
+{
+	for (int i = 0; i < m_nControlers; ++i)
+		m_ppControlers[i]->Animate(fTimeElapsed);
+}
+
+void CParticleBillboards::PopParticle(
+	const XMFLOAT3&			pos
+	, XMFLOAT3&				dir
+	, float					speed
+	, float					animateTime
+	, float					animateSpeed)
+{
+	m_ppControlers[m_iCurrControler++]->StartAnimate(pos, dir, speed, animateTime, animateSpeed);
+	if (m_iCurrControler >= m_nControlers) m_iCurrControler = 0;
 }

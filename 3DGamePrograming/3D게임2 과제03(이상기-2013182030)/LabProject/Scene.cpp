@@ -133,73 +133,67 @@ void CScene::BuildObjects(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *p
 	float fHalfHeightMapLength = m_pTerrain->GetHeightMapLength() * xmf3Scale.z * 0.5f;
 	// Static billboards
 	{
-		const int num_texture = 8;
-		std::wstring billboard_texture_path[num_texture];
-		billboard_texture_path[0] = L"Assets/Image/Grasses/Grass01.DDS";
-		billboard_texture_path[1] = L"Assets/Image/Grasses/Grass02.DDS";
-		billboard_texture_path[2] = L"Assets/Image/Grasses/Grass03.DDS";
-		billboard_texture_path[3] = L"Assets/Image/Grasses/Grass04.DDS";
-		billboard_texture_path[4] = L"Assets/Image/Grasses/Grass05.DDS";
-		billboard_texture_path[5] = L"Assets/Image/Grasses/Grass06.DDS";
-		billboard_texture_path[6] = L"Assets/Image/Trees/Tree01.DDS";
-		billboard_texture_path[7] = L"Assets/Image/Trees/Tree02.DDS";
+		m_pGrasses = new CGrassBillboards(
+			pd3dDevice
+			, pd3dCommandList
+			, m_pd3dGraphicsRootSignature
+			, 50000
+			, XMFLOAT3(fHalfHeightMapWidth, 0, fHalfHeightMapLength)
+			, XMFLOAT2(20, 20)
+			, 1000.f
+			, static_cast<void*>(m_pTerrain));
 
-		CTexture* pBillboardTexture[num_texture];
-		for (int i = 0; i < num_texture; ++i)
-		{
-			pBillboardTexture[i] = new CTexture(1, RESOURCE_TEXTURE2D_ARRAY, 0);
-			pBillboardTexture[i]->LoadTextureFromFile(pd3dDevice, pd3dCommandList, &(*(billboard_texture_path[i].begin())), 0);
-		}
-
-		m_nBillboard = num_texture;
-		m_ppBillboards = new CStaticBillboards*[m_nBillboard];
-
-		const float radius = 1000.f;
-		const int num_grasses_in_area = 1000;
-		const int num_tress_in_area = 100;
-		int num_billboard_in_area = 0;
-		for (int i = 0; i < m_nBillboard; ++i)
-		{
-			UINT texture_idx = rand() % num_texture;
-			XMFLOAT3 xmf3CenterPos = XMFLOAT3();
-			XMFLOAT2 xmf2Size = XMFLOAT2();
-			if (texture_idx < 6)
-			{
-				xmf2Size = XMFLOAT2(50, 20);
-				num_billboard_in_area = num_grasses_in_area;
-			}
-			else if (texture_idx < 8)
-			{
-				xmf2Size = XMFLOAT2(20, 50);
-				num_billboard_in_area = num_tress_in_area;
-			}
-			m_ppBillboards[i] = new CStaticBillboards(
-				pd3dDevice
-				, pd3dCommandList
-				, m_pd3dGraphicsRootSignature
-				, L"Assets/Image/Grasses/Grass01.DDS"
-				, num_billboard_in_area
-				, XMFLOAT3(fHalfHeightMapWidth, 0, fHalfHeightMapLength)
-				, xmf2Size
-				, radius
-				, static_cast<void*>(m_pTerrain));
-		}
+		m_pTrees = new CTreeBillboards(
+			pd3dDevice
+			, pd3dCommandList
+			, m_pd3dGraphicsRootSignature
+			, 1000
+			, XMFLOAT3(fHalfHeightMapWidth, 0, fHalfHeightMapLength)
+			, XMFLOAT2(70, 70)
+			, 1000.f
+			, static_cast<void*>(m_pTerrain));
 	}
 
-	m_nObjects = 1;
+	// Particle billboards
+	{
+		m_pFireBall = new CParticleBillboards(
+			pd3dDevice
+			, pd3dCommandList
+			, m_pd3dGraphicsRootSignature
+			, L"Assets/Image/Particle/FireBall.DDS"
+			, XMFLOAT2(8, 4)
+			, 500
+			, XMFLOAT2(20, 20));
+
+		m_pExplosions = new CParticleBillboards(
+			  pd3dDevice
+			, pd3dCommandList
+			, m_pd3dGraphicsRootSignature
+			, L"Assets/Image/Particle/Explosion.DDS"
+			, XMFLOAT2(8, 8)
+			, 1000
+			, XMFLOAT2(50, 50));
+	}
+
+	m_nObjects = 5;
 	m_ppObjects = new CGameObject*[m_nObjects];
 
 #ifdef _WITH_GUNSHIP_MODEL
 	m_ppObjects[0] = new CGunshipHellicopter(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
-	m_ppObjects[0]->SetPosition(XMFLOAT3(0.0f, 0.0f, 50.0f));
-	//m_ppObjects[1] = new CGunshipHellicopter(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
-	//m_ppObjects[1]->SetPosition(XMFLOAT3(-30.0f, 5.0f, 30.0f));
-	//m_ppObjects[2] = new CGunshipHellicopter(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
-	//m_ppObjects[2]->SetPosition(XMFLOAT3(+30.0f, 0.0f, 20.0f));
-	//m_ppObjects[3] = new CGunshipHellicopter(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
-	//m_ppObjects[3]->SetPosition(XMFLOAT3(+40.0f, 10.0f, 50.0f));
-	//m_ppObjects[4] = new CGunshipHellicopter(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
-	//m_ppObjects[4]->SetPosition(XMFLOAT3(+40.0f, -10.0f, 30.0f));
+	m_ppObjects[0]->SetPosition(800, 500, 800);
+	m_ppObjects[0]->UpdateTransform();
+	m_ppObjects[1] = new CGunshipHellicopter(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
+	m_ppObjects[1]->SetPosition(800, 500, 800);
+	m_ppObjects[1]->UpdateTransform();
+	m_ppObjects[2] = new CGunshipHellicopter(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
+	m_ppObjects[2]->SetPosition(800, 500, 800);
+	m_ppObjects[2]->UpdateTransform();
+	m_ppObjects[3] = new CGunshipHellicopter(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
+	m_ppObjects[3]->SetPosition(800, 500, 800);
+	m_ppObjects[3]->UpdateTransform();
+	m_ppObjects[4] = new CGunshipHellicopter(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
+	m_ppObjects[4]->SetPosition(800, 500, 800);
+	m_ppObjects[4]->UpdateTransform();
 #endif
 #ifdef _WITH_APACHE_MODEL
 	m_ppObjects[0] = new CApacheHellicopter(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
@@ -241,11 +235,10 @@ void CScene::ReleaseObjects()
 	if (m_pSkyBox) delete m_pSkyBox;
 	if (m_pTerrain) delete m_pTerrain;
 
-	if (m_ppBillboards)
-	{
-		for (int i = 0; i < m_nBillboard; i++) delete m_ppBillboards[i];
-		delete[] m_ppBillboards;
-	}
+	if (m_pGrasses) delete m_pGrasses;
+	if (m_pTrees) delete m_pTrees;
+	if (m_pExplosions) delete m_pExplosions;
+	if (m_pFireBall) delete m_pFireBall;
 }
 
 void CScene::ReleaseUploadBuffers()
@@ -259,7 +252,7 @@ ID3D12RootSignature *CScene::CreateGraphicsRootSignature(ID3D12Device *pd3dDevic
 {
 	ID3D12RootSignature *pd3dGraphicsRootSignature = NULL;
 
-	D3D12_DESCRIPTOR_RANGE pd3dDescriptorRanges[2];
+	D3D12_DESCRIPTOR_RANGE pd3dDescriptorRanges[5];
 
 	pd3dDescriptorRanges[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
 	pd3dDescriptorRanges[0].NumDescriptors = 1;
@@ -268,12 +261,30 @@ ID3D12RootSignature *CScene::CreateGraphicsRootSignature(ID3D12Device *pd3dDevic
 	pd3dDescriptorRanges[0].OffsetInDescriptorsFromTableStart = 0;
 
 	pd3dDescriptorRanges[1].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-	pd3dDescriptorRanges[1].NumDescriptors = 6;
-	pd3dDescriptorRanges[1].BaseShaderRegister = 0; //Texture
+	pd3dDescriptorRanges[1].NumDescriptors = 3;
+	pd3dDescriptorRanges[1].BaseShaderRegister = 0; //Terrain
 	pd3dDescriptorRanges[1].RegisterSpace = 0;
 	pd3dDescriptorRanges[1].OffsetInDescriptorsFromTableStart = 0;
 
-	D3D12_ROOT_PARAMETER pd3dRootParameters[6];
+	pd3dDescriptorRanges[2].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+	pd3dDescriptorRanges[2].NumDescriptors = 6;
+	pd3dDescriptorRanges[2].BaseShaderRegister = 3; //SkyBox
+	pd3dDescriptorRanges[2].RegisterSpace = 0;
+	pd3dDescriptorRanges[2].OffsetInDescriptorsFromTableStart = 0;
+
+	pd3dDescriptorRanges[3].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+	pd3dDescriptorRanges[3].NumDescriptors = 6;
+	pd3dDescriptorRanges[3].BaseShaderRegister = 9; //Billboards
+	pd3dDescriptorRanges[3].RegisterSpace = 0;
+	pd3dDescriptorRanges[3].OffsetInDescriptorsFromTableStart = 0;
+
+	pd3dDescriptorRanges[4].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+	pd3dDescriptorRanges[4].NumDescriptors = 1;
+	pd3dDescriptorRanges[4].BaseShaderRegister = 15; //Particles
+	pd3dDescriptorRanges[4].RegisterSpace = 0;
+	pd3dDescriptorRanges[4].OffsetInDescriptorsFromTableStart = 0;
+
+	D3D12_ROOT_PARAMETER pd3dRootParameters[9];
 
 	pd3dRootParameters[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
 	pd3dRootParameters[0].Descriptor.ShaderRegister = 0; //Player
@@ -302,8 +313,23 @@ ID3D12RootSignature *CScene::CreateGraphicsRootSignature(ID3D12Device *pd3dDevic
 
 	pd3dRootParameters[5].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
 	pd3dRootParameters[5].DescriptorTable.NumDescriptorRanges = 1;
-	pd3dRootParameters[5].DescriptorTable.pDescriptorRanges = &pd3dDescriptorRanges[1]; //Texture
+	pd3dRootParameters[5].DescriptorTable.pDescriptorRanges = &pd3dDescriptorRanges[1]; //Terrain
 	pd3dRootParameters[5].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+
+	pd3dRootParameters[6].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+	pd3dRootParameters[6].DescriptorTable.NumDescriptorRanges = 1;
+	pd3dRootParameters[6].DescriptorTable.pDescriptorRanges = &pd3dDescriptorRanges[2]; //SkyBox
+	pd3dRootParameters[6].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+
+	pd3dRootParameters[7].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+	pd3dRootParameters[7].DescriptorTable.NumDescriptorRanges = 1;
+	pd3dRootParameters[7].DescriptorTable.pDescriptorRanges = &pd3dDescriptorRanges[3]; //Billboards
+	pd3dRootParameters[7].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+
+	pd3dRootParameters[8].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+	pd3dRootParameters[8].DescriptorTable.NumDescriptorRanges = 1;
+	pd3dRootParameters[8].DescriptorTable.pDescriptorRanges = &pd3dDescriptorRanges[4]; //Particles
+	pd3dRootParameters[8].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
 
 	D3D12_STATIC_SAMPLER_DESC d3dSamplerDesc;
 	::ZeroMemory(&d3dSamplerDesc, sizeof(D3D12_STATIC_SAMPLER_DESC));
@@ -387,20 +413,122 @@ bool CScene::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wPar
 
 bool CScene::ProcessInput(UCHAR *pKeysBuffer)
 {
-	return(false);
+	DWORD dwDirection = 0;
+	if (pKeysBuffer[VK_SPACE] & 0xF0)
+	{
+		if (m_bShoot)
+		{
+			m_pFireBall->PopParticle(
+				m_pPlayer->GetPosition()
+				, m_pPlayer->GetLook()
+				, 100 + rand() % 50
+				, 10.f
+				, 60
+			);
+			m_bShoot = false;
+		}
+		
+
+		
+	}
+	return false;
 }
 
 void CScene::AnimateObjects(float fTimeElapsed)
 {
+	if(!m_bShoot) m_fShootTimer += fTimeElapsed;
+	if (SHOOT_DELAY < m_fShootTimer)
+	{
+		m_bShoot = true;
+		m_fShootTimer = 0.0f;
+	}
+
+	XMFLOAT3 playerPos = m_pPlayer->GetPosition();
+	float terrainHeight = m_pTerrain->GetHeight(playerPos.x, playerPos.z);
+
 	for (int i = 0; i < m_nShaders; i++) m_ppShaders[i]->AnimateObjects(fTimeElapsed);
 
-	for (int i = 0; i < m_nObjects; i++) m_ppObjects[i]->Animate(fTimeElapsed);
+	for (int i = 0; i < m_nObjects; i++)
+	{
+		m_ppObjects[i]->Animate(fTimeElapsed);
+		XMFLOAT3 objPos = m_ppObjects[i]->GetPosition();
+		if (terrainHeight + 50 > objPos.y)
+		{
+			objPos.y = terrainHeight + 50;
+			m_ppObjects[i]->SetPosition(objPos);
+		}
+	}
+
+	for (int j = 0; j < m_pFireBall->m_nControlers; ++j)
+	{
+		XMFLOAT3 particlePos = m_pFireBall->m_ppControlers[j]->Particle.m_xmf4Pos;
+		float particleRadius = m_pFireBall->m_ppControlers[j]->Particle.m_xmf2Size.x;
+		for (int i = 0; i < m_nObjects; i++)
+		{
+			CGunshipHellicopter* obj = static_cast<CGunshipHellicopter*>(m_ppObjects[i]);
+			if (obj->m_bTimeOut)
+			{
+				obj->m_bTimeOut = false;
+				obj->Rotate(0, rand() % 360, 0);
+			}
+
+			XMFLOAT3 objPos = m_ppObjects[i]->GetPosition();
+			
+			if (m_pFireBall->m_ppControlers[j]->bActive && 
+				particleRadius > Vector3::Length(Vector3::Subtract(particlePos, objPos)))
+			{
+				m_ppObjects[i]->SetPosition(800, 500, 800);
+				m_ppObjects[i]->UpdateTransform();
+				for (int k = 0; k < 10; ++k)
+				{
+					m_pExplosions->PopParticle(
+						particlePos
+						, Vector3::Normalize(XMFLOAT3(
+							rand() % 10000 - 5000
+							, rand() % 10000 - 5000
+							, rand() % 10000 - 5000))
+						, 50 + rand() % 50
+						, 1.f + static_cast<float>(rand() % 10000) / 10000.f
+					);
+				}
+				m_pFireBall->m_ppControlers[j]->Reset();
+			}
+			
+		}
+		if (m_pFireBall->m_ppControlers[j]->bActive && 
+			terrainHeight + 50 > particlePos.y)
+		{
+			for (int k = 0; k < 20; ++k)
+			{
+				m_pExplosions->PopParticle(
+					particlePos
+					, Vector3::Normalize(XMFLOAT3(
+						rand() % 10000 - 5000
+						, rand() % 10000 - 5000
+						, rand() % 10000 - 5000))
+					, 50 + rand() % 50
+					, 2.f + static_cast<float>(rand() % 10000) / 10000.f
+				);
+			}
+			m_pFireBall->m_ppControlers[j]->Reset();
+		}
+	}
+
+	if (m_pExplosions) m_pExplosions->Animate(fTimeElapsed);
+	if (m_pFireBall) m_pFireBall->Animate(fTimeElapsed);
 
 	if (m_pLights)
 	{
 		m_pLights->m_pLights[1].m_xmf3Position = m_pPlayer->GetPosition();
 		m_pLights->m_pLights[1].m_xmf3Direction = m_pPlayer->GetLookVector();
 	}
+
+	if (terrainHeight + 50 > playerPos.y)
+	{
+		playerPos.y = terrainHeight + 50;
+		m_pPlayer->SetPosition(playerPos);
+	}
+	
 }
 
 void CScene::Render(ID3D12GraphicsCommandList *pd3dCommandList, CCamera *pCamera)
@@ -420,9 +548,10 @@ void CScene::Render(ID3D12GraphicsCommandList *pd3dCommandList, CCamera *pCamera
 
 	if (m_pSkyBox) m_pSkyBox->Render(pd3dCommandList, pCamera);
 	if (m_pTerrain) m_pTerrain->Render(pd3dCommandList, pCamera);
-	if (m_ppBillboards)
-		for (int i = 0; i < m_nBillboard; ++i)
-			m_ppBillboards[i]->Render(pd3dCommandList, pCamera);
+	if (m_pGrasses) m_pGrasses->Render(pd3dCommandList, pCamera);
+	if (m_pTrees) m_pTrees->Render(pd3dCommandList, pCamera);
+	if (m_pExplosions) m_pExplosions->Render(pd3dCommandList, pCamera);
+	if (m_pFireBall) m_pFireBall->Render(pd3dCommandList, pCamera);
 
 	for (int i = 0; i < m_nShaders; i++) m_ppShaders[i]->Render(pd3dCommandList, pCamera);
 

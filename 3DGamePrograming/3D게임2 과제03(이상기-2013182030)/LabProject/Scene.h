@@ -7,6 +7,8 @@
 #include "Shader.h"
 #include "Player.h"
 
+#define SHOOT_DELAY			0.3f
+
 struct LIGHT
 {
 	XMFLOAT4				m_xmf4Ambient;
@@ -98,6 +100,12 @@ protected:
 	CSkyBox						*m_pSkyBox = NULL;
 	CHeightMapTerrain			*m_pTerrain = NULL;
 
-	CStaticBillboards			**m_ppBillboards = NULL;
-	int							m_nBillboard = 0;
+	CGrassBillboards			*m_pGrasses = NULL;
+	CTreeBillboards				*m_pTrees = NULL;
+	CParticleBillboards			*m_pExplosions = NULL;
+	CParticleBillboards			*m_pFireBall = NULL;
+
+	float						m_fShootTimer = 0.0f;
+	bool						m_bShoot = false;
+
 };

@@ -701,7 +701,7 @@ D3D12_SHADER_BYTECODE CSkyBoxShader::CreatePixelShader(ID3DBlob **ppd3dShaderBlo
 	return(CShader::CompileShaderFromFile(L"hlsl/Shaders.hlsl", "PSSkyBox", "ps_5_1", ppd3dShaderBlob));
 }
 
-
+/////////////////////////////////////////////////////////////////////////////////////////////////
 CBillboardShader::CBillboardShader()
 {
 }
@@ -788,4 +788,44 @@ D3D12_SHADER_BYTECODE CBillboardShader::CreatePixelShader(ID3DBlob ** ppd3dShade
 D3D12_SHADER_BYTECODE CBillboardShader::CreateGeometryShader(ID3DBlob ** ppd3dShaderBlob)
 {
 	return(CShader::CompileShaderFromFile(L"hlsl/Shaders.hlsl", "GSBillBoard", "gs_5_1", ppd3dShaderBlob));
+}
+
+/////////////////////////////////////////////////////////////////////
+CParticleBillboardShader::CParticleBillboardShader()
+{
+}
+
+CParticleBillboardShader::~CParticleBillboardShader()
+{
+}
+
+D3D12_INPUT_LAYOUT_DESC CParticleBillboardShader::CreateInputLayout()
+{
+	UINT nInputElementDescs = 4;
+	D3D12_INPUT_ELEMENT_DESC *pd3dInputElementDescs = new
+		D3D12_INPUT_ELEMENT_DESC[nInputElementDescs];
+	pd3dInputElementDescs[0] = { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
+	pd3dInputElementDescs[1] = { "SIZE", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
+	pd3dInputElementDescs[2] = { "CURRENT_IMAGE", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 20, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
+	pd3dInputElementDescs[3] = { "DIVIDED_TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 28, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
+
+	D3D12_INPUT_LAYOUT_DESC d3dInputLayoutDesc;
+	d3dInputLayoutDesc.pInputElementDescs = pd3dInputElementDescs;
+	d3dInputLayoutDesc.NumElements = nInputElementDescs;
+	return(d3dInputLayoutDesc);
+}
+
+D3D12_SHADER_BYTECODE CParticleBillboardShader::CreateVertexShader(ID3DBlob ** ppd3dShaderBlob)
+{
+	return(CShader::CompileShaderFromFile(L"hlsl/Shaders.hlsl", "VSParticle", "vs_5_1", ppd3dShaderBlob));
+}
+
+D3D12_SHADER_BYTECODE CParticleBillboardShader::CreatePixelShader(ID3DBlob ** ppd3dShaderBlob)
+{
+	return(CShader::CompileShaderFromFile(L"hlsl/Shaders.hlsl", "PSParticle", "ps_5_1", ppd3dShaderBlob));
+}
+
+D3D12_SHADER_BYTECODE CParticleBillboardShader::CreateGeometryShader(ID3DBlob ** ppd3dShaderBlob)
+{
+	return(CShader::CompileShaderFromFile(L"hlsl/Shaders.hlsl", "GSParticle", "gs_5_1", ppd3dShaderBlob));
 }

@@ -143,6 +143,35 @@ public:
 	~CBillboardVertex() {}
 };
 
+class CParticleBillboardVertex
+{
+public:
+	XMFLOAT3						m_xmf4Pos;
+	XMFLOAT2						m_xmf2Size;
+
+	XMFLOAT2						m_xmf2CurrTex;
+	XMFLOAT2						m_xmf2DividedTexCoord;
+
+public:
+	CParticleBillboardVertex()
+		: m_xmf4Pos(XMFLOAT3(0.0f, 0.0f, 0.0f))
+		, m_xmf2Size(XMFLOAT2(0.0f, 0.0f))
+		, m_xmf2CurrTex(XMFLOAT2(0.0f, 0.0f))
+		, m_xmf2DividedTexCoord(XMFLOAT2(0.0f, 0.0f))
+	{}
+	CParticleBillboardVertex(
+		const XMFLOAT3& xmf3Pos
+		, const XMFLOAT2& xmf2Size
+		, const XMFLOAT2& xmf2CurrTex
+		, const XMFLOAT2& xmf2DividedTexCoord)
+		: m_xmf4Pos(xmf3Pos)
+		, m_xmf2Size(xmf2Size)
+		, m_xmf2CurrTex(xmf2CurrTex)
+		, m_xmf2DividedTexCoord(xmf2DividedTexCoord)
+	{}
+	~CParticleBillboardVertex() {}
+};
+
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 class CMesh
@@ -183,6 +212,8 @@ protected:
 
 public:
 	virtual void Render(ID3D12GraphicsCommandList *pd3dCommandList);
+
+	const UINT GetnVertices() const { return m_nVertices; }
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -327,4 +358,20 @@ public:
 		, float							fClusterBillboardsRadius
 		, void*							pContext = NULL);
 	virtual ~CStaticBillBoardMesh();
+};
+
+class CParticleBillBoardMesh : public CMesh
+{
+private:
+	CParticleBillboardVertex*			m_pVertices;
+
+public:
+	CParticleBillBoardMesh(
+		ID3D12Device*					pd3dDevice
+		, ID3D12GraphicsCommandList*	pd3dCommandList
+		, UINT							nBillboards
+		, XMFLOAT2						szBillboards);
+	virtual ~CParticleBillBoardMesh();
+
+	CParticleBillboardVertex* GetVertices() { return m_pVertices; }
 };

@@ -480,7 +480,6 @@ void CGameFramework::ProcessInput()
 		if (pKeysBuffer['D'] & 0xF0) dwDirection |= DIR_RIGHT;
 		if (pKeysBuffer['R'] & 0xF0) dwDirection |= DIR_UP;
 		if (pKeysBuffer['F'] & 0xF0) dwDirection |= DIR_DOWN;
-		if (pKeysBuffer[VK_SPACE] & 0xF0) ;
 
 		float cxDelta = 0.0f, cyDelta = 0.0f;
 		POINT ptCursorPos;
