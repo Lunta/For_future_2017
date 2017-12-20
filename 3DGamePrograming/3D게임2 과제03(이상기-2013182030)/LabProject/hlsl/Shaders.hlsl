@@ -425,14 +425,6 @@ void GSParticle(
 		, float2(curr_u + base_u,	curr_v)
 	};
 
-	//float2 pUVs[4] =
-	//{
-	//	  float2(0.0f, 1.0f)
-	//	, float2(0.0f, 0.0f)
-	//	, float2(1.0f, 1.0f)
-	//	, float2(1.0f, 0.0f)
-	//};
-
 	PS_PARTICLE_INPUT output;
 	for (int i = 0; i < 4; i++)
 	{
@@ -450,13 +442,52 @@ float4 PSParticle(PS_PARTICLE_INPUT input) : SV_Target
 	float4 cTexture = gtxtParticle.Sample(gSamplerState, input.uv);
 	if (cTexture.a < 0.01f) discard;
 
-	//float4 cIlumination = Lighting(input.posW, input.normalW);
-	//float3 uvw = float3(input.uv, (input.primID % 6));
-	//float4 cTexture = gtxtBillBoard.Sample(gWrapSamplerState, uvw);
-	//float4 cColor = cIlumination * cTexture;
 	float4 cColor = cTexture;
 	cColor.a = cTexture.a;
 
 	return (cColor);
-	//return float4(1, 1, 1, 1);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+cbuffer cbPostProcessingInfo : register(b5)
+{
+	uint		gbActive				: packoffset(c0);
+};
+
+float4 VSTextureToFullScreen(uint nVertexID : SV_VertexID) : SV_POSITION
+{
+	if (nVertexID == 0) return(float4(-1.0f, +1.0f, 0.0f, 1.0f));
+	if (nVertexID == 1) return(float4(+1.0f, +1.0f, 0.0f, 1.0f));
+	if (nVertexID == 2) return(float4(+1.0f, -1.0f, 0.0f, 1.0f));
+	if (nVertexID == 3) return(float4(-1.0f, +1.0f, 0.0f, 1.0f));
+	if (nVertexID == 4) return(float4(+1.0f, -1.0f, 0.0f, 1.0f));
+	if (nVertexID == 5) return(float4(-1.0f, -1.0f, 0.0f, 1.0f));
+	
+	return(float4(0, 0, 0, 0));
+}
+
+Texture2D<float4> gtxtScene : register(t16);
+Texture2D<float4> gtxtMiniMap : register(t17);
+
+static int2 gnOffsets[9] = { { -1,-1 },{ 0,-1 },{ 1,-1 },{ -1,0 },{ 0,0 },{ 1,0 },{ -1,1 },{ 0,1 },{ 1,1 } };
+
+float4 PSTextureToFullScreenWithPostProcessing(float4 position : SV_POSITION) : SV_Target
+{
+	float4 cSceneColor = gtxtScene[int2(position.xy)];
+	float4 cMiniMapColor = gtxtMiniMap[int2(position.xy)];
+	
+	if (gbActive > 0)
+	{
+		if (position.x < 250 || position.x > 400 || position.y < 150 || position.y > 300)
+		{
+			float3 cBlur = float3(0.0f, 0.0f, 0.0f);
+			for (int i = 0; i < 9; i++)
+				cBlur += (1.f / 9.f) * gtxtScene[int2(position.xy) + gnOffsets[i]].xyz;
+			cSceneColor = float4(cBlur, cSceneColor.a);
+		}
+	}
+	if(cMiniMapColor.a < 0.01f)
+		return(cSceneColor);
+	else
+		return(cMiniMapColor);
 }
